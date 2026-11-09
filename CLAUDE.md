@@ -101,9 +101,8 @@ supabase/README.md      where the database schema and migrations live
 - `netlify.toml`: build `npm run build`, publish `dist`, Node 22.
 - `/pipeline`, `/pipeline/history` and `/pipeline/partner` are rewritten to
   their `.html` files **before** the SPA catch-all. Keep that order.
-- Source of truth for the pipeline pages: until farirainandipa-web stops
-  carrying its own copy, copy `public/pipeline/*.html` from that repo's
-  `origin/main` (not a possibly stale local checkout) when syncing.
+- This repo is the only source of the pipeline pages. farirainandipa-web no
+  longer carries a copy (removed in its PR #18), so edit them here.
 - farirainandipa.co.zw/pipeline/* 301-redirects here (path and query kept), so
   old links and the partner verification emails, which still point at the
   old domain, keep working.
