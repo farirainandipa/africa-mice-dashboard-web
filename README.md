@@ -1,4 +1,4 @@
-# Africa MICE Dashboard — landing site
+# Africa MICE Dashboard landing site
 
 Single-page marketing site for Africa MICE Dashboard. Vite + React + TypeScript, Tailwind CSS v4, lucide-react.
 
@@ -12,11 +12,11 @@ npm run build    # production build into dist/
 
 All copy, stats, URLs and the contact email live in **`src/content.ts`**. Components only read from it.
 
-- `DASHBOARD_URL` — "Sign in" link, `/pipeline` (the Bid Pipeline in `public/pipeline/`).
-- `CONTACT_EMAIL` — receives access requests (form) and event submissions.
-- `HERO.stats` — placeholder figures for the stat chips.
-- `TRUST.logos` / `TRUST.testimonial` — placeholder logos and testimonial.
-- `FOOTER.legalLinks` — Privacy and Terms URLs.
+- `DASHBOARD_URL` is the "Sign in" link, `/pipeline` (the Bid Pipeline in `public/pipeline/`).
+- `CONTACT_EMAIL` receives access requests (form) and event submissions.
+- `HERO.stats` holds placeholder figures for the stat chips.
+- `TRUST.logos` and `TRUST.testimonial` hold the placeholder logos and testimonial.
+- `FOOTER.legalLinks` holds the Privacy and Terms URLs.
 
 Also update the OpenGraph URLs and image in `index.html`, and replace `public/favicon.svg` if needed.
 

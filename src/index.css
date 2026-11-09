@@ -1,6 +1,6 @@
 @import "tailwindcss";
 
-/* Design tokens — one accent colour, used sparingly. */
+/* Design tokens. One accent colour, used sparingly. */
 @theme {
   --color-navy: #0b1220;
   --color-panel: #121a2b;

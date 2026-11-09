@@ -4,7 +4,7 @@ import AfricaDots from './AfricaDots';
 import Reveal from './Reveal';
 import { ButtonLink } from './Button';
 
-/** Hero: headline, CTAs, stat chips, and the dotted Africa backdrop. */
+/** Hero with the headline, CTAs, stat chips and the dotted Africa backdrop. */
 export default function Hero() {
   return (
     <section id="top" aria-labelledby="hero-heading" className="relative isolate -mt-16 overflow-hidden pt-16">
@@ -49,7 +49,7 @@ export default function Hero() {
           </div>
         </Reveal>
 
-        {/* Stat chips — figures are placeholders in content.ts */}
+        {/* Stat chips. The figures are placeholders in content.ts */}
         <Reveal delay={150}>
           <dl className="mt-16 grid max-w-3xl grid-cols-3 divide-x divide-line overflow-hidden rounded-xl border border-line bg-panel/70 backdrop-blur-sm">
             {HERO.stats.map((stat) => (

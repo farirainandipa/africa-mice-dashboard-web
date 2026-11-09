@@ -3,7 +3,7 @@
  *  SITE CONTENT & CONFIGURATION
  * ---------------------------------------------------------------------------
  *  Every piece of editable copy, figure, URL and email address on the page
- *  lives in this file. Update text here — the components only read from it.
+ *  lives in this file. Update text here; the components only read from it.
  *
  *  Copy rules: British English, no exclamation marks, no emojis, no hype.
  *  Speak to outcomes and access only.
@@ -19,12 +19,12 @@ export const CONTACT_EMAIL = 'nandie@farirainandipa.co.zw';
 export const BRAND = {
   name: 'Africa MICE Dashboard',
   description:
-    'Bid intelligence for African destinations — the international events open to bid, in one place.',
+    'Bid intelligence for African destinations, with the international events open to bid in one place.',
   parentCompany: 'A product of Farirai Nandipa MICE Consultancy',
   copyrightYear: 2026,
 };
 
-/** Primary navigation — `href` values must match section ids below. */
+/** Primary navigation. The `href` values must match section ids below. */
 export const NAV_LINKS = [
   { label: 'Platform', href: '#platform' },
   { label: "Who it's for", href: '#audience' },
@@ -39,10 +39,10 @@ export const CTA = {
 
 export const HERO = {
   overline: 'Bid intelligence for African destinations',
-  headline: 'Know which international events Africa can win — before the bid closes.',
+  headline: 'Know which international events Africa can win, before the bid closes.',
   subhead:
-    'A curated, continuously updated pipeline of conferences, congresses, incentives and corporate events open to African hosts — with the context destinations need to decide, prioritise and bid.',
-  /** Placeholder figures — edit freely. */
+    'A curated, continuously updated pipeline of conferences, congresses, incentives and corporate events open to African hosts, with the context destinations need to decide, prioritise and bid.',
+  /** Placeholder figures. Edit freely. */
   stats: [
     { value: '350+', label: 'Events tracked' },
     { value: '24', label: 'Sectors covered' },
@@ -120,7 +120,7 @@ export const HOW_IT_WORKS = {
 export const TRUST = {
   overline: 'Credibility',
   heading: 'Built by business-events professionals working across Africa.',
-  /** Placeholder logos — replace with real partner/client logos (one entry per logo). */
+  /** Placeholder logos. Replace with real partner/client logos (one entry per logo). */
   logos: ['Logo', 'Logo', 'Logo', 'Logo', 'Logo', 'Logo'],
   testimonial: {
     quote:

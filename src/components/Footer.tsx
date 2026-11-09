@@ -1,7 +1,7 @@
 import { BRAND, CTA, DASHBOARD_URL, FOOTER, NAV_LINKS } from '../content';
 import Wordmark from './Wordmark';
 
-/** Footer: wordmark, description, navigation, legal links and attribution. */
+/** Footer with the wordmark, description, navigation, legal links and attribution. */
 export default function Footer() {
   return (
     <footer className="border-t border-line">
