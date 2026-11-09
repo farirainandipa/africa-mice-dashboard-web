@@ -60,7 +60,7 @@ supabase/README.md      where the database schema and migrations live
 - Project ref `upzkvszgoqhoefkiwoep` (eu-west-1), **shared** with the
   farirainandipa.co.zw website. Both sites read the same pipeline data.
 - The canonical schema and migrations live in the **farirainandipa-web** repo
-  under `supabase/migrations/` (001 to 009+). Add new migrations there with the
+  under `supabase/migrations/` (001 to 023 so far). Add new migrations there with the
   next number, never edit existing ones, then apply to the project and run the
   Supabase security advisor.
 - The anon (publishable) key is hard-coded in the pipeline pages. That is
@@ -84,7 +84,7 @@ supabase/README.md      where the database schema and migrations live
   and call the public-form RPCs `bid_wins_teaser`, `partner_form_options`,
   `profile_submit`, `profile_verify`, `profile_status`,
   `submission_upload_allowed`. Every other function has EXECUTE revoked from
-  `anon` (migration 009). New SECURITY DEFINER functions must
+  `anon` (migration 023). New SECURITY DEFINER functions must
   `revoke execute ... from public, anon` unless they are meant for public forms,
   and must set `search_path`.
 - Never widen a policy to plain `authenticated`: bureau users are
