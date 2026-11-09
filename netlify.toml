@@ -12,6 +12,18 @@
   to = "/pipeline/index.html"
   status = 200
 
+# Public bid-history teaser (no login): last three hosts per series.
+[[redirects]]
+  from = "/pipeline/history"
+  to = "/pipeline/history.html"
+  status = 200
+
+# Destination partner submission form (no login), also the verify link and status page.
+[[redirects]]
+  from = "/pipeline/partner"
+  to = "/pipeline/partner.html"
+  status = 200
+
 [[redirects]]
   from = "/*"
   to = "/index.html"

@@ -14,9 +14,11 @@ Netlify:
 2. **Africa MICE Bid Pipeline** (`/pipeline`, `/pipeline/submit.html`): a
    standalone static app in `public/pipeline/`, outside the React build. It
    talks directly to Supabase with `@supabase/supabase-js` loaded from a CDN.
-   Sign-in is required (admins and convention-bureau logins);
-   `submit.html` is a public form where event organisers submit movable
-   conferences.
+   Sign-in is required (admins and convention-bureau logins). Three public
+   pages need no login: `submit.html` (organisers submit movable
+   conferences), `partner.html` at `/pipeline/partner` (destination partners
+   submit profile data, plus the email-verify and status views) and
+   `history.html` at `/pipeline/history` (bid-history teaser).
 
 ## Commands
 
@@ -41,6 +43,8 @@ src/
 public/
   pipeline/index.html   Bid Pipeline app (HTML + CSS + JS in one file, ~125 KB)
   pipeline/submit.html  public event submission form
+  pipeline/partner.html public destination-partner submission form
+  pipeline/history.html public bid-history teaser
 netlify.toml            build, /pipeline rewrite, security headers
 supabase/README.md      where the database schema and migrations live
 ```
@@ -95,8 +99,14 @@ supabase/README.md      where the database schema and migrations live
 ## Deployment (Netlify)
 
 - `netlify.toml`: build `npm run build`, publish `dist`, Node 22.
-- `/pipeline` is rewritten to `/pipeline/index.html` **before** the SPA
-  catch-all. Keep that order.
+- `/pipeline`, `/pipeline/history` and `/pipeline/partner` are rewritten to
+  their `.html` files **before** the SPA catch-all. Keep that order.
+- Source of truth for the pipeline pages: until farirainandipa-web stops
+  carrying its own copy, copy `public/pipeline/*.html` from that repo's
+  `origin/main` (not a possibly stale local checkout) when syncing.
+- farirainandipa.co.zw/pipeline/* 301-redirects here (path and query kept), so
+  old links and the partner verification emails, which still point at the
+  old domain, keep working.
 - `/pipeline/*` is served with `X-Robots-Tag: noindex` and `no-cache`.
 - No build-time environment variables are needed.
 - When the site's domain changes, add it to Supabase Auth URL configuration
