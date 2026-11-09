@@ -26,7 +26,7 @@ export default function Nav() {
       }`}
     >
       <nav aria-label="Primary" className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-4 px-5 sm:px-8">
-        <a href="#top" aria-label={`${BRAND.name} — back to top`} onClick={close}>
+        <a href="#top" aria-label={`${BRAND.name}, back to top`} onClick={close}>
           <Wordmark />
         </a>
 

@@ -2,7 +2,7 @@ import { Quote } from 'lucide-react';
 import { TRUST } from '../content';
 import Reveal from './Reveal';
 
-/** Trust strip: credibility line, placeholder logo row and a testimonial card. */
+/** Trust strip with a credibility line, a placeholder logo row and a testimonial card. */
 export default function Trust() {
   return (
     <section aria-labelledby="trust-heading" className="border-t border-line bg-panel/40 py-20 sm:py-24">
@@ -14,7 +14,7 @@ export default function Trust() {
           </h2>
         </Reveal>
 
-        {/* Placeholder logos — replace entries in content.ts (or swap for <img> tags) */}
+        {/* Placeholder logos. Replace entries in content.ts (or swap for <img> tags) */}
         <Reveal delay={100}>
           <ul className="mt-12 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6" aria-label="Partners and clients">
             {TRUST.logos.map((logo, i) => (

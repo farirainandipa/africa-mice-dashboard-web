@@ -6,7 +6,7 @@ Guidance for Claude Code (and other agents) working in this repository.
 
 Africa MICE Dashboard: bid intelligence for African destinations, a product of
 Farirai Nandipa MICE Consultancy. The site has two parts, deployed together on
-Netlify:
+Netlify.
 
 1. **Landing page** (`/`): Vite + React 19 + TypeScript + Tailwind CSS v4
    single-page marketing site. No backend: the access form and "Submit an
@@ -15,7 +15,7 @@ Netlify:
    standalone static app in `public/pipeline/`, outside the React build. It
    talks directly to Supabase with `@supabase/supabase-js` loaded from a CDN.
    Sign-in is required (admins and convention-bureau logins). Three public
-   pages need no login: `submit.html` (organisers submit movable
+   pages need no login, namely `submit.html` (organisers submit movable
    conferences), `partner.html` at `/pipeline/partner` (destination partners
    submit profile data, plus the email-verify and status views) and
    `history.html` at `/pipeline/history` (bid-history teaser).
@@ -74,12 +74,12 @@ supabase/README.md      where the database schema and migrations live
   every pipeline table and all writes. The allowlist and `site_assets` tables
   have no policies on purpose (service role only).
 - **Bureau logins**: `public.user_access` (role `bureau`, a `country_id` and a
-  licence `tier`: free / explorer / bureau / bureau_plus). Bureaux never read
+  licence `tier`, one of free, explorer, bureau or bureau_plus). Bureaux never read
   pipeline tables directly; they get their own country only, through the
   `bureau_portal()` / `bid_history()` RPCs and the `dp_bureau_own` /
   `dpf_bureau_own` policies. Accounts are created by the `bureau-admin` edge
   function (admins only).
-- **Anonymous visitors** can only: read `econ_sectors`, insert into
+- **Anonymous visitors** can only read `econ_sectors`, insert into
   `submissions` (status forced to `review`), insert into `contact_submissions`,
   and call the public-form RPCs `bid_wins_teaser`, `partner_form_options`,
   `profile_submit`, `profile_verify`, `profile_status`,
@@ -113,6 +113,19 @@ supabase/README.md      where the database schema and migrations live
 
 ## Copy style
 
-British English. No exclamation marks, no emojis, no hype. No em dashes in
-user-facing text (use a comma or rephrase). No colon before a list in running
-prose.
+British English. No exclamation marks, no emojis, no hype.
+
+These two rules apply to **all text you generate**, including page copy,
+titles and meta tags, aria labels, code comments, README and docs, commit
+messages, PR descriptions, emails and chat replies.
+
+- **No em dashes** (U+2014, also written `&mdash;` or `\u2014`). Use a comma,
+  a full stop, a semicolon or parentheses, or rephrase. En dashes only in
+  number ranges.
+- **No colon before a list.** Do not introduce a run of items with a colon in
+  a sentence. Rephrase so the list follows naturally ("three pages, namely a,
+  b and c", or "Three pages need no login. They are a, b and c."). A colon is
+  fine after a label or term being defined (`bids`: serves the app) and in
+  times, ratios and URLs.
+
+Before finishing, grep changed files for U+2014 and fix any hits.
