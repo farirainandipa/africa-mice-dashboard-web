@@ -9,8 +9,9 @@ Farirai Nandipa MICE Consultancy. The site has two parts, deployed together on
 Netlify.
 
 1. **Landing page** (`/`): Vite + React 19 + TypeScript + Tailwind CSS v4
-   single-page marketing site. No backend: the access form and "Submit an
-   event" open a prefilled `mailto:`.
+   single-page marketing site. No backend. The access form opens a prefilled
+   `mailto:`, and the "Submit an event" and destination partner links go to
+   the public pipeline forms.
 2. **Africa MICE Bid Pipeline** (`/pipeline`, `/pipeline/submit.html`): a
    standalone static app in `public/pipeline/`, outside the React build. It
    talks directly to Supabase with `@supabase/supabase-js` loaded from a CDN.
@@ -38,7 +39,7 @@ pass before deploying.
 src/
   content.ts            ALL landing copy, stats, URLs and the contact email
   lib/mailto.ts         mailto: URL builder
-  components/           Nav, Hero, Platform, Audience, HowItWorks, Trust,
+  components/           Nav, Hero, Platform, Audience, HowItWorks, Contribute,
                         AccessForm, Footer, AfricaDots, Reveal, Button, ...
 public/
   pipeline/index.html   Bid Pipeline app (HTML + CSS + JS in one file, ~125 KB)

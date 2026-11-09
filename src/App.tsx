@@ -3,7 +3,7 @@ import Hero from './components/Hero';
 import Platform from './components/Platform';
 import Audience from './components/Audience';
 import HowItWorks from './components/HowItWorks';
-import Trust from './components/Trust';
+import Contribute from './components/Contribute';
 import AccessForm from './components/AccessForm';
 import Footer from './components/Footer';
 
@@ -23,7 +23,7 @@ export default function App() {
         <Platform />
         <Audience />
         <HowItWorks />
-        <Trust />
+        <Contribute />
         <AccessForm />
       </main>
       <Footer />
