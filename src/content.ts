@@ -13,6 +13,9 @@
 /** Sign-in URL for the access-controlled Bid Pipeline (static page in public/pipeline/). */
 export const DASHBOARD_URL = '/pipeline';
 
+/** Public event submission form (no login), static page at public/pipeline/submit.html. */
+export const SUBMIT_URL = '/pipeline/submit.html';
+
 /** Address that receives access requests and event submissions. */
 export const CONTACT_EMAIL = 'nandie@farirainandipa.co.zw';
 
@@ -30,6 +33,7 @@ export const NAV_LINKS = [
   { label: "Who it's for", href: '#audience' },
   { label: 'How it works', href: '#how-it-works' },
   { label: 'Access', href: '#access' },
+  { label: 'Submit an event', href: SUBMIT_URL },
 ];
 
 export const CTA = {
@@ -99,9 +103,7 @@ export const AUDIENCE = {
       body: 'Looking for an African host? Submit your event and reach destinations ready to bid.',
       cta: {
         label: 'Submit an event',
-        subject: 'Event submission – Africa MICE Dashboard',
-        body:
-          'Event name:\nOrganisation:\nEvent type (conference / congress / incentive / corporate):\nPreferred dates or year:\nExpected attendance:\nBid deadline (if known):\nContact name and role:\n',
+        href: SUBMIT_URL,
       },
     },
   ],
