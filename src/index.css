@@ -1,0 +1,59 @@
+@import "tailwindcss";
+
+/* Design tokens — one accent colour, used sparingly. */
+@theme {
+  --color-navy: #0b1220;
+  --color-panel: #121a2b;
+  --color-panel-2: #172034;
+  --color-ink: #eef1f6;
+  --color-muted: #9aa4b5;
+  --color-faint: #6b7588;
+  --color-accent: #19c3b1;
+  --color-accent-strong: #2ad8c5;
+  --color-line: rgb(255 255 255 / 0.09);
+  --font-sans: "Manrope", "Inter", ui-sans-serif, system-ui, sans-serif;
+}
+
+html {
+  scroll-behavior: smooth;
+  /* Offset anchor targets so the sticky nav does not cover section headings. */
+  scroll-padding-top: 5rem;
+}
+
+body {
+  background-color: var(--color-navy);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+::selection {
+  background: rgb(25 195 177 / 0.3);
+}
+
+/* Scroll-reveal: elements start slightly lowered and transparent. */
+.reveal {
+  opacity: 0;
+  transform: translateY(16px);
+  transition: opacity 700ms ease, transform 700ms cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+.reveal.is-visible {
+  opacity: 1;
+  transform: none;
+}
+
+/* Soft pulse for destination points on the hero map. */
+@keyframes pulse-ring {
+  0% { r: 0.6; opacity: 0.7; }
+  100% { r: 3.2; opacity: 0; }
+}
+.pulse-ring {
+  animation: pulse-ring 3.2s ease-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  .reveal { opacity: 1; transform: none; transition: none; }
+  .pulse-ring { animation: none; opacity: 0; }
+}
