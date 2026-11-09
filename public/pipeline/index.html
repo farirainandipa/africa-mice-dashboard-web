@@ -244,7 +244,7 @@ footer.ft{text-align:center;color:var(--muted);font-size:11.5px;padding:22px;bor
 
 <div id="appView" class="hidden">
   <header class="top">
-    <div class="brand"><div class="mark">FN</div><div><b id="brandTitle">Africa MICE Bid Pipeline</b><span id="brandSub">Farirai Nandipa MICE Agency</span></div></div>
+    <div class="brand"><div class="mark">FN</div><div><b id="brandTitle">Africa MICE Dashboard</b><span id="brandSub">Farirai Nandipa MICE Agency</span></div></div>
     <nav class="tabs" id="navTabs"></nav>
     <div class="userChip">
       <button id="userBtn"><span id="userEmail"></span> ▾</button>
@@ -415,7 +415,7 @@ function bureauTabs(){
 function buildNav(){
   const tabs = MODE==="admin" ? ADMIN_TABS : bureauTabs();
   $("#navTabs").innerHTML = tabs.map(([k,l])=>`<button data-v="${k}" class="${k===VIEW?"active":""}">${esc(l)}</button>`).join("");
-  if(MODE==="admin"){ $("#brandTitle").textContent="Africa MICE Bid Pipeline"; $("#brandSub").textContent="Farirai Nandipa MICE Agency"; }
+  if(MODE==="admin"){ $("#brandTitle").textContent="Africa MICE Dashboard"; $("#brandSub").textContent="Farirai Nandipa MICE Agency"; }
   else { $("#brandTitle").textContent = (PORTAL?.country?.name||"")+" bid intelligence"; $("#brandSub").textContent="Partner portal · Farirai Nandipa MICE Agency"; }
   const pb=$("#previewBar");
   if(MODE==="preview"){ pb.classList.remove("hidden"); pb.innerHTML=`Previewing what the <b>${esc(PORTAL.country.name)}</b> bureau sees on the <b>${esc(LIC_L[PREVIEW_TIER]||PREVIEW_TIER)}</b> licence. Internal notes, other countries' scores and suggested-host lists are hidden from them. <button class="btn sm ghost" onclick="exitPreview()">Exit preview</button>`; }
