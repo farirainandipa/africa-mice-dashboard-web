@@ -12,7 +12,8 @@
 <link rel="stylesheet" href="/pipeline/theme.css">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
 <style>
-:root{--rank1:var(--accent);--rank2:rgba(25,195,177,.62);--rank3:rgba(25,195,177,.3);--rank4:rgba(255,255,255,.1)}
+:root{--rank1:var(--accent);--rank2:rgba(25,195,177,.62);--rank3:rgba(25,195,177,.3);--rank4:var(--track)}
+.light{--rank3:rgba(25,195,177,.35)}
 .hidden{display:none!important}
 .serif{font-family:var(--font)}
 /* ---------- auth ---------- */
@@ -34,25 +35,26 @@
 .authAlt{margin-top:18px;padding-top:18px;border-top:1px solid var(--line);font-size:13px;color:var(--muted)}
 .authAlt a{font-weight:600}
 /* ---------- shell ---------- */
-#appView{min-height:100vh;display:flex;flex-direction:column}
-header.top{background:rgba(11,18,32,.88);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);border-bottom:1px solid var(--line);color:var(--ink);padding:0 28px;display:flex;align-items:center;gap:24px;height:64px;position:sticky;top:0;z-index:40}
-header.top .brand{display:flex;align-items:center;gap:10px;flex-shrink:0;color:var(--ink)}
+#appView{min-height:100vh;display:flex;flex-direction:column;background:#eef2f7}
+main.light{background:transparent}
+#modalBack.light{background:rgba(11,18,32,.55)}
+header.top{background:#0b1220;border-bottom:1px solid var(--line);color:var(--ink);padding:0 max(28px,calc((100% - 1240px)/2 + 28px));display:flex;flex-wrap:wrap;align-items:center;column-gap:24px;position:sticky;top:0;z-index:40}
+header.top .brand{display:flex;align-items:center;gap:10px;flex-shrink:0;color:var(--ink);height:60px}
 header.top .brand:hover{text-decoration:none}
 header.top .brand svg{width:28px;height:28px;flex-shrink:0}
 header.top .brand b{display:block;font-size:15px;font-weight:700;letter-spacing:-.01em;line-height:1.2}
 header.top .brand span{display:block;font-size:10.5px;color:var(--faint);letter-spacing:.14em;text-transform:uppercase;font-weight:600}
-nav.tabs{display:flex;gap:2px;margin-left:8px;min-width:0;overflow-x:auto;scrollbar-width:none}
-nav.tabs::-webkit-scrollbar{display:none}
-nav.tabs button{background:none;border:none;color:var(--muted);padding:8px 12px;border-radius:8px;font-size:13.5px;font-weight:500;white-space:nowrap;transition:color .2s,background-color .2s}
+nav.tabs{order:3;flex-basis:100%;display:flex;flex-wrap:wrap;gap:2px 4px;margin:0 -12px;border-top:1px solid var(--line)}
+nav.tabs button{background:none;border:none;color:var(--muted);padding:12px 12px 11px;font-size:13.5px;font-weight:500;white-space:nowrap;border-bottom:2px solid transparent;transition:color .2s,border-color .2s}
 nav.tabs button:hover{color:var(--ink)}
-nav.tabs button.active{background:var(--t-n);color:var(--ink);font-weight:600;box-shadow:inset 0 -2px 0 var(--accent)}
+nav.tabs button.active{color:var(--ink);font-weight:600;border-bottom-color:var(--accent)}
 .userChip{margin-left:auto;position:relative;flex-shrink:0}
 .userChip>button{background:transparent;border:1px solid var(--line);color:var(--muted);padding:7px 13px;border-radius:8px;font-size:12.5px;font-weight:500;display:flex;align-items:center;gap:7px}
-.userChip>button:hover{color:var(--ink);border-color:rgba(255,255,255,.25)}
+.userChip>button:hover{color:var(--ink);border-color:var(--edge)}
 .userMenu{position:absolute;right:0;top:44px;background:var(--panel2);color:var(--ink);border-radius:10px;box-shadow:0 20px 50px rgba(0,0,0,.45);min-width:210px;padding:6px;border:1px solid var(--line2)}
 .userMenu button{display:block;width:100%;text-align:left;background:none;border:none;color:var(--ink);padding:9px 11px;border-radius:7px;font-size:13px}
 .userMenu button:hover{background:var(--t-n)}
-.previewBar{background:var(--t-amber);border-bottom:1px solid rgba(232,189,104,.25);color:var(--amber);padding:9px 28px;font-size:13px;display:flex;gap:12px;align-items:center;justify-content:center;flex-wrap:wrap}
+.previewBar{background:var(--t-amber);border-bottom:1px solid rgba(232,189,104,.25);color:var(--amber);padding:9px max(28px,calc((100% - 1240px)/2 + 28px));font-size:13px;display:flex;gap:12px;align-items:center;justify-content:center;flex-wrap:wrap}
 main{flex:1;max-width:1240px;width:100%;margin:0 auto;padding:32px 28px 72px}
 .pageHead{display:flex;align-items:baseline;justify-content:space-between;gap:14px;margin:4px 0 20px;flex-wrap:wrap}
 .pageHead h2{font-size:28px;font-weight:800;letter-spacing:-.02em}
@@ -64,6 +66,7 @@ main{flex:1;max-width:1240px;width:100%;margin:0 auto;padding:32px 28px 72px}
 .kpi .n{font-size:30px;font-weight:800;letter-spacing:-.02em;color:var(--ink);line-height:1.15}
 .kpi .l{font-size:10.5px;font-weight:600;color:var(--faint);margin-top:6px;text-transform:uppercase;letter-spacing:.16em}
 .kpi.gold .n{color:var(--accent)}
+.light .kpi.gold .n{color:var(--accent2)}
 .card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:22px;margin-bottom:20px}
 .card h3{font-size:17px;margin-bottom:14px}
 .cardHead{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:14px}
@@ -74,7 +77,7 @@ table.data th{font-size:10.5px;font-weight:600;text-transform:uppercase;letter-s
 table.data td{padding:11px 10px;border-bottom:1px solid var(--line);vertical-align:top;font-size:13.5px}
 table.data tr:last-child td{border-bottom:none}
 table.data tr.rowlink{cursor:pointer}
-table.data tr.rowlink:hover{background:rgba(255,255,255,.03)}
+table.data tr.rowlink:hover{background:var(--hover)}
 .chip{display:inline-block;padding:3px 9px;border-radius:999px;font-size:11.5px;font-weight:600;white-space:nowrap;background:var(--t-n);color:var(--muted)}
 .chip.open,.chip.sp,.chip.ok,.chip.days.ok,.chip.conf-verified,.chip.c-verified{background:var(--t-accent);color:var(--accent2)}
 .chip.watchlist,.chip.sig,.chip.conf-estimate,.chip.c-stale,.chip.c-partial{background:var(--t-amber);color:var(--amber)}
@@ -85,7 +88,7 @@ table.data tr.rowlink:hover{background:rgba(255,255,255,.03)}
 .chip.cont{background:var(--t-violet);color:var(--violet)}
 .chip.reg{background:var(--t-lime);color:var(--lime)}
 .chip.afcfta,.chip.prio{background:var(--accent);color:var(--navy)}
-.chip.sector{background:var(--t-accent);color:#a5ece4}
+.chip.sector{background:var(--t-accent);color:var(--sector-ink)}
 .chip.sec{background:var(--t-n);color:var(--ink);font-weight:500}
 .chip.sec.pri{background:var(--t-accent);color:var(--accent2);font-weight:600}
 .chip.terr{background:var(--t-n);color:var(--faint)}
@@ -111,12 +114,12 @@ table.data td .pm{font-size:11.5px;color:var(--muted);margin-top:3px}
 .evCard .org{color:var(--muted);font-size:12.5px}
 .chips{display:flex;gap:6px;flex-wrap:wrap}
 .dots{display:inline-flex;gap:3px;vertical-align:middle}
-.dots i{width:9px;height:9px;border-radius:50%;background:rgba(255,255,255,.12)}
+.dots i{width:9px;height:9px;border-radius:50%;background:var(--track)}
 .dots i.on{background:var(--accent)}
 .fitList{border-top:1px dashed var(--line2);padding-top:10px;margin-top:2px;display:flex;flex-direction:column;gap:6px}
 .fitRow{display:flex;align-items:center;gap:9px;font-size:12.5px}
 .fitRow .nm{width:105px;font-weight:600}
-.fitRow .bar{flex:1;height:6px;background:rgba(255,255,255,.08);border-radius:5px;overflow:hidden}
+.fitRow .bar{flex:1;height:6px;background:var(--track);border-radius:5px;overflow:hidden}
 .fitRow .bar i{display:block;height:100%;background:var(--accent)}
 .fitRow .sc{width:30px;text-align:right;color:var(--muted);font-weight:600}
 .why{background:var(--t-accent);border-left:3px solid var(--accent);border-radius:6px;padding:9px 12px;font-size:12.5px}
@@ -159,7 +162,7 @@ table.data td .pm{font-size:11.5px;color:var(--muted);margin-top:3px}
 /* ---------- bid history ---------- */
 .subTabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:18px}
 .subTabs button{background:transparent;border:1px solid var(--line);border-radius:999px;padding:7px 15px;font-size:13px;font-weight:600;color:var(--muted);transition:color .2s,border-color .2s}
-.subTabs button:hover{color:var(--ink);border-color:rgba(255,255,255,.25)}
+.subTabs button:hover{color:var(--ink);border-color:var(--edge)}
 .subTabs button.active{background:var(--accent);color:var(--navy);border-color:var(--accent)}
 .subTabs button .lk{font-size:10.5px;font-weight:600;margin-left:6px;opacity:.8}
 .coverage{font-size:12px;color:var(--faint);margin:-6px 0 18px;max-width:860px}
@@ -182,7 +185,7 @@ table.data.sm th{padding:6px 8px}
 .modal .mHead h3{font-size:21px;font-weight:800;letter-spacing:-.02em}
 .modal .mHead .sub{color:var(--muted);font-size:12.5px;margin-top:3px}
 .modal .x{background:var(--t-n);border:1px solid var(--line);color:var(--ink);border-radius:8px;width:32px;height:32px;font-size:16px;flex-shrink:0}
-.modal .x:hover{background:rgba(255,255,255,.1)}
+.modal .x:hover{background:var(--track)}
 .mTabs{display:flex;gap:2px;background:var(--panel2);padding:0 20px;overflow-x:auto;border-bottom:1px solid var(--line)}
 .mTabs button{background:none;border:none;color:var(--muted);padding:11px 15px;font-size:13px;font-weight:600;border-bottom:2px solid transparent;white-space:nowrap}
 .mTabs button:hover{color:var(--ink)}
@@ -199,8 +202,9 @@ footer.ft{color:var(--faint);font-size:12px;padding:22px 28px;border-top:1px sol
 .spin{width:18px;height:18px;border:2.5px solid var(--line2);border-top-color:var(--accent);border-radius:50%;animation:sp .8s linear infinite}
 @keyframes sp{to{transform:rotate(360deg)}}
 @media(max-width:900px){
-  header.top{padding:10px 16px;gap:10px;height:auto;flex-wrap:wrap}
-  nav.tabs{order:3;width:100%;margin-left:0}
+  header.top{padding:0 16px;column-gap:10px}
+  nav.tabs{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;margin:0 -16px;padding:0 6px}
+  nav.tabs::-webkit-scrollbar{display:none}
   main{padding:22px 16px 60px}
   .kv{grid-template-columns:1fr}
   .grid.cols2{grid-template-columns:1fr}
@@ -234,7 +238,7 @@ footer.ft{color:var(--faint);font-size:12px;padding:22px 28px;border-top:1px sol
   </div>
 </div>
 
-<div id="appView" class="hidden">
+<div id="appView" class="hidden appShell">
   <header class="top">
     <a class="brand" href="/" aria-label="Africa MICE Dashboard home"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="0.5" y="0.5" width="23" height="23" rx="6" fill="#121A2B" stroke="rgba(255,255,255,0.12)"/><g fill="#19C3B1"><circle cx="7" cy="7" r="1.6"/><circle cx="12" cy="7" r="1.6" opacity=".4"/><circle cx="17" cy="7" r="1.6" opacity=".4"/><circle cx="7" cy="12" r="1.6" opacity=".4"/><circle cx="12" cy="12" r="1.6"/><circle cx="17" cy="12" r="1.6" opacity=".4"/><circle cx="12" cy="17" r="1.6" opacity=".4"/><circle cx="17" cy="17" r="1.6"/></g></svg><div><b id="brandTitle">Africa MICE Dashboard</b><span id="brandSub">Farirai Nandipa MICE Agency</span></div></a>
     <nav class="tabs" id="navTabs"></nav>
@@ -246,12 +250,12 @@ footer.ft{color:var(--faint);font-size:12px;padding:22px 28px;border-top:1px sol
       </div>
     </div>
   </header>
-  <div id="previewBar" class="previewBar hidden"></div>
-  <main id="mainEl"><div class="loadWrap"><div class="spin"></div>Loading pipeline…</div></main>
-  <footer class="ft" id="footEl">Prepared by Farirai Nandipa MICE Agency · Confidential · Each record shows its own confidence and the date it was last checked against its source</footer>
+  <div id="previewBar" class="previewBar light hidden"></div>
+  <main id="mainEl" class="light"><div class="loadWrap"><div class="spin"></div>Loading pipeline…</div></main>
+  <footer class="ft light" id="footEl">Prepared by Farirai Nandipa MICE Agency · Confidential · Each record shows its own confidence and the date it was last checked against its source</footer>
 </div>
 
-<div id="modalBack" class="hidden"><div class="modal" id="modalEl"></div></div>
+<div id="modalBack" class="hidden light"><div class="modal" id="modalEl"></div></div>
 
 <script>
 const SUPABASE_URL = "https://upzkvszgoqhoefkiwoep.supabase.co";

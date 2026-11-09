@@ -14,6 +14,7 @@
   --red:#f2958a; --amber:#e8bd68; --sky:#86b9e8; --violet:#b9a3e0; --lime:#a9d38f;
   --t-accent:rgba(25,195,177,.14); --t-red:rgba(242,149,138,.13); --t-amber:rgba(232,189,104,.13);
   --t-sky:rgba(134,185,232,.13); --t-violet:rgba(185,163,224,.13); --t-lime:rgba(169,211,143,.12); --t-n:rgba(255,255,255,.06);
+  --hover:rgba(255,255,255,.04); --track:rgba(255,255,255,.1); --edge:rgba(255,255,255,.25); --sector-ink:#a5ece4;
   --font:"Manrope","Inter",ui-sans-serif,system-ui,sans-serif;
   --radius:12px;
   /* Older names still used by inline styles in the portal scripts */
@@ -38,6 +39,27 @@ input:focus,select:focus,textarea:focus{outline:2px solid var(--accent);outline-
 option{background:var(--panel2);color:var(--ink)}
 input[type=checkbox],input[type=radio]{accent-color:var(--accent)}
 
+/* ---------- light surface ----------
+ * Same brand (navy ink, teal accent) on a pale ground, for long working
+ * sessions in the signed-in portal. Every token that other tokens are built
+ * from is restated here, because custom properties resolve where declared.
+ */
+.light{
+  color-scheme:light;
+  --panel:#ffffff; --panel2:#f4f7fb; --panel3:#ffffff;
+  --ink:#0b1220; --muted:#4c586b; --faint:#687387;
+  --accent2:#0b8478;
+  --line:rgba(11,18,32,.1); --line2:rgba(11,18,32,.17);
+  --red:#b3412e; --amber:#8f5f00; --sky:#2c66a0; --violet:#66489c; --lime:#3b7424;
+  --t-accent:rgba(25,195,177,.13); --t-red:rgba(179,65,46,.09); --t-amber:rgba(214,150,20,.14);
+  --t-sky:rgba(44,102,160,.09); --t-violet:rgba(102,72,156,.09); --t-lime:rgba(59,116,36,.1); --t-n:rgba(11,18,32,.05);
+  --hover:rgba(11,18,32,.035); --track:rgba(11,18,32,.09); --edge:rgba(11,18,32,.28); --sector-ink:#0a6c62;
+  --card:var(--panel); --green2:var(--accent2); --sand:var(--t-accent); --blue:var(--sky);
+  background:#eef2f7; color:var(--ink);
+}
+.light .btn.primary:hover,.light .btn:not(.ghost):not(.danger):hover{background:#2ad8c5}
+.light .card,.light .evCard,.light .destCard,.light .polCard,.light .kpis,.light table.status{box-shadow:0 1px 2px rgba(11,18,32,.05),0 4px 14px rgba(11,18,32,.04)}
+
 /* ---------- wordmark (same mark as the landing nav) ---------- */
 .wordmark{display:inline-flex;align-items:center;gap:10px;color:var(--ink);text-decoration:none}
 .wordmark:hover{color:var(--ink);text-decoration:none}
@@ -51,7 +73,7 @@ input[type=checkbox],input[type=radio]{accent-color:var(--accent)}
 .btn.primary{background:var(--accent);color:var(--navy)}
 .btn.primary:hover{background:var(--accent2)}
 .btn.ghost{background:transparent;border-color:var(--line);color:var(--ink)}
-.btn.ghost:hover{border-color:rgba(255,255,255,.25);background:rgba(255,255,255,.05);color:var(--ink)}
+.btn.ghost:hover{border-color:var(--edge);background:var(--hover);color:var(--ink)}
 .btn.danger{background:var(--t-red);color:var(--red)}
 .btn.danger:hover{background:rgba(242,149,138,.22)}
 .btn.sm{padding:5px 11px;font-size:12px;border-radius:7px;gap:5px}
