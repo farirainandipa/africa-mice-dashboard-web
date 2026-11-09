@@ -4,8 +4,10 @@
  */
 import {
   Building2,
+  CalendarPlus,
   CalendarRange,
   Compass,
+  Database,
   Handshake,
   Landmark,
   ListChecks,
@@ -21,4 +23,6 @@ export const ICONS: Record<string, LucideIcon> = {
   bureau: Landmark,
   venue: Building2,
   owner: Users,
+  submit: CalendarPlus,
+  partner: Database,
 };

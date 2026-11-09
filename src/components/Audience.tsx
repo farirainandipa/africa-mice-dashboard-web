@@ -1,11 +1,10 @@
 import { ArrowRight } from 'lucide-react';
-import { AUDIENCE, CONTACT_EMAIL } from '../content';
-import { buildMailto } from '../lib/mailto';
+import { AUDIENCE } from '../content';
 import { ICONS } from './icons';
 import Reveal from './Reveal';
 import SectionHeading from './SectionHeading';
 
-/** Who it's for: three audience columns; event owners get a "Submit an event" mailto. */
+/** Who it's for: three audience columns; event owners get a link to the "Submit an event" form. */
 export default function Audience() {
   return (
     <section id="audience" aria-labelledby="audience-heading" className="border-t border-line bg-panel/40 py-20 sm:py-28">
@@ -27,7 +26,7 @@ export default function Audience() {
                 <p className="mt-3 flex-1 text-[15px] leading-relaxed text-muted">{group.body}</p>
                 {cta && (
                   <a
-                    href={buildMailto(CONTACT_EMAIL, cta.subject, cta.body)}
+                    href={cta.href}
                     className="group mt-7 inline-flex items-center gap-2 self-start text-sm font-semibold text-accent transition-colors hover:text-accent-strong"
                   >
                     {cta.label}

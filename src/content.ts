@@ -97,12 +97,7 @@ export const AUDIENCE = {
       icon: 'owner',
       title: 'Event owners & associations',
       body: 'Looking for an African host? Submit your event and reach destinations ready to bid.',
-      cta: {
-        label: 'Submit an event',
-        subject: 'Event submission – Africa MICE Dashboard',
-        body:
-          'Event name:\nOrganisation:\nEvent type (conference / congress / incentive / corporate):\nPreferred dates or year:\nExpected attendance:\nBid deadline (if known):\nContact name and role:\n',
-      },
+      cta: { label: 'Submit an event', href: '/pipeline/submit.html' },
     },
   ],
 } as const;
@@ -117,17 +112,26 @@ export const HOW_IT_WORKS = {
   ],
 };
 
-export const TRUST = {
-  overline: 'Credibility',
-  heading: 'Built by business-events professionals working across Africa.',
-  /** Placeholder logos. Replace with real partner/client logos (one entry per logo). */
-  logos: ['Logo', 'Logo', 'Logo', 'Logo', 'Logo', 'Logo'],
-  testimonial: {
-    quote:
-      'Placeholder testimonial. A short line from a convention bureau or tourism board on how the dashboard changed the way they choose which events to pursue.',
-    name: 'Full Name',
-    role: 'Title, Organisation, Country',
-  },
+export const CONTRIBUTE = {
+  overline: 'Contribute',
+  heading: 'Share an event or destination data with us.',
+  intro: 'Two public forms feed the pipeline. Neither needs a login, and our team reviews every submission before it is used.',
+  cards: [
+    {
+      icon: 'submit',
+      title: 'Submit an event',
+      body:
+        'For corporates, associations, foundations and incentive houses whose conference is not tied to one country. Tell us about the event and when the host will be decided. There is no charge.',
+      cta: { label: 'Submit an event', href: '/pipeline/submit.html' },
+    },
+    {
+      icon: 'partner',
+      title: 'Destination partner data',
+      body:
+        'For convention bureaux and other in-country partners with first-hand data about a destination. Each data point needs a date and a source, and nothing goes live until it has been reviewed.',
+      cta: { label: 'Submit destination data', href: '/pipeline/partner' },
+    },
+  ],
 };
 
 export const ACCESS = {
