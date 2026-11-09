@@ -147,13 +147,11 @@ export default function AccessForm() {
             </Button>
 
             <p className="mt-4 text-xs leading-relaxed text-faint" aria-live="polite">
-              {sent ? (
+              {sent && (
                 <span className="inline-flex items-center gap-1.5 text-accent">
                   <CheckCircle2 size={14} aria-hidden="true" />
                   {ACCESS.successNote}
                 </span>
-              ) : (
-                <>Submitting opens an email to {CONTACT_EMAIL} with your details filled in.</>
               )}
             </p>
           </form>
