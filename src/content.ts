@@ -13,6 +13,9 @@
 /** Sign-in URL for the access-controlled Bid Pipeline (static page in public/pipeline/). */
 export const DASHBOARD_URL = '/pipeline';
 
+/** Public event submission form (no login), static page at public/pipeline/submit.html. */
+export const SUBMIT_URL = '/pipeline/submit.html';
+
 /** Address that receives access requests and event submissions. */
 export const CONTACT_EMAIL = 'nandie@farirainandipa.co.zw';
 
@@ -30,6 +33,7 @@ export const NAV_LINKS = [
   { label: "Who it's for", href: '#audience' },
   { label: 'How it works', href: '#how-it-works' },
   { label: 'Access', href: '#access' },
+  { label: 'Submit an event', href: SUBMIT_URL },
 ];
 
 export const CTA = {
@@ -97,7 +101,7 @@ export const AUDIENCE = {
       icon: 'owner',
       title: 'Event owners & associations',
       body: 'Looking for an African host? Submit your event and reach destinations ready to bid.',
-      cta: { label: 'Submit an event', href: '/pipeline/submit.html' },
+      cta: { label: 'Submit an event', href: SUBMIT_URL },
     },
   ],
 } as const;
@@ -122,7 +126,7 @@ export const CONTRIBUTE = {
       title: 'Submit an event',
       body:
         'For corporates, associations, foundations and incentive houses whose conference is not tied to one country. Tell us about the event and when the host will be decided. There is no charge.',
-      cta: { label: 'Submit an event', href: '/pipeline/submit.html' },
+      cta: { label: 'Submit an event', href: SUBMIT_URL },
     },
     {
       icon: 'partner',

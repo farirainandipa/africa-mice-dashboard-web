@@ -1,49 +1,61 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en-GB">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="robots" content="noindex, nofollow">
-<title>Submit a conference · Africa MICE Bid Pipeline · Farirai Nandipa</title>
+<title>Submit an event · Africa MICE Dashboard</title>
 <link rel="icon" type="image/svg+xml" href="/favicon.svg?v=3">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Serif:wght@600;700&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/pipeline/theme.css">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
 <style>
-:root{--ink:#1f2222;--muted:#5f6a6b;--bg:#eeeeee;--card:#ffffff;--line:#e8e8e8;--green:#46666a;--green2:#5a7f84;--red:#a33b2e}
-*{box-sizing:border-box;margin:0;padding:0}
-body{font-family:'IBM Plex Sans',system-ui,sans-serif;background:linear-gradient(160deg,#46666a 0%,#4f7176 55%,#5a7f84 100%);color:var(--ink);font-size:14px;line-height:1.5;min-height:100vh;padding:28px 16px}
-h1,h2{font-family:'IBM Plex Serif',Georgia,serif}
-.card{background:var(--card);border-radius:16px;padding:32px;max-width:860px;margin:0 auto;box-shadow:0 20px 60px rgba(0,0,0,.3)}
-.brandLogo{margin:0 auto 18px;text-align:center}
-.brandLogo img{display:block;width:min(240px,70%);margin:0 auto}
-.brandLogo .fnSub{display:block;font-size:10.5px;letter-spacing:.42em;text-indent:.42em;color:#3f3f3d;margin-top:2px}
-h1{font-size:22px;text-align:center;margin-bottom:4px}
-p.sub{text-align:center;color:var(--muted);margin-bottom:22px;font-size:13.5px;max-width:62ch;margin-left:auto;margin-right:auto}
-fieldset{border:1px solid var(--line);border-radius:12px;padding:16px 16px 4px;margin-bottom:18px}
-legend{font-family:'IBM Plex Serif',Georgia,serif;font-weight:700;padding:0 8px;font-size:15px}
-legend small{display:block;font-family:'IBM Plex Sans',sans-serif;font-weight:400;color:var(--muted);font-size:12px}
-.frow{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:0 14px}
-.field{margin-bottom:14px}
-.field label{display:block;font-size:12px;font-weight:600;color:var(--muted);margin-bottom:5px;text-transform:uppercase;letter-spacing:.04em}
-.field input,.field select,.field textarea{width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:9px;font-size:14px;font-family:inherit;background:#fbfbfa}
-.field textarea{min-height:72px;resize:vertical}
-.field input:focus,.field select:focus,.field textarea:focus{outline:2px solid var(--green2);border-color:transparent}
-.btn{border:none;border-radius:9px;padding:12px 18px;font-size:14px;font-weight:600;font-family:inherit;cursor:pointer;background:var(--green);color:#fff}
-.btn:disabled{opacity:.6;cursor:default}
-.note{font-size:12.5px;color:var(--muted);margin-top:10px}
-.err{background:#fbeae7;color:var(--red);padding:10px 12px;border-radius:9px;margin-top:12px;font-weight:600}
-.ok{background:#e3f0e9;color:var(--green);padding:16px;border-radius:9px;margin-top:12px}
-.ok b{display:block;margin-bottom:4px}
+.split{display:grid;gap:40px}
+@media(min-width:980px){.split{grid-template-columns:minmax(0,5fr) minmax(0,8fr);gap:64px}.aside{position:sticky;top:104px;align-self:start}}
+.aside .intro{margin-bottom:0}
+.steps{list-style:none;margin-top:32px;border-top:1px solid var(--line)}
+.steps li{display:grid;grid-template-columns:36px 1fr;gap:14px;padding:18px 0;border-bottom:1px solid var(--line)}
+.steps .num{width:32px;height:32px;border-radius:50%;border:1px solid rgba(25,195,177,.4);color:var(--accent);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700}
+.steps b{display:block;font-size:15px;font-weight:700;color:var(--ink)}
+.steps span{display:block;font-size:13.5px;color:var(--muted);margin-top:3px;line-height:1.6}
+.aside .contact{margin-top:22px;font-size:13px;color:var(--muted)}
+fieldset{border:0;margin:0 0 8px;padding:0}
+fieldset+fieldset{border-top:1px solid var(--line);padding-top:26px;margin-top:10px}
+legend{font-size:17px;font-weight:700;padding:0;margin-bottom:16px;color:var(--ink)}
+legend small{display:block;font-weight:500;color:var(--muted);font-size:13px;margin-top:3px;letter-spacing:0}
+fieldset.key{background:var(--t-accent);border:1px solid rgba(25,195,177,.25);border-radius:10px;padding:18px 18px 4px;margin-bottom:26px}
+fieldset.key legend{float:left;width:100%}
+fieldset.key legend+*{clear:both}
+.formEnd{border-top:1px solid var(--line);margin-top:10px;padding-top:24px;display:flex;flex-wrap:wrap;align-items:center;gap:14px 20px}
+.formEnd .btn{padding:12px 24px;font-size:15px}
+.note{font-size:12.5px;color:var(--muted);flex:1;min-width:220px}
 </style>
 </head>
 <body>
-<div class="card">
-  <div class="brandLogo"><img src="https://upzkvszgoqhoefkiwoep.supabase.co/functions/v1/dashboard/logo" alt="Farirai Nandipa"><span class="fnSub">M.I.C.E AGENCY</span></div>
-  <h1>Submit a conference that could be hosted in Africa</h1>
-  <p class="sub">For corporates, associations, foundations and incentive houses whose event is not tied to one country. There is no charge. Our team confirms the three questions below with you before any convention bureau sees the record.</p>
+<header class="siteBar"><div class="in">
+  <a class="wordmark" href="/" aria-label="Africa MICE Dashboard home"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="0.5" y="0.5" width="23" height="23" rx="6" fill="#121A2B" stroke="rgba(255,255,255,0.12)"/><g fill="#19C3B1"><circle cx="7" cy="7" r="1.6"/><circle cx="12" cy="7" r="1.6" opacity=".4"/><circle cx="17" cy="7" r="1.6" opacity=".4"/><circle cx="7" cy="12" r="1.6" opacity=".4"/><circle cx="12" cy="12" r="1.6"/><circle cx="17" cy="12" r="1.6" opacity=".4"/><circle cx="12" cy="17" r="1.6" opacity=".4"/><circle cx="17" cy="17" r="1.6"/></g></svg><b>Africa MICE Dashboard</b></a>
+  <div class="acts"><a class="txt" href="/">Home</a><a class="btn ghost" href="/pipeline">Sign in</a></div>
+</div></header>
+<main class="page"><div class="wrap">
+<div class="split">
+  <aside class="aside">
+    <div class="intro">
+      <p class="overline">Submit an event</p>
+      <h1>Looking for an African host for your conference?</h1>
+      <p class="sub">For corporates, associations, foundations and incentive houses whose event is not tied to one country. There is no charge and no account to create.</p>
+    </div>
+    <ol class="steps">
+      <li><span class="num">1</span><div><b>Tell us about the event</b><span>The three questions on host choice matter most. They decide whether a bureau can act.</span></div></li>
+      <li><span class="num">2</span><div><b>We confirm the details with you</b><span>Our team replies within five working days to check the host decision before any bureau sees the record.</span></div></li>
+      <li><span class="num">3</span><div><b>Matching destinations prepare to bid</b><span>Your details go only to the convention bureaux that fit your event, and only after we have spoken to you.</span></div></li>
+    </ol>
+    <p class="contact">Prefer email? Write to <a href="mailto:nandie@farirainandipa.co.zw">nandie@farirainandipa.co.zw</a>.</p>
+  </aside>
+  <div class="panel">
   <form id="f" novalidate>
-    <fieldset><legend>The three questions we confirm with you <small>These decide whether a bureau can act on your event.</small></legend>
+    <fieldset class="key"><legend>The three questions we confirm with you <small>These decide whether a bureau can act on your event.</small></legend>
       <div class="frow">
         <div class="field"><label for="host_open">Is the host destination open?</label><select id="host_open" required><option value="">Choose</option><option>Yes, any African country</option><option>Yes, within a region of Africa</option><option>No, already decided</option></select></div>
         <div class="field"><label for="decision_when">When will the host be decided?</label><input id="decision_when" placeholder="e.g. March 2027, or at the 2027 AGM" required></div>
@@ -73,11 +85,16 @@ legend small{display:block;font-family:'IBM Plex Sans',sans-serif;font-weight:40
       </div>
       <div class="field"><label for="notes">Anything else</label><textarea id="notes"></textarea></div>
     </fieldset>
-    <button class="btn" id="go" type="submit">Submit for review</button>
-    <p class="note">We reply within five working days. Your details are shared only with the convention bureaux that match your event, and only after we have spoken to you.</p>
+    <div class="formEnd">
+      <button class="btn" id="go" type="submit">Submit for review</button>
+      <p class="note">We reply within five working days. Your details are shared only with the convention bureaux that match your event, and only after we have spoken to you.</p>
+    </div>
     <div id="out"></div>
   </form>
+  </div>
 </div>
+</div></main>
+<footer class="siteFoot"><div class="in"><span>© 2026 Africa MICE Dashboard</span><span>A product of Farirai Nandipa MICE Consultancy</span></div></footer>
 <script>
 const SUPABASE_URL = "https://upzkvszgoqhoefkiwoep.supabase.co";
 const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVwemt2c3pnb3Fob2Vma2l3b2VwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIxMzg1MjQsImV4cCI6MjA5NzcxNDUyNH0.4RB-5FCWW7JXvGBKs0PlzkYcUeG5kTVxTVdoXUNp8ao";

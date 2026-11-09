@@ -10,8 +10,9 @@ Netlify.
 
 1. **Landing page** (`/`): Vite + React 19 + TypeScript + Tailwind CSS v4
    single-page marketing site. No backend. The access form opens a prefilled
-   `mailto:`, and the "Submit an event" and destination partner links go to
-   the public pipeline forms.
+   `mailto:`. "Submit an event" (nav, footer, the event-owner card and the
+   Contribute section) and the destination partner link go to the public
+   pipeline forms.
 2. **Africa MICE Bid Pipeline** (`/pipeline`, `/pipeline/submit.html`): a
    standalone static app in `public/pipeline/`, outside the React build. It
    talks directly to Supabase with `@supabase/supabase-js` loaded from a CDN.
@@ -46,6 +47,7 @@ public/
   pipeline/submit.html  public event submission form
   pipeline/partner.html public destination-partner submission form
   pipeline/history.html public bid-history teaser
+  pipeline/theme.css    shared tokens and primitives for all pipeline pages
 netlify.toml            build, /pipeline rewrite, security headers
 supabase/README.md      where the database schema and migrations live
 ```
@@ -53,7 +55,10 @@ supabase/README.md      where the database schema and migrations live
 - Landing copy lives only in `src/content.ts`; components read from it.
   `DASHBOARD_URL` is `/pipeline` (the "Sign in" buttons).
 - The pipeline pages are plain HTML/JS. Edit them directly; there is no build
-  step for them. Keep links relative (`submit.html`, `location.origin`) so the
+  step for them. They share `pipeline/theme.css`, which mirrors the landing
+  tokens in `src/index.css` (navy, one teal accent, Manrope). Change colours in
+  both places together. Link it as `/pipeline/theme.css`, since the rewritten
+  paths have no trailing slash. Keep links relative (`submit.html`, `location.origin`) so the
   pages work on any domain.
 
 ## Database (Supabase)
@@ -100,7 +105,7 @@ supabase/README.md      where the database schema and migrations live
 ## Deployment (Netlify)
 
 - `netlify.toml`: build `npm run build`, publish `dist`, Node 22.
-- `/pipeline`, `/pipeline/history` and `/pipeline/partner` are rewritten to
+- `/pipeline`, `/pipeline/history`, `/pipeline/partner` and `/pipeline/submit` are rewritten to
   their `.html` files **before** the SPA catch-all. Keep that order.
 - This repo is the only source of the pipeline pages. farirainandipa-web no
   longer carries a copy (removed in its PR #18), so edit them here.

@@ -1,0 +1,119 @@
+/*
+ * Shared design tokens and primitives for the pipeline pages.
+ * They mirror the landing page (src/index.css): navy ground, one teal accent,
+ * Manrope. Link it with an absolute path (/pipeline/theme.css) because
+ * /pipeline, /pipeline/history, /pipeline/partner and /pipeline/submit are
+ * served through rewrites without a trailing slash.
+ */
+:root{
+  color-scheme:dark;
+  --navy:#0b1220; --panel:#121a2b; --panel2:#172034; --panel3:#1d2840;
+  --ink:#eef1f6; --muted:#9aa4b5; --faint:#6b7588;
+  --accent:#19c3b1; --accent2:#2ad8c5;
+  --line:rgba(255,255,255,.09); --line2:rgba(255,255,255,.16);
+  --red:#f2958a; --amber:#e8bd68; --sky:#86b9e8; --violet:#b9a3e0; --lime:#a9d38f;
+  --t-accent:rgba(25,195,177,.14); --t-red:rgba(242,149,138,.13); --t-amber:rgba(232,189,104,.13);
+  --t-sky:rgba(134,185,232,.13); --t-violet:rgba(185,163,224,.13); --t-lime:rgba(169,211,143,.12); --t-n:rgba(255,255,255,.06);
+  --hover:rgba(255,255,255,.04); --track:rgba(255,255,255,.1); --edge:rgba(255,255,255,.25); --sector-ink:#a5ece4;
+  --font:"Manrope","Inter",ui-sans-serif,system-ui,sans-serif;
+  --radius:12px;
+  /* Older names still used by inline styles in the portal scripts */
+  --bg:var(--navy); --card:var(--panel); --green:var(--accent); --green2:var(--accent2);
+  --gold:var(--accent); --sand:var(--t-accent); --blue:var(--sky);
+  --shadow:none;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{-webkit-text-size-adjust:100%}
+body{font-family:var(--font);background:var(--navy);color:var(--ink);font-size:14px;line-height:1.55;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
+h1,h2,h3,h4,h5,legend{font-family:var(--font);letter-spacing:-.01em}
+h1,h2,h3{font-weight:700}
+a{color:var(--accent);text-decoration:none}
+a:hover{color:var(--accent2);text-decoration:underline}
+button{font-family:inherit;cursor:pointer}
+::selection{background:rgba(25,195,177,.3)}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.92em;background:var(--t-n);padding:1px 6px;border-radius:5px}
+input,select,textarea{font-family:inherit;color:var(--ink);background:var(--panel2);border:1px solid var(--line);border-radius:8px}
+input::placeholder,textarea::placeholder{color:var(--faint)}
+input:focus,select:focus,textarea:focus{outline:2px solid var(--accent);outline-offset:0;border-color:transparent}
+option{background:var(--panel2);color:var(--ink)}
+input[type=checkbox],input[type=radio]{accent-color:var(--accent)}
+
+/* ---------- light surface ----------
+ * Same brand (navy ink, teal accent) on a pale ground, for long working
+ * sessions in the signed-in portal. Every token that other tokens are built
+ * from is restated here, because custom properties resolve where declared.
+ */
+.light{
+  color-scheme:light;
+  --panel:#ffffff; --panel2:#f4f7fb; --panel3:#ffffff;
+  --ink:#0b1220; --muted:#4c586b; --faint:#687387;
+  --accent2:#0b8478;
+  --line:rgba(11,18,32,.1); --line2:rgba(11,18,32,.17);
+  --red:#b3412e; --amber:#8f5f00; --sky:#2c66a0; --violet:#66489c; --lime:#3b7424;
+  --t-accent:rgba(25,195,177,.13); --t-red:rgba(179,65,46,.09); --t-amber:rgba(214,150,20,.14);
+  --t-sky:rgba(44,102,160,.09); --t-violet:rgba(102,72,156,.09); --t-lime:rgba(59,116,36,.1); --t-n:rgba(11,18,32,.05);
+  --hover:rgba(11,18,32,.035); --track:rgba(11,18,32,.09); --edge:rgba(11,18,32,.28); --sector-ink:#0a6c62;
+  --card:var(--panel); --green2:var(--accent2); --sand:var(--t-accent); --blue:var(--sky);
+  background:#eef2f7; color:var(--ink);
+}
+.light .btn.primary:hover,.light .btn:not(.ghost):not(.danger):hover{background:#2ad8c5}
+.light .card,.light .evCard,.light .destCard,.light .polCard,.light .kpis,.light table.status{box-shadow:0 1px 2px rgba(11,18,32,.05),0 4px 14px rgba(11,18,32,.04)}
+
+/* ---------- wordmark (same mark as the landing nav) ---------- */
+.wordmark{display:inline-flex;align-items:center;gap:10px;color:var(--ink);text-decoration:none}
+.wordmark:hover{color:var(--ink);text-decoration:none}
+.wordmark svg{width:28px;height:28px;flex-shrink:0}
+.wordmark b{font-size:15px;font-weight:700;letter-spacing:-.01em}
+
+/* ---------- buttons ---------- */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border:1px solid transparent;border-radius:8px;padding:10px 20px;font-size:14px;font-weight:600;font-family:inherit;line-height:1.4;white-space:nowrap;cursor:pointer;text-decoration:none;background:var(--accent);color:var(--navy);transition:background-color .2s,border-color .2s,color .2s}
+.btn:hover{background:var(--accent2);color:var(--navy);text-decoration:none}
+.btn:disabled{opacity:.55;cursor:default}
+.btn.primary{background:var(--accent);color:var(--navy)}
+.btn.primary:hover{background:var(--accent2)}
+.btn.ghost{background:transparent;border-color:var(--line);color:var(--ink)}
+.btn.ghost:hover{border-color:var(--edge);background:var(--hover);color:var(--ink)}
+.btn.danger{background:var(--t-red);color:var(--red)}
+.btn.danger:hover{background:rgba(242,149,138,.22)}
+.btn.sm{padding:5px 11px;font-size:12px;border-radius:7px;gap:5px}
+
+/* ---------- form fields ---------- */
+.field{margin-bottom:16px}
+.field label{display:block;font-size:11px;font-weight:600;color:var(--muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:.12em}
+.field input,.field select,.field textarea{width:100%;padding:11px 13px;font-size:14px}
+.field textarea{min-height:80px;resize:vertical}
+.field .hint{font-size:12px;color:var(--faint);margin-top:5px}
+.frow{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:0 16px}
+
+/* ---------- messages ---------- */
+.err:not(.chip){background:var(--t-red);color:var(--red);border:1px solid rgba(242,149,138,.25);padding:11px 14px;border-radius:8px;margin-top:12px;font-weight:600}
+.warn:not(.chip){background:var(--t-amber);color:var(--amber);border:1px solid rgba(232,189,104,.25);padding:11px 14px;border-radius:8px;margin-top:12px}
+.ok:not(.chip){background:var(--t-accent);color:var(--ink);border:1px solid rgba(25,195,177,.3);padding:16px;border-radius:8px;margin-top:12px}
+.ok:not(.chip) b{display:block;margin-bottom:4px;color:var(--accent2)}
+
+/* ---------- public page shell (submit, partner, history) ---------- */
+.siteBar{position:sticky;top:0;z-index:50;border-bottom:1px solid var(--line);background:rgba(11,18,32,.85);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px)}
+.siteBar .in{max-width:1152px;margin:0 auto;height:64px;padding:0 32px;display:flex;align-items:center;justify-content:space-between;gap:16px}
+.siteBar .acts{display:flex;gap:10px;align-items:center}
+.siteBar .acts a.txt{font-size:14px;font-weight:500;color:var(--muted)}
+.siteBar .acts a.txt:hover{color:var(--ink);text-decoration:none}
+.page{position:relative;isolation:isolate;overflow:hidden}
+.page::before{content:"";position:absolute;z-index:-1;right:-14rem;top:-6rem;width:36rem;height:36rem;border-radius:50%;background:rgba(25,195,177,.08);filter:blur(64px);pointer-events:none}
+.wrap{max-width:1152px;margin:0 auto;padding:64px 32px 88px}
+.intro{max-width:720px;margin-bottom:36px}
+.overline{font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.22em;color:var(--accent)}
+.intro h1{margin-top:14px;font-size:clamp(28px,4vw,40px);line-height:1.12;font-weight:800;letter-spacing:-.02em}
+.intro p.sub{margin-top:14px;font-size:16.5px;line-height:1.65;color:var(--muted)}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:32px}
+.siteFoot{border-top:1px solid var(--line)}
+.siteFoot .in{max-width:1152px;margin:0 auto;padding:24px 32px;display:flex;flex-wrap:wrap;gap:8px 24px;justify-content:space-between;font-size:12px;color:var(--faint)}
+.siteFoot a{color:var(--faint)}
+.siteFoot a:hover{color:var(--ink)}
+@media(max-width:640px){
+  .siteBar .in{padding:0 20px}
+  .siteBar .acts a.txt{display:none}
+  .wrap{padding:40px 20px 64px}
+  .panel{padding:22px 18px}
+  .siteFoot .in{padding:22px 20px}
+}
