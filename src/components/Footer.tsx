@@ -22,7 +22,7 @@ export default function Footer() {
                 </li>
               ))}
               <li>
-                <a href={DASHBOARD_URL} target="_blank" rel="noopener noreferrer" className="text-accent transition-colors hover:text-accent-strong">
+                <a href={DASHBOARD_URL} className="text-accent transition-colors hover:text-accent-strong">
                   {CTA.signIn}
                 </a>
               </li>

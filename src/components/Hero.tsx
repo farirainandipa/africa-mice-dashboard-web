@@ -41,8 +41,6 @@ export default function Hero() {
             <ButtonLink
               variant="ghost"
               href={DASHBOARD_URL}
-              target="_blank"
-              rel="noopener noreferrer"
               className="px-6 py-3 text-[15px]"
             >
               {CTA.signIn}

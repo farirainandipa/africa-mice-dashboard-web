@@ -41,7 +41,7 @@ export default function Nav() {
         </ul>
 
         <div className="hidden items-center gap-3 lg:flex">
-          <ButtonLink variant="ghost" href={DASHBOARD_URL} target="_blank" rel="noopener noreferrer">
+          <ButtonLink variant="ghost" href={DASHBOARD_URL}>
             {CTA.signIn}
           </ButtonLink>
           <ButtonLink href="#access">{CTA.requestAccess}</ButtonLink>
@@ -72,7 +72,7 @@ export default function Nav() {
             ))}
           </ul>
           <div className="mt-5 grid grid-cols-2 gap-3">
-            <ButtonLink variant="ghost" href={DASHBOARD_URL} target="_blank" rel="noopener noreferrer">
+            <ButtonLink variant="ghost" href={DASHBOARD_URL}>
               {CTA.signIn}
             </ButtonLink>
             <ButtonLink href="#access" onClick={close}>

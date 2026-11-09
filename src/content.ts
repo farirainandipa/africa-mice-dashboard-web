@@ -10,11 +10,11 @@
  * ---------------------------------------------------------------------------
  */
 
-/** External sign-in URL for the access-controlled dashboard. Replace before launch. */
-export const DASHBOARD_URL = 'https://app.example.com';
+/** Sign-in URL for the access-controlled Bid Pipeline (static page in public/pipeline/). */
+export const DASHBOARD_URL = '/pipeline';
 
-/** Address that receives access requests and event submissions. Replace before launch. */
-export const CONTACT_EMAIL = 'hello@example.com';
+/** Address that receives access requests and event submissions. */
+export const CONTACT_EMAIL = 'nandie@farirainandipa.co.zw';
 
 export const BRAND = {
   name: 'Africa MICE Dashboard',

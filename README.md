@@ -12,7 +12,7 @@ npm run build    # production build into dist/
 
 All copy, stats, URLs and the contact email live in **`src/content.ts`**. Components only read from it.
 
-- `DASHBOARD_URL` — external "Sign in" link.
+- `DASHBOARD_URL` — "Sign in" link, `/pipeline` (the Bid Pipeline in `public/pipeline/`).
 - `CONTACT_EMAIL` — receives access requests (form) and event submissions.
 - `HERO.stats` — placeholder figures for the stat chips.
 - `TRUST.logos` / `TRUST.testimonial` — placeholder logos and testimonial.
@@ -33,4 +33,8 @@ src/
     Button, Wordmark, SectionHeading, icons
 ```
 
-There is no backend: the access form validates required fields, then opens a prefilled email to `CONTACT_EMAIL`.
+The landing page has no backend: the access form validates required fields, then opens a prefilled email to `CONTACT_EMAIL`.
+
+## Bid Pipeline
+
+`public/pipeline/` holds the Africa MICE Bid Pipeline (sign-in required) and the public event submission form. They are static pages that talk to Supabase directly; see CLAUDE.md for the database and access model. Deployed on Netlify via `netlify.toml`.
