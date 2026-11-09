@@ -43,7 +43,7 @@ export const CTA = {
 
 export const HERO = {
   overline: 'Bid intelligence for African destinations',
-  headline: 'Know which international events Africa can win, before the bid closes.',
+  headline: 'Know which MICE events African destinations can win.',
   subhead:
     'A curated, continuously updated pipeline of conferences, congresses, incentives and corporate events open to African hosts, with the context destinations need to decide, prioritise and bid.',
   /** Placeholder figures. Edit freely. */
@@ -101,10 +101,7 @@ export const AUDIENCE = {
       icon: 'owner',
       title: 'Event owners & associations',
       body: 'Looking for an African host? Submit your event and reach destinations ready to bid.',
-      cta: {
-        label: 'Submit an event',
-        href: SUBMIT_URL,
-      },
+      cta: { label: 'Submit an event', href: SUBMIT_URL },
     },
   ],
 } as const;
@@ -119,17 +116,26 @@ export const HOW_IT_WORKS = {
   ],
 };
 
-export const TRUST = {
-  overline: 'Credibility',
-  heading: 'Built by business-events professionals working across Africa.',
-  /** Placeholder logos. Replace with real partner/client logos (one entry per logo). */
-  logos: ['Logo', 'Logo', 'Logo', 'Logo', 'Logo', 'Logo'],
-  testimonial: {
-    quote:
-      'Placeholder testimonial. A short line from a convention bureau or tourism board on how the dashboard changed the way they choose which events to pursue.',
-    name: 'Full Name',
-    role: 'Title, Organisation, Country',
-  },
+export const CONTRIBUTE = {
+  overline: 'Contribute',
+  heading: 'Share an event or destination data with us.',
+  intro: 'Two public forms feed the pipeline. Neither needs a login, and our team reviews every submission before it is used.',
+  cards: [
+    {
+      icon: 'submit',
+      title: 'Submit an event',
+      body:
+        'For corporates, associations, foundations and incentive houses whose conference is not tied to one country. Tell us about the event and when the host will be decided. There is no charge.',
+      cta: { label: 'Submit an event', href: SUBMIT_URL },
+    },
+    {
+      icon: 'partner',
+      title: 'Destination partner data',
+      body:
+        'For convention bureaux and other in-country partners with first-hand data about a destination. Each data point needs a date and a source, and nothing goes live until it has been reviewed.',
+      cta: { label: 'Submit destination data', href: '/pipeline/partner' },
+    },
+  ],
 };
 
 export const ACCESS = {

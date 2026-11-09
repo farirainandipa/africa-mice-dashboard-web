@@ -4,7 +4,7 @@ import { ICONS } from './icons';
 import Reveal from './Reveal';
 import SectionHeading from './SectionHeading';
 
-/** Who it's for: three audience columns; event owners get a link to the public submission form. */
+/** Who it's for: three audience columns; event owners get a link to the "Submit an event" form. */
 export default function Audience() {
   return (
     <section id="audience" aria-labelledby="audience-heading" className="border-t border-line bg-panel/40 py-20 sm:py-28">
