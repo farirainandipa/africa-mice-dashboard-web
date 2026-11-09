@@ -39,7 +39,7 @@ export const CTA = {
 
 export const HERO = {
   overline: 'Bid intelligence for African destinations',
-  headline: 'Know which international events Africa can win, before the bid closes.',
+  headline: 'Know which MICE events African destinations can win.',
   subhead:
     'A curated, continuously updated pipeline of conferences, congresses, incentives and corporate events open to African hosts, with the context destinations need to decide, prioritise and bid.',
   /** Placeholder figures. Edit freely. */
