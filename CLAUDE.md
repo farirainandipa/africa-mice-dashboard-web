@@ -88,8 +88,11 @@ supabase/migrations/    pipeline migrations from the move onwards
   licence `tier`, one of free, explorer, bureau or bureau_plus). Bureaux never read
   pipeline tables directly; they get their own country only, through the
   `bureau_portal()` / `bid_history()` RPCs and the `dp_bureau_own` /
-  `dpf_bureau_own` policies. Accounts are created by the `bureau-admin` edge
-  function (admins only).
+  `dpf_bureau_own` policies. They edit their own country's descriptive and
+  visa fields through `bureau_country()` / `bureau_update_country(patch)`
+  (migration `20261110221713_bureau_country_edit`), which reject any other
+  column; admins edit `countries` directly. Accounts are created by the
+  `bureau-admin` edge function (admins only).
 - **Anonymous visitors** can only read `econ_sectors`, insert into
   `submissions` (status forced to `review`), insert into `contact_submissions`,
   and call the public-form RPCs `bid_wins_teaser`, `partner_form_options`,
