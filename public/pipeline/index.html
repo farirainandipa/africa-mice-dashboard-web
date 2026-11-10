@@ -412,7 +412,7 @@ const ADMIN_TABS = [["overview","Overview"],["pipeline","Bid Pipeline"],["events
 function bureauTabs(){
   const t = curTier();
   if(!t || t==="free") return [["b_history","Bid history"]];
-  return [["b_home","Overview"],["b_bids","Bids for "+(PORTAL?.country?.name||"you")],["b_events","Strategic events"],["b_history","Bid history"],["b_policy","Policy & sectors"],["b_visa","Visa & access"]];
+  return [["b_home","Overview"],["b_bids","Bids for "+(PORTAL?.country?.name||"you")],["b_events","Strategic events"],["b_history","Bid history"],["b_policy","Policy & sectors"],["b_visa","Country profile"]];
 }
 function buildNav(){
   const tabs = MODE==="admin" ? ADMIN_TABS : bureauTabs();
@@ -973,7 +973,8 @@ window.openDest = (id, tab) => {
   const vn = all.filter(v=>!["hotel_conference","resort"].includes(v.category));
   const ht = all.filter(v=>["hotel_conference","resort"].includes(v.category));
   const ap = DB.airports.filter(a=>a.country_id===id);
-  const pe = DB.past.filter(p=>p.country_id===id);
+  const peAll = DB.past.filter(p=>p.country_id===id);
+  const pe = peAll.slice(0,10); /* DB.past is ordered newest year first */
   const tabs = ["Profile","Framework","Visa","Policy & sectors","Venues","Hotels","Air access","Past events"];
   const prof = DB.profById[id];
   const body = t => {
@@ -988,13 +989,14 @@ window.openDest = (id, tab) => {
         <dt>Convention bureau</dt><dd>${esc(c.bureau_name||"None identified")}${c.bureau_url?` · <a href="${esc(c.bureau_url)}" target="_blank" rel="noopener">site ↗</a>`:""}</dd>
         <dt>AfCFTA status</dt><dd>${afLabelShort(c)||"–"}</dd>
         <dt>Data confidence</dt><dd>${esc(c.data_confidence||"estimate")}</dd>
-      </dl>`;
+      </dl>
+      <div style="margin-top:16px"><button class="btn sm ghost" onclick="countryForm(${id})">Edit country data</button></div><div id="countryEdit"></div>`;
     if(t==="Visa") return visaBlock(c) + `<div style="margin-top:16px"><button class="btn sm ghost" onclick="visaForm(${id})">Edit visa profile</button></div><div id="visaEdit"></div>`;
     if(t==="Policy & sectors") return countryPolicyPanel(id);
     if(t==="Venues") return vn.length? `<div class="tblWrap"><table class="data"><thead><tr><th>Venue</th><th>City</th><th>Type</th><th>Plenary</th><th>Expo m²</th><th>Rooms</th></tr></thead><tbody>${vn.map(v=>`<tr><td><b>${esc(v.name)}</b>${v.notes?`<br><span style="font-size:11.5px;color:var(--muted)">${esc(v.notes)}</span>`:""}</td><td>${esc(v.city||"")}</td><td>${esc(v.category.replace("_"," "))}</td><td>${v.plenary_capacity?v.plenary_capacity.toLocaleString():"–"}</td><td>${v.exhibition_sqm?v.exhibition_sqm.toLocaleString():"–"}</td><td>${v.rooms||"–"}</td></tr>`).join("")}</tbody></table></div>` : `<p class="empty">Venue inventory not yet researched for this destination.</p>`;
     if(t==="Hotels") return ht.length? `<div class="tblWrap"><table class="data"><thead><tr><th>Hotel</th><th>City</th><th>Type</th><th>Rooms</th><th>Conference capacity</th></tr></thead><tbody>${ht.map(v=>`<tr><td><b>${esc(v.name)}</b>${v.notes?`<br><span style="font-size:11.5px;color:var(--muted)">${esc(v.notes)}</span>`:""}</td><td>${esc(v.city||"")}</td><td>${v.category==="resort"?"resort":"conference hotel"}</td><td>${v.rooms||"–"}</td><td>${v.plenary_capacity?v.plenary_capacity.toLocaleString():"–"}</td></tr>`).join("")}</tbody></table></div>` : `<p class="empty">Hotel inventory not yet researched for this destination.</p>`;
     if(t==="Air access") return ap.length? `<div class="tblWrap"><table class="data"><thead><tr><th>Airport</th><th>City</th><th>IATA</th><th>Connectivity</th></tr></thead><tbody>${ap.map(a=>`<tr><td><b>${esc(a.name)}</b></td><td>${esc(a.city||"")}</td><td>${esc(a.iata||"–")}</td><td>${esc(a.connectivity||"")}</td></tr>`).join("")}</tbody></table></div>` : `<p class="empty">Airport inventory not yet researched for this destination.</p>`;
-    return pe.length? `<div class="tblWrap"><table class="data"><thead><tr><th>Event</th><th>City</th><th>Year</th><th>Sector</th><th>Attendance</th></tr></thead><tbody>${pe.map(p=>`<tr><td><b>${esc(p.event_name)}</b>${p.notes?`<br><span style="font-size:11.5px;color:var(--muted)">${esc(p.notes)}</span>`:""}</td><td>${esc(p.city||"")}</td><td style="white-space:nowrap">${p.year||"recurring"}${(!p.year||p.year>=new Date().getFullYear()-5)?' <span class="chip open" style="font-size:10px">recent</span>':""}</td><td>${esc(p.sector||"")}</td><td>${p.attendance?p.attendance.toLocaleString():"–"}</td></tr>`).join("")}</tbody></table></div>` : `<p class="empty">No hosted-event records yet for this destination.</p>`;
+    return pe.length? `<div class="tblWrap"><table class="data"><thead><tr><th>Event</th><th>City</th><th>Year</th><th>Sector</th><th>Attendance</th></tr></thead><tbody>${pe.map(p=>`<tr><td><b>${esc(p.event_name)}</b>${p.notes?`<br><span style="font-size:11.5px;color:var(--muted)">${esc(p.notes)}</span>`:""}</td><td>${esc(p.city||"")}</td><td style="white-space:nowrap">${p.year||"recurring"}${(!p.year||p.year>=new Date().getFullYear()-5)?' <span class="chip open" style="font-size:10px">recent</span>':""}</td><td>${esc(p.sector||"")}</td><td>${p.attendance?p.attendance.toLocaleString():"–"}</td></tr>`).join("")}</tbody></table></div>${peAll.length>pe.length?`<p style="font-size:12.5px;color:var(--muted);margin-top:8px">Showing the ${pe.length} most recent of ${peAll.length} hosted events.</p>`:""}` : `<p class="empty">No hosted-event records yet for this destination.</p>`;
   };
   showTabbedModal(`<div><h3>${flag(c.iso2)} ${esc(c.name)}</h3><div class="sub">${c.region} Africa · ${afLabelShort(c)||c.type}</div></div>`, tabs, body, tab);
 };
@@ -1040,6 +1042,56 @@ window.saveVisa = async id => {
     visa_portal_url:nz(val("v_visa_portal_url")), visa_verified_on:nz(val("v_visa_verified_on"))};
   const r = await sb.from("countries").update(rec).eq("id",id); if(r.error) return toast(r.error.message);
   await reload(true); toast("Visa profile saved."); openDest(id,"Visa");
+};
+
+/* Country data edit form, shared by admins (Destinations > Profile) and bureaux
+   (their Country profile tab). Bureaux save through bureau_update_country(),
+   which only accepts the descriptive and visa fields for their own country. */
+const COUNTRY_TEXT = [["mice_summary","MICE positioning"],["transport_summary","Transport network"],["security_summary","Security context"]];
+function countryFormHtml(c, o){
+  const tri = (k,l) => `<div class="field"><label>${l}</label><select id="ce_${k}"><option value="" ${c[k]==null?"selected":""}>Unknown</option><option value="true" ${c[k]===true?"selected":""}>Yes</option><option value="false" ${c[k]===false?"selected":""}>No</option></select></div>`;
+  const ta = (k,l) => `<div class="field"><label>${l}</label><textarea id="ce_${k}">${esc(c[k]||"")}</textarea></div>`;
+  return `<div class="alignBox">
+    ${COUNTRY_TEXT.map(([k,l])=>ta(k,l)).join("")}
+    <div class="frow"><div class="field"><label>Convention bureau</label><input id="ce_bureau_name" value="${esc(c.bureau_name||"")}"></div>
+    <div class="field"><label>Bureau website</label><input id="ce_bureau_url" placeholder="https://" value="${esc(c.bureau_url||"")}"></div></div>
+    ${o.admin?`<div class="frow">
+      <div class="field"><label>AfCFTA status</label><select id="ce_afcfta_status"><option value="">Not set</option>${Object.entries(AF_LABEL).map(([k,[l]])=>`<option value="${k}" ${c.afcfta_status===k?"selected":""}>${l}</option>`).join("")}</select></div>
+      <div class="field"><label>Data confidence</label><select id="ce_data_confidence">${["verified","estimate","unverified"].map(k=>`<option ${(c.data_confidence||"estimate")===k?"selected":""}>${k}</option>`).join("")}</select></div>
+      <div class="field"><label>Priority destination</label><select id="ce_priority"><option value="true" ${c.priority?"selected":""}>Yes</option><option value="false" ${c.priority?"":"selected"}>No</option></select></div>
+    </div>`:""}
+    ${o.visa?`<h5>Visa and delegate access</h5>
+    <div class="frow">
+      <div class="field"><label>African delegates</label><select id="ce_visa_africa"><option value="">Not classified</option>${Object.entries(VISA_AF).map(([k,l])=>`<option value="${k}" ${c.visa_africa===k?"selected":""}>${l}</option>`).join("")}</select></div>
+      ${tri("evisa","eVisa / eTA")}${tri("visa_on_arrival","Visa on arrival")}${tri("univisa","KAZA UniVisa")}
+    </div>
+    ${ta("visa_regime","Regime summary")}${ta("visa_notes","Notes")}${ta("visa_events_note","What it means for event bids")}
+    <div class="frow"><div class="field"><label>Official visa portal</label><input id="ce_visa_portal_url" placeholder="https://" value="${esc(c.visa_portal_url||"")}"></div>
+    <div class="field"><label>Last verified</label><input type="date" id="ce_visa_verified_on" value="${esc(c.visa_verified_on||"")}"></div></div>`:""}
+    <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn sm primary" onclick="${o.onSave}">Save country data</button><button class="btn sm ghost" onclick="${o.onCancel}">Cancel</button></div></div>`;
+}
+function countryFormRec(o){
+  const b = v => v===""?null:v==="true";
+  const rec = {};
+  COUNTRY_TEXT.forEach(([k])=>rec[k]=nz(val("ce_"+k)));
+  rec.bureau_name = nz(val("ce_bureau_name")); rec.bureau_url = nz(val("ce_bureau_url"));
+  for(const k of ["bureau_url","visa_portal_url"]){ const u = k==="bureau_url"? rec.bureau_url : nz(val("ce_visa_portal_url")); if(u && !/^https?:\/\//i.test(u)) throw new Error("Web addresses must start with http:// or https://."); }
+  if(o.admin){ rec.afcfta_status = nz(val("ce_afcfta_status")); rec.data_confidence = val("ce_data_confidence"); rec.priority = val("ce_priority")==="true"; }
+  if(o.visa){
+    Object.assign(rec, {visa_africa:nz(val("ce_visa_africa")), evisa:b(val("ce_evisa")), visa_on_arrival:b(val("ce_visa_on_arrival")), univisa:b(val("ce_univisa")),
+      visa_regime:nz(val("ce_visa_regime")), visa_notes:nz(val("ce_visa_notes")), visa_events_note:nz(val("ce_visa_events_note")),
+      visa_portal_url:nz(val("ce_visa_portal_url")), visa_verified_on:nz(val("ce_visa_verified_on"))});
+  }
+  return rec;
+}
+window.countryForm = id => {
+  $("#countryEdit").innerHTML = countryFormHtml(DB.cById[id], {admin:true, onSave:`saveCountry(${id})`, onCancel:`openDest(${id},'Profile')`});
+};
+window.saveCountry = async id => {
+  let rec; try{ rec = countryFormRec({admin:true}); }catch(e){ return toast(e.message); }
+  rec.updated_at = new Date().toISOString();
+  const r = await sb.from("countries").update(rec).eq("id",id); if(r.error) return toast(r.error.message);
+  await reload(true); toast("Country data saved."); openDest(id,"Profile");
 };
 
 /* =====================================================================
@@ -1486,14 +1538,46 @@ function bPolicy(){
   <h3 style="font-size:18px;margin:6px 0 12px">Policy frameworks</h3>
   <div class="grid" style="gap:10px">${tree.map(([x,d])=>polCardHtml(x,d,{})).join("") || '<div class="card empty">No frameworks recorded yet.</div>'}</div>`;
 }
-function bVisa(){
-  const c=P().country;
-  $("#mainEl").innerHTML = `
-  <div class="pageHead"><h2>Visa & delegate access</h2><div class="meta">How organisers will read ${esc(c.name)}'s entry regime</div></div>
-  <div class="card">${visaBlock(c)}</div>
-  ${c.transport_summary?`<div class="card"><h3>Transport network</h3><p>${esc(c.transport_summary)}</p></div>`:""}
-  <p style="font-size:12px;color:var(--muted)">Visa rules change often. Confirm with the immigration authority before quoting in a bid document.</p>`;
+/* Country profile: the bureau reads and edits its own country's descriptive and
+   visa data. bureau_country() returns the full editable set (the portal payload
+   leaves out a few fields); an admin preview reads the admin copy instead. */
+let BCOUNTRY = null;
+async function loadBureauCountry(){
+  if(MODE==="preview"){ const c = DB.cById[P().country.id]; return c ? {...c} : {...P().country}; }
+  const {data,error} = await sb.rpc("bureau_country"); if(error) throw new Error(error.message);
+  if(!data) throw new Error("Your login is not linked to a country.");
+  return data;
 }
+async function bVisa(){
+  $("#mainEl").innerHTML = `<div class="loadWrap"><div class="spin"></div>Loading your country profile…</div>`;
+  try{ BCOUNTRY = await loadBureauCountry(); }catch(e){ $("#mainEl").innerHTML = `<div class="card"><h3>Could not load your country profile</h3><p>${esc(e.message)}</p></div>`; return; }
+  const c = BCOUNTRY;
+  $("#mainEl").innerHTML = `
+  <div class="pageHead"><h2>${esc(c.name)}: country profile</h2><div class="meta">How organisers and the agency read ${esc(c.name)} as a host${c.updated_at?" · last updated "+fmtD(String(c.updated_at).slice(0,10)):""}</div></div>
+  <div class="card"><div class="cardHead"><h3>Destination</h3>${MODE==="bureau"?`<button class="btn sm ghost" onclick="bCountryEdit()">Edit country data</button>`:'<span style="font-size:12px;color:var(--muted)">The bureau can edit these fields</span>'}</div>
+    <dl class="kv">
+      <dt>MICE positioning</dt><dd>${esc(c.mice_summary||"To be researched.")}</dd>
+      <dt>Transport network</dt><dd>${esc(c.transport_summary||"To be researched.")}</dd>
+      <dt>Security context</dt><dd>${esc(c.security_summary||"To be researched.")}</dd>
+      <dt>Convention bureau</dt><dd>${esc(c.bureau_name||"None recorded")}${c.bureau_url?` · <a href="${esc(c.bureau_url)}" target="_blank" rel="noopener">site ↗</a>`:""}</dd>
+    </dl></div>
+  <div class="card"><h3>Visa & delegate access</h3>${visaBlock(c)}</div>
+  <div id="bCountryEdit"></div>
+  <p style="font-size:12px;color:var(--muted)">Visa rules change often. Confirm with the immigration authority before quoting in a bid document. Changes you save here go live in the dashboard straight away.</p>`;
+}
+window.bCountryEdit = () => {
+  if(MODE!=="bureau" || !BCOUNTRY) return;
+  $("#bCountryEdit").innerHTML = `<div class="card"><h3>Edit country data</h3>${countryFormHtml(BCOUNTRY, {visa:true, onSave:"bSaveCountry()", onCancel:"bVisa()"})}</div>`;
+  $("#bCountryEdit").scrollIntoView({behavior:"smooth", block:"start"});
+};
+window.bSaveCountry = async () => {
+  let rec; try{ rec = countryFormRec({visa:true}); }catch(e){ return toast(e.message); }
+  const {data,error} = await sb.rpc("bureau_update_country",{patch:rec});
+  if(error) return toast(error.message);
+  BCOUNTRY = data;
+  Object.keys(PORTAL.country).forEach(k=>{ if(k in data) PORTAL.country[k] = data[k]; });
+  toast("Country data saved."); bVisa();
+};
 
 /* =====================================================================
    BID HISTORY (ICCA Bid Wins layer)
