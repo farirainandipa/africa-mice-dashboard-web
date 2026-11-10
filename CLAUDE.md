@@ -101,6 +101,21 @@ supabase/migrations/    pipeline migrations from the move onwards
 - Never widen a policy to plain `authenticated`: bureau users are
   authenticated too.
 
+### Weekly bid scan
+
+- A Claude cloud routine, "Weekly mice bid scan" (Mondays 08:00
+  Africa/Johannesburg), maintains `bid_opportunities`, `events` and
+  `country_matches` through the Supabase MCP. Its prompt lives in the routine
+  (claude.ai/code/routines), not in this repo.
+- Step 2 of that prompt rescans closed bids and bid history for calls that
+  have reopened. It reads `public.reopen_scan_queue(15)` (migration
+  `20261110213927_reopened_bids_scan`), which
+  lists closed opportunities, lapsed or set-aside events (fixed-venue ones
+  excluded) and `series` whose next host window is near, skipping anything
+  already tracked by an open or watchlist row with the same `series_key`. Every
+  recheck is logged in `public.reopen_checks`, so each week covers the items
+  checked longest ago. Both are admin only.
+
 ### Edge functions used by the pipeline
 
 - `dashboard` (`/functions/v1/dashboard/logo`): serves the logo image.
