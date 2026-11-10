@@ -50,6 +50,7 @@ public/
   pipeline/theme.css    shared tokens and primitives for all pipeline pages
 netlify.toml            build, /pipeline rewrite, security headers
 supabase/README.md      where the database schema and migrations live
+supabase/migrations/    pipeline migrations from the move onwards
 ```
 
 - Landing copy lives only in `src/content.ts`; components read from it.
@@ -65,10 +66,14 @@ supabase/README.md      where the database schema and migrations live
 
 - Project ref `upzkvszgoqhoefkiwoep` (eu-west-1), **shared** with the
   farirainandipa.co.zw website. Both sites read the same pipeline data.
-- The canonical schema and migrations live in the **farirainandipa-web** repo
-  under `supabase/migrations/` (001 to 023 so far). Add new migrations there with the
-  next number, never edit existing ones, then apply to the project and run the
-  Supabase security advisor.
+- The dashboard now lives in this repo, so new pipeline migrations go in
+  `supabase/migrations/` **here**, named `<version>_<name>.sql` with the version
+  the project records in `supabase_migrations.schema_migrations` when applied.
+  Never edit existing ones. Apply to the project, then run the Supabase security
+  advisor.
+- The older history (001 to 023, before the move) stays in the
+  **farirainandipa-web** repo under `supabase/migrations/`. Read it there; do
+  not add to it for dashboard changes.
 - The anon (publishable) key is hard-coded in the pipeline pages. That is
   expected: it is public by design and everything is enforced by RLS. Never put
   the `service_role` key in this repo or any client code.

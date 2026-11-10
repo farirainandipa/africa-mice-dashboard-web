@@ -110,6 +110,12 @@ table.data td .pm{font-size:11.5px;color:var(--muted);margin-top:3px}
 .grid.cols4{grid-template-columns:repeat(auto-fill,minmax(215px,1fr))}
 .evCard{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:20px;display:flex;flex-direction:column;gap:10px;transition:border-color .2s}
 .evCard:hover{border-color:var(--line2)}
+.evCard.clickable{cursor:pointer}
+.evCard.clickable:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.edHead{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:14px}
+.edSec{font-size:11px;font-weight:700;color:var(--faint);text-transform:uppercase;letter-spacing:.12em;margin:18px 0 10px;padding-top:12px;border-top:1px solid var(--line)}
+.edSec:first-of-type{border-top:0;padding-top:0;margin-top:0}
+.edActions{display:flex;gap:8px;flex-wrap:wrap;padding-top:14px;border-top:1px solid var(--line);margin-top:8px}
 .evCard h4{font-size:15.5px;line-height:1.35;font-weight:700}
 .evCard .org{color:var(--muted);font-size:12.5px}
 .chips{display:flex;gap:6px;flex-wrap:wrap}
@@ -726,7 +732,7 @@ function rEvents(){
     const rec = DB.cById[e.recommended_destination_id];
     const conf = DB.aligns.filter(a=>a.event_id===e.id&&a.status==="confirmed");
     const op = OPEN_L[e.openness_2027_29];
-    return `<div class="evCard">
+    return `<div class="evCard clickable" tabindex="0" role="button" aria-label="Open ${esc(e.event_name)}" onclick="if(!event.target.closest('a,button'))openEv(${e.id},'Details')" onkeydown="if((event.key==='Enter'||event.key===' ')&&event.target===this){event.preventDefault();openEv(${e.id},'Details')}">
       <h4>${esc(e.event_name)}</h4>
       <div class="org">${esc(e.organiser||"")}${e.typical_attendance?` · ~${e.typical_attendance.toLocaleString()} delegates`:""}</div>
       <div class="chips">
@@ -769,8 +775,12 @@ function hostFitPanel(e, kind){
 window.openEv = (id, tab) => {
   const e = DB.events.find(x=>x.id===id); if(!e) return;
   const op = OPEN_L[e.openness_2027_29];
-  const body = t => t==="Details" ? `<dl class="kv">
+  const editBar = MODE==="admin" ? `<div class="edHead"><span style="font-size:12.5px;color:var(--muted)">${e.updated_at?"Last updated "+fmtD(e.updated_at.slice(0,10)):""}</span><button class="btn sm primary" onclick="editEv(${e.id})">Edit details</button></div>` : "";
+  const body = t => t==="Details" ? `${editBar}<dl class="kv">
       ${provenanceRows("event",e)}
+      ${e.sector?`<dt>Sector group</dt><dd>${esc(SECTORS[e.sector]||e.sector)}</dd>`:""}
+      ${e.edition_year?`<dt>Edition year</dt><dd>${e.edition_year}</dd>`:""}
+      <dt>AfCFTA alignment</dt><dd>${dots(e.afcfta_score)} ${e.afcfta_score||0}/5${e.afcfta_relevance?`<div style="font-size:12.5px;color:var(--muted)">${esc(e.afcfta_relevance)}</div>`:""}</dd>
       <dt>Organiser</dt><dd>${esc(e.organiser||"–")}</dd>
       <dt>Scope</dt><dd>${esc(e.scope||"–")}${e.forum_group?` · ${esc(e.forum_group)}`:""}</dd>
       <dt>Typical attendance</dt><dd>${e.typical_attendance?e.typical_attendance.toLocaleString():"–"}</dd>
@@ -782,10 +792,110 @@ window.openEv = (id, tab) => {
       <dt>Host requirements</dt><dd>${esc(e.host_requirements||"–")}</dd>
       <dt>Next available edition</dt><dd>${esc(e.next_available_edition||"–")}</dd>
       <dt>Bid deadline</dt><dd>${fmtD(e.bid_deadline)}</dd>
-      <dt>Status</dt><dd>${esc((e.bid_status||"").replace("_"," "))}</dd>
-      <dt>Source</dt><dd>${e.source_url?`<a href="${esc(e.source_url)}" target="_blank" rel="noopener">Source ↗</a>`:"–"}</dd>
-    </dl>${e.notes?`<h5>Notes</h5><p>${esc(e.notes)}</p>`:""}` : t==="Host fit" ? hostFitPanel(e, "event") : alignPanel("event", id);
+      ${e.decision_date?`<dt>Decision date</dt><dd>${fmtD(e.decision_date)}</dd>`:""}
+      <dt>Status</dt><dd>${esc((e.bid_status||"").replace(/_/g," "))}</dd>
+      ${DB.cById[e.recommended_destination_id]?`<dt>Recommended host</dt><dd>${flag(DB.cById[e.recommended_destination_id].iso2)} ${esc(DB.cById[e.recommended_destination_id].name)}</dd>`:""}
+      <dt>Source</dt><dd>${e.source_url?`<a href="${esc(e.source_url)}" target="_blank" rel="noopener">Source ↗</a>`:"–"}${e.bid_document_url?` · <a href="${esc(e.bid_document_url)}" target="_blank" rel="noopener">Bid document ↗</a>`:""}</dd>
+    </dl>${e.notes?`<h5>Notes</h5><p style="white-space:pre-line">${esc(e.notes)}</p>`:""}` : t==="Host fit" ? hostFitPanel(e, "event") : alignPanel("event", id);
   showTabbedModal(`<div><h3>${esc(e.event_name)}</h3><div class="sub">${esc(e.organiser||"")}</div></div>`, ["Details","Host fit","Sectors & policy fit"], body, tab);
+};
+
+/* Admin edit form for an event. Writes need the events admin policy (is_allowlisted). */
+const EV_BID_STATUS = ["watching","bid_open","bid_in_prep","submitted","shortlisted","awarded","lost","not_pursued"];
+const EV_CONF = ["verified","stale","unverified","conflict"];
+const EV_TIERS = Object.fromEntries(Object.entries(TIER_L).map(([k,v])=>[k,`${k} · ${v[0].toUpperCase()+v.slice(1)}`]));
+window.editEv = id => {
+  const e = DB.events.find(x=>x.id===id); if(!e) return;
+  const opt = (pairs, cur, blank) => (blank?`<option value="">${blank}</option>`:"") + pairs.map(([k,l])=>`<option value="${esc(k)}" ${String(cur??"")===String(k)?"selected":""}>${esc(l)}</option>`).join("");
+  const nice = s => s.replace(/_/g," ").replace(/^./,c=>c.toUpperCase());
+  const txt = (k,l,v,attrs="") => `<div class="field"><label for="ee_${k}">${l}</label><input id="ee_${k}" value="${esc(v??"")}" ${attrs}></div>`;
+  const area = (k,l,v) => `<div class="field"><label for="ee_${k}">${l}</label><textarea id="ee_${k}">${esc(v??"")}</textarea></div>`;
+  const sel = (k,l,pairs,cur,blank) => `<div class="field"><label for="ee_${k}">${l}</label><select id="ee_${k}">${opt(pairs,cur,blank)}</select></div>`;
+  $("#mTabBody").innerHTML = `
+  <div class="edHead"><b>Edit event details</b><span><button class="btn sm primary ee_save" onclick="saveEv(${id})">Save</button> <button class="btn sm ghost" onclick="openEv(${id},'Details')">Cancel</button></span></div>
+  <div class="edSec">Event</div>
+  ${txt("event_name","Event name",e.event_name,"required")}
+  <div class="frow">${txt("organiser","Organiser",e.organiser)}${txt("forum_group","Forum group",e.forum_group)}</div>
+  <div class="frow">
+    ${sel("sector","Sector group",Object.entries(SECTORS),e.sector,"–")}
+    ${sel("scope","Scope",["international","continental","regional"].map(s=>[s,nice(s)]),e.scope,"–")}
+  </div>
+  <div class="frow">
+    ${txt("edition_year","Edition year",e.edition_year,'type="number" min="1900" max="2100"')}
+    ${txt("edition_label","Edition label",e.edition_label)}
+    ${txt("series_key","Series key",e.series_key)}
+    ${txt("typical_attendance","Typical attendance",e.typical_attendance,'type="number" min="0"')}
+  </div>
+  <div class="frow">
+    ${sel("afcfta_score","AfCFTA alignment (0–5)",[0,1,2,3,4,5].map(n=>[n,String(n)]),e.afcfta_score,"–")}
+  </div>
+  ${area("afcfta_relevance","AfCFTA relevance",e.afcfta_relevance)}
+
+  <div class="edSec">Hosting</div>
+  <div class="frow">
+    ${sel("host_selection","Host chosen by",Object.entries(HS_L),e.host_selection,"–")}
+    ${sel("openness_2027_29","Openness 2027–29",Object.entries(OPEN_L).map(([k,v])=>[k,v[0]]),e.openness_2027_29,"–")}
+  </div>
+  ${txt("openness_note","Openness note",e.openness_note)}
+  <div class="checks"><label><input type="checkbox" id="ee_fixed_venue" ${e.fixed_venue?"checked":""}> Fixed-venue series</label></div>
+  ${txt("rotation_pattern","Rotation pattern",e.rotation_pattern)}
+  ${txt("last_hosts","Last hosts",e.last_hosts)}
+  <div class="frow">${txt("decision_body","Decision body",e.decision_body)}${txt("lead_time","Lead time",e.lead_time)}</div>
+  ${area("host_requirements","Host requirements",e.host_requirements)}
+  <div class="frow">
+    ${txt("next_available_edition","Next available edition",e.next_available_edition)}
+    ${sel("recommended_destination_id","Recommended host",[...DB.countries].sort((a,b)=>a.name.localeCompare(b.name)).map(c=>[c.id,c.name]),e.recommended_destination_id,"None")}
+  </div>
+
+  <div class="edSec">Bid</div>
+  <div class="frow">
+    ${sel("bid_status","Bid status",EV_BID_STATUS.map(s=>[s,nice(s)]),e.bid_status,"–")}
+    ${txt("bid_deadline","Bid deadline",e.bid_deadline,'type="date"')}
+    ${txt("decision_date","Decision date",e.decision_date,'type="date"')}
+  </div>
+
+  <div class="edSec">Sources and confidence</div>
+  <div class="frow">${txt("source_url","Source URL",e.source_url,'type="url"')}${txt("bid_document_url","Bid document URL",e.bid_document_url,'type="url"')}</div>
+  <div class="frow">
+    ${sel("source_tier","Source tier",Object.entries(EV_TIERS),e.source_tier,"–")}
+    ${sel("confidence","Confidence",EV_CONF.map(s=>[s,nice(s)]),e.confidence)}
+    ${txt("verified_on","Last checked",e.verified_on,'type="date"')}
+  </div>
+  ${area("conflict_note","Conflict note",e.conflict_note)}
+  ${area("notes","Notes",e.notes)}
+
+  <div class="edActions"><button class="btn primary ee_save" onclick="saveEv(${id})">Save changes</button><button class="btn ghost" onclick="openEv(${id},'Details')">Cancel</button></div>`;
+  $("#ee_event_name").focus();
+};
+window.saveEv = async id => {
+  const e = DB.events.find(x=>x.id===id); if(!e) return;
+  const name = val("ee_event_name"); if(!name) return toast("The event name cannot be empty.");
+  const int = k => { const v=val(k); return v===""? null : parseInt(v,10); };
+  const url = k => { const v=val(k); if(v && !/^https?:\/\//i.test(v)) throw new Error("Links must start with http:// or https://"); return nz(v); };
+  let rec;
+  try {
+    rec = {
+      event_name:name, organiser:nz(val("ee_organiser")), forum_group:nz(val("ee_forum_group")),
+      sector:nz(val("ee_sector")), scope:nz(val("ee_scope")),
+      edition_year:int("ee_edition_year"), edition_label:nz(val("ee_edition_label")), series_key:nz(val("ee_series_key")),
+      typical_attendance:int("ee_typical_attendance"), afcfta_score:int("ee_afcfta_score"), afcfta_relevance:nz(val("ee_afcfta_relevance")),
+      host_selection:nz(val("ee_host_selection")), openness_2027_29:nz(val("ee_openness_2027_29")), openness_note:nz(val("ee_openness_note")),
+      fixed_venue:!!val("ee_fixed_venue"), rotation_pattern:nz(val("ee_rotation_pattern")), last_hosts:nz(val("ee_last_hosts")),
+      decision_body:nz(val("ee_decision_body")), lead_time:nz(val("ee_lead_time")), host_requirements:nz(val("ee_host_requirements")),
+      next_available_edition:nz(val("ee_next_available_edition")), recommended_destination_id:int("ee_recommended_destination_id"),
+      bid_status:nz(val("ee_bid_status")), bid_deadline:nz(val("ee_bid_deadline")), decision_date:nz(val("ee_decision_date")),
+      source_url:url("ee_source_url"), bid_document_url:url("ee_bid_document_url"), source_tier:int("ee_source_tier"),
+      confidence:val("ee_confidence")||"unverified", verified_on:nz(val("ee_verified_on")),
+      conflict_note:nz(val("ee_conflict_note")), notes:nz(val("ee_notes")), updated_at:new Date().toISOString()
+    };
+  } catch(err){ return toast(err.message); }
+  if([rec.edition_year, rec.typical_attendance].some(n=>n!=null && (isNaN(n)||n<0))) return toast("Year and attendance must be whole numbers.");
+  const btns = document.querySelectorAll(".ee_save"); btns.forEach(b=>b.disabled=true);
+  const r = await sb.from("events").update(rec).eq("id",id).select("id");
+  btns.forEach(b=>b.disabled=false);
+  if(r.error) return toast("Could not save: "+r.error.message);
+  if(!r.data?.length) return toast("Nothing was saved. Your account may not have permission to edit events.");
+  await reload(true); rEvents(); openEv(id,"Details"); toast("Event updated.");
 };
 
 /* =====================================================================
