@@ -66,7 +66,7 @@ supabase/README.md      where the database schema and migrations live
 - Project ref `upzkvszgoqhoefkiwoep` (eu-west-1), **shared** with the
   farirainandipa.co.zw website. Both sites read the same pipeline data.
 - The canonical schema and migrations live in the **farirainandipa-web** repo
-  under `supabase/migrations/` (001 to 023 so far). Add new migrations there with the
+  under `supabase/migrations/` (001 to 025 so far). Add new migrations there with the
   next number, never edit existing ones, then apply to the project and run the
   Supabase security advisor.
 - The anon (publishable) key is hard-coded in the pipeline pages. That is
@@ -95,6 +95,20 @@ supabase/README.md      where the database schema and migrations live
   and must set `search_path`.
 - Never widen a policy to plain `authenticated`: bureau users are
   authenticated too.
+
+### Weekly bid scan
+
+- A Claude cloud routine, "Weekly mice bid scan" (Mondays 08:00
+  Africa/Johannesburg), maintains `bid_opportunities`, `events` and
+  `country_matches` through the Supabase MCP. Its prompt lives in the routine
+  (claude.ai/code/routines), not in this repo.
+- Step 2 of that prompt rescans closed bids and bid history for calls that
+  have reopened. It reads `public.reopen_scan_queue(15)` (migration 025), which
+  lists closed opportunities, lapsed or set-aside events (fixed-venue ones
+  excluded) and `series` whose next host window is near, skipping anything
+  already tracked by an open or watchlist row with the same `series_key`. Every
+  recheck is logged in `public.reopen_checks`, so each week covers the items
+  checked longest ago. Both are admin only.
 
 ### Edge functions used by the pipeline
 
