@@ -1560,7 +1560,7 @@ async function callBureauAdmin(payload){
 }
 const pwHtml = (j,c) => `<div class="pwBox"><b>Login ready.</b> Send these to the bureau over a channel you trust; the password is shown only once.<br><br>
   Portal: <a href="${location.origin+location.pathname}" target="_blank">${esc(location.origin+location.pathname)}</a><br>Email: <b>${esc(j.email)}</b><br>Temporary password: <code>${esc(j.temp_password)}</code><br><br>
-  They can change it under their email menu → Change password.${c?`<br><br><a href="mailto:${esc(j.email)}?subject=${encodeURIComponent((c.name||"")+" bid intelligence portal")}&body=${encodeURIComponent("Dear colleague,\n\nYour login to the Africa MICE bid intelligence portal is ready. It shows the international congresses and calls for bids that align with "+c.name+"'s national development priorities.\n\nPortal: "+location.origin+location.pathname+"\nEmail: "+j.email+"\n\nI will share your temporary password separately.\n\nKind regards,\nFarirai Nandipa")}">Draft the welcome email (without the password) ↗</a>`:""}</div>`;
+  They can change it under their email menu → Change password.${c?`<br><br><a href="mailto:${esc(j.email)}?subject=${encodeURIComponent((c.name||"")+" bid intelligence portal")}&body=${encodeURIComponent("Dear colleague,\n\nYour login to the Africa MICE bid intelligence portal is ready. It shows the international and regional congresses and calls for bids that align with "+c.name+"'s national development priorities.\n\nPortal: "+location.origin+location.pathname+"\nEmail: "+j.email+"\n\nI will share your temporary password separately.\n\nKind regards,\nFarirai Nandipa")}">Draft the welcome email (without the password) ↗</a>`:""}</div>`;
 window.createBureau = async () => {
   const email=val("ba_email"), cid=+val("ba_c"), tier=val("ba_t");
   if(!email) return toast("Enter the login email.");
@@ -1660,7 +1660,7 @@ function bHome(){
   const plan = p.policies.find(x=>x.level==="national_plan"&&x.status==="in_force") || p.policies.find(x=>x.level==="national_plan");
   $("#mainEl").innerHTML = `
   <div class="pageHead"><h2>${flag(c.iso2)} ${esc(c.name)}: bids aligned to your national priorities</h2><div class="meta">${esc(p.org?.org_name||"")} · updated ${new Date().toLocaleDateString("en-GB",{day:"numeric",month:"long",year:"numeric"})}</div></div>
-  <p class="lede">These international congresses and calls for bids match the priority sectors in ${plan?esc(plan.title):"your national development plan"}. Each one shows why it fits, so you can take the case to ministries and industry partners.</p>
+  <p class="lede">These international and regional congresses and calls for bids match the priority sectors in ${plan?esc(plan.title):"your national development plan"}. Each one shows why it fits, so you can take the case to ministries and industry partners.</p>
   <div class="kpis">
     <div class="kpi"><div class="n">${open.length}</div><div class="l">Open calls for bids aligned to ${esc(c.name)}</div></div>
     <div class="kpi"><div class="n">${p.bids.length-open.length}</div><div class="l">On watch (call expected)</div></div>

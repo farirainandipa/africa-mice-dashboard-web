@@ -22,7 +22,7 @@ export const CONTACT_EMAIL = 'nandie@farirainandipa.co.zw';
 export const BRAND = {
   name: 'Africa MICE Dashboard',
   description:
-    'Bid intelligence for African destinations, with the international events open to bid in one place.',
+    'Bid intelligence for African destinations, with the international and regional events open to bid in one place.',
   parentCompany: 'A product of Farirai Nandipa MICE Consultancy',
   copyrightYear: 2026,
 };
@@ -58,7 +58,7 @@ export const HERO = {
 export const PLATFORM = {
   overline: 'Platform',
   heading: 'Everything a destination needs to decide where to bid.',
-  intro: 'One clear view of the international business open to Africa, and a direct route from opportunity to bid.',
+  intro: 'One clear view of the international and regional events open to Africa, and a direct route from opportunity to bid.',
   features: [
     {
       icon: 'pipeline',
