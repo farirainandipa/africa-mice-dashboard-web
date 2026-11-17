@@ -16,11 +16,10 @@ Netlify.
 2. **Africa MICE Bid Pipeline** (`/pipeline`, `/pipeline/submit.html`): a
    standalone static app in `public/pipeline/`, outside the React build. It
    talks directly to Supabase with `@supabase/supabase-js` loaded from a CDN.
-   Sign-in is required (admins and convention-bureau logins). Three public
+   Sign-in is required (admins and convention-bureau logins). Two public
    pages need no login, namely `submit.html` (organisers submit movable
-   conferences), `partner.html` at `/pipeline/partner` (destination partners
-   submit profile data, plus the email-verify and status views) and
-   `history.html` at `/pipeline/history` (bid-history teaser).
+   conferences) and `partner.html` at `/pipeline/partner` (destination partners
+   submit profile data, plus the email-verify and status views).
 
 ## Commands
 
@@ -46,7 +45,6 @@ public/
   pipeline/index.html   Bid Pipeline app (HTML + CSS + JS in one file, ~125 KB)
   pipeline/submit.html  public event submission form
   pipeline/partner.html public destination-partner submission form
-  pipeline/history.html public bid-history teaser
   pipeline/theme.css    shared tokens and primitives for all pipeline pages
 netlify.toml            build, /pipeline rewrite, security headers
 supabase/README.md      where the database schema and migrations live
@@ -87,15 +85,20 @@ supabase/migrations/    pipeline migrations from the move onwards
 - **Bureau logins**: `public.user_access` (role `bureau`, a `country_id` and a
   licence `tier`, one of free, explorer, bureau or bureau_plus). Bureaux never read
   pipeline tables directly; they get their own country only, through the
-  `bureau_portal()` / `bid_history()` RPCs and the `dp_bureau_own` /
+  `bureau_portal()` RPC and the `dp_bureau_own` /
   `dpf_bureau_own` policies. They edit their own country's descriptive and
   visa fields through `bureau_country()` / `bureau_update_country(patch)`
   (migration `20261110221713_bureau_country_edit`), which reject any other
   column; admins edit `countries` directly. Accounts are created by the
-  `bureau-admin` edge function (admins only).
+  `bureau-admin` edge function (admins only). Every tier gets the same
+  portal for now.
+- **Bid history** (`bid_wins`, `series`, `history_sync_log` and the
+  `bid_history*` / `bid_wins_teaser` RPCs) is admin only. Bureaux and
+  anonymous visitors have no access (migration
+  `20261117081600_bid_history_admin_only`). Do not reopen it without asking.
 - **Anonymous visitors** can only read `econ_sectors`, insert into
   `submissions` (status forced to `review`), insert into `contact_submissions`,
-  and call the public-form RPCs `bid_wins_teaser`, `partner_form_options`,
+  and call the public-form RPCs `partner_form_options`,
   `profile_submit`, `profile_verify`, `profile_status`,
   `submission_upload_allowed`. Every other function has EXECUTE revoked from
   `anon` (migration 023). New SECURITY DEFINER functions must
@@ -132,7 +135,7 @@ supabase/migrations/    pipeline migrations from the move onwards
 ## Deployment (Netlify)
 
 - `netlify.toml`: build `npm run build`, publish `dist`, Node 22.
-- `/pipeline`, `/pipeline/history`, `/pipeline/partner` and `/pipeline/submit` are rewritten to
+- `/pipeline`, `/pipeline/partner` and `/pipeline/submit` are rewritten to
   their `.html` files **before** the SPA catch-all. Keep that order.
 - This repo is the only source of the pipeline pages. farirainandipa-web no
   longer carries a copy (removed in its PR #18), so edit them here.
