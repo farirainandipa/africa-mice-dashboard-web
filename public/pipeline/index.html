@@ -128,6 +128,15 @@ table.data td .pm{font-size:11.5px;color:var(--muted);margin-top:3px}
 .fitRow .bar{flex:1;height:6px;background:var(--track);border-radius:5px;overflow:hidden}
 .fitRow .bar i{display:block;height:100%;background:var(--accent)}
 .fitRow .sc{width:30px;text-align:right;color:var(--muted);font-weight:600}
+table.data tr.soon td{background:var(--t-amber)}
+table.data tr.mxRow td{background:var(--hover);padding:14px 16px 18px}
+.mxGrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:18px}
+.mxGrid h5{margin:0 0 8px}
+.fitNum{font-weight:700;font-size:15px}
+.wRow{display:flex;align-items:center;gap:12px;margin:8px 0;font-size:13px}
+.wRow label{width:150px;font-weight:600}
+.wRow input[type=range]{flex:1;accent-color:var(--accent)}
+.wRow .v{width:34px;text-align:right;font-weight:600}
 .why{background:var(--t-accent);border-left:3px solid var(--accent);border-radius:6px;padding:9px 12px;font-size:12.5px}
 .why b{color:var(--accent2)}
 .destCard{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:18px;cursor:pointer;transition:transform .15s,border-color .2s}
@@ -348,6 +357,7 @@ let DB = {}, ME = null, PORTAL = null, MODE = "admin", VIEW = "overview";
 /* licence tiers (Bureau Licence Tiers doc). The server enforces them; these only drive the layout. */
 const LIC_L = {free:"Free", explorer:"Explorer", bureau:"Bureau", bureau_plus:"Bureau Plus"};
 let PREVIEW_TIER = "bureau";
+let MATCHES = null, MATCH_OPEN = null, MW = null, MW_SAVED = null, MW_CID = null, MW_TIMER = null;
 let state = {pipeStatus:"all", pipeQ:"", pipeSector:"all", evSector:"all", evScope:"all", evAf:false, destQ:"", polQ:"", polCountry:"all", polSector:"all", polLevel:"all", bSector:"all"};
 
 /* =====================================================================
@@ -399,9 +409,9 @@ window.savePw = async ()=>{
 /* =====================================================================
    NAV
    ===================================================================== */
-const ADMIN_TABS = [["overview","Overview"],["pipeline","Bid Pipeline"],["events","Strategic Events"],["history","Bid History"],["destinations","Destinations"],["policies","Policy & Sectors"],["submissions","Submissions"],["partner","Partner Data"],["access","Bureau Access"]];
+const ADMIN_TABS = [["overview","Overview"],["pipeline","Bid Pipeline"],["matching","Matching"],["events","Strategic Events"],["history","Bid History"],["destinations","Destinations"],["policies","Policy & Sectors"],["submissions","Submissions"],["partner","Partner Data"],["access","Bureau Access"]];
 function bureauTabs(){
-  return [["b_home","Overview"],["b_bids","Bids for "+(PORTAL?.country?.name||"you")],["b_events","Strategic events"],["b_policy","Policy & sectors"],["b_visa","Country profile"]];
+  return [["b_home","Overview"],["b_match","Matches"],["b_bids","Bids for "+(PORTAL?.country?.name||"you")],["b_events","Strategic events"],["b_policy","Policy & sectors"],["b_visa","Country profile"]];
 }
 function buildNav(){
   const tabs = MODE==="admin" ? ADMIN_TABS : bureauTabs();
@@ -419,7 +429,7 @@ $("#navTabs").addEventListener("click",e=>{
   render();
 });
 function render(){
-  const R = {overview:rOverview, pipeline:rPipeline, events:rEvents, history:rHistory, destinations:rDest, policies:rPolicies, submissions:rSubmissions, partner:rPartner, access:rAccess,
+  const R = {overview:rOverview, pipeline:rPipeline, matching:rMatching, b_match:bMatch, events:rEvents, history:rHistory, destinations:rDest, policies:rPolicies, submissions:rSubmissions, partner:rPartner, access:rAccess,
              b_home:bHome, b_bids:bBids, b_events:bEvents, b_policy:bPolicy, b_visa:bVisa};
   (R[VIEW]||rOverview)();
   window.scrollTo(0,0);
@@ -565,9 +575,9 @@ function rPipeline(){
 }
 window.openOpp = (id, tab) => {
   const o = DB.opps.find(x=>x.id===id); if(!o) return;
-  const tabs = ["Details","Host fit","Sectors & policy fit"];
+  const tabs = ["Details","Requirements","Host fit","Sectors & policy fit"];
   const st = effStatus(o);
-  const body = t => t==="Host fit" ? hostFitPanel(oppAsFitInput(o), "opportunity") : t==="Details" ? `
+  const body = t => t==="Requirements" ? reqPanel(o) : t==="Host fit" ? hostFitPanel(oppAsFitInput(o), "opportunity") : t==="Details" ? `
       <div class="chips" style="margin-bottom:16px">
         <span class="chip ${st}">${st}</span>
         ${o.event_type?`<span class="chip sector">${esc(o.event_type)}</span>`:""}
@@ -591,6 +601,175 @@ window.openOpp = (id, tab) => {
       ${o.summary?`<h5>Summary</h5><p>${esc(o.summary)}</p>`:""}
       ${o.verification_note?`<h5>Verification trail</h5><p style="font-size:12.5px;color:var(--muted)">${esc(o.verification_note)}</p>`:""}` : alignPanel("opportunity", id);
   showTabbedModal(`<div><h3>${esc(o.title)}</h3><div class="sub">${esc(o.issuing_body||"")}</div></div>`, tabs, body, tab);
+};
+
+/* =====================================================================
+   MATCHING (fit scores per opportunity and country)
+   Scores live in match_scores and are recomputed in the database nightly
+   and whenever requirements, fit inputs or weights change.
+   ===================================================================== */
+const SUB_L = {venue:"Venue", air:"Air access", visa:"Visa", bidding_capability:"Bidding capability", sector_alignment:"Sector fit"};
+const SUB_ORDER = ["venue","air","visa","bidding_capability","sector_alignment"];
+const ORIGIN_L = {global:"Global", africa:"Mostly African", regional:"Regional"};
+const SENS_L = {high:"High", medium:"Medium", low:"Low"};
+const HOST_L = {any:"Any host", bureau:"Convention bureau", university:"University", association_member:"Association member", government:"Government"};
+const delegatesTxt = x => x.delegates_min&&x.delegates_max ? `${Number(x.delegates_min).toLocaleString()}–${Number(x.delegates_max).toLocaleString()}` : x.delegates_max ? `up to ${Number(x.delegates_max).toLocaleString()}` : x.delegates_min ? `${Number(x.delegates_min).toLocaleString()}+` : "–";
+const subBars = subs => SUB_ORDER.map(k => subs?.[k]==null
+  ? `<div class="fitRow"><span class="nm" style="width:130px">${SUB_L[k]}</span><span style="flex:1;color:var(--muted);font-size:12px">No requirement set, so not counted</span></div>`
+  : `<div class="fitRow"><span class="nm" style="width:130px">${SUB_L[k]}</span><span class="bar"><i style="width:${subs[k]}%"></i></span><span class="sc">${subs[k]}</span></div>`).join("");
+const MCONF_L = {verified:"Verified", partial:"Partial", unverified:"Unverified"};
+const matchConf = c => `<span class="chip c-${c}" title="The weakest trust level among the destination inputs behind this score">${MCONF_L[c]||c}</span>`;
+
+/* ---------- Bureau: Matches tab ---------- */
+async function loadMatches(){
+  const args = MODE==="preview" ? {p_country_id:PORTAL.country.id, p_tier:PREVIEW_TIER} : {};
+  const {data,error} = await sb.rpc("bureau_matches", args);
+  if(error || data?.error){ MATCHES = {error: error?.message || data.error}; return; }
+  MATCHES = data;
+}
+async function bMatch(){
+  if(!MATCHES){ $("#mainEl").innerHTML = `<div class="loadWrap"><div class="spin"></div>Loading matches…</div>`; await loadMatches(); if(VIEW!=="b_match") return; }
+  if(MATCHES.error){ $("#mainEl").innerHTML = `<div class="card"><h3>Could not load matches</h3><p>${esc(MATCHES.error)}</p></div>`; return; }
+  const c = P().country, rows = MATCHES.matches||[], plus = MATCHES.tier==="bureau_plus";
+  $("#mainEl").innerHTML = `
+  <div class="pageHead"><h2>${flag(c.iso2)} Matches for ${esc(c.name)}</h2><div class="meta">${rows.length} open and watched calls, ranked by how well ${esc(c.name)} fits each one</div></div>
+  <p class="lede">The fit score (0 to 100) weighs venue capacity, air access, visa ease, bidding capability and sector priority against what each call asks for. A requirement the call does not state is left out rather than counted against you. Rows due within 21 days are highlighted. Select a row for the breakdown.</p>
+  <div class="card tblWrap" style="padding:6px 16px 10px">
+    <table class="data"><thead><tr><th>#</th><th>Opportunity</th><th>Delegates</th><th>Deadline</th><th>Fit</th><th>Why</th><th>Gap</th><th>Next action</th></tr></thead><tbody>
+    ${rows.map(m=>{ const n=daysLeft(m.deadline), soon = n!=null && n>=0 && n<=21, open = MATCH_OPEN===m.id;
+      return `<tr class="rowlink ${soon?"soon":""}" onclick="toggleMatch(${m.id})">
+        <td style="color:var(--muted);font-weight:600">${m.rank}</td>
+        <td style="max-width:260px"><b>${esc(m.title)}</b><div style="font-size:12px;color:var(--muted)">${esc(m.issuing_body||"")}</div></td>
+        <td style="white-space:nowrap">${delegatesTxt(m)}</td>
+        <td style="white-space:nowrap">${fmtD(m.deadline)} ${m.deadline?dlChip(m.deadline):`<span class="chip watchlist">${m.status==="watchlist"?"watchlist":"no date"}</span>`}</td>
+        <td><span class="fitNum">${m.score}</span><div>${matchConf(m.confidence)}</div></td>
+        <td style="font-size:12.5px;max-width:200px">${esc(m.reasons?.[0]||"–")}</td>
+        <td style="font-size:12.5px;max-width:200px">${esc(m.gaps?.[0]||"–")}</td>
+        <td style="font-size:12.5px;max-width:200px">${esc(m.next_action||"–")}</td></tr>
+        ${open?`<tr class="mxRow"><td colspan="8">${matchDetail(m, plus)}</td></tr>`:""}`;}).join("") || `<tr><td colspan="8" class="empty">No open calls are scored for ${esc(c.name)} yet.</td></tr>`}
+    </tbody></table>
+  </div>`;
+}
+window.toggleMatch = id => { MATCH_OPEN = MATCH_OPEN===id ? null : id; bMatch(); };
+function matchDetail(m, plus){
+  const comp = (m.competitors||[]).map((x,i)=>`<div class="fitRow"><span class="nm" style="width:130px">${plus&&x.name?`${flag(x.iso2)} ${esc(x.name)}`:`Competitor ${i+1}`}</span><span class="bar"><i style="width:${x.score}%"></i></span><span class="sc">${x.score}</span></div>`).join("");
+  return `<div class="mxGrid">
+    <div><h5>Score breakdown</h5>${subBars(m.sub_scores)}<div style="font-size:11.5px;color:var(--muted);margin-top:8px">Scored ${m.scored_on?new Date(m.scored_on).toLocaleDateString("en-GB",{day:"numeric",month:"short",year:"numeric"}):"–"} · confidence ${matchConf(m.confidence)}</div></div>
+    <div><h5>Strongest other African contenders</h5>${comp||'<div class="empty">No other scores yet.</div>'}
+      ${plus?"":`<div style="font-size:11.5px;color:var(--muted);margin-top:8px">Country names are included with the Bureau Plus licence.</div>`}</div>
+    <div><h5>Why it fits</h5>${(m.reasons||[]).map(r=>`<div style="font-size:12.8px;margin-bottom:4px">${esc(r)}</div>`).join("")||'<div class="empty">No strong signals yet.</div>'}
+      <h5 style="margin-top:12px">Gaps to close</h5>${(m.gaps||[]).map(r=>`<div style="font-size:12.8px;margin-bottom:4px">${esc(r)}</div>`).join("")||'<div class="empty">None recorded.</div>'}</div>
+  </div>
+  <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:14px">
+    ${m.source_url?`<a class="btn sm ghost" href="${esc(m.source_url)}" target="_blank" rel="noopener" onclick="event.stopPropagation()">Official call ↗</a>`:""}
+    <a class="btn sm primary" href="${interestLink(m.title)}" onclick="event.stopPropagation()">Express interest</a>
+  </div>`;
+}
+
+/* ---------- Admin: Matching tab (weights with live preview) ---------- */
+async function rMatching(){
+  if(!MW){
+    $("#mainEl").innerHTML = `<div class="loadWrap"><div class="spin"></div>Loading weights…</div>`;
+    const {data,error} = await sb.from("match_weights").select("*");
+    if(error){ $("#mainEl").innerHTML = `<div class="card"><h3>Could not load weights</h3><p>${esc(error.message)}</p></div>`; return; }
+    MW_SAVED = Object.fromEntries(data.map(r=>[r.input, Number(r.weight)])); MW = {...MW_SAVED};
+  }
+  if(!MW_CID) MW_CID = (DB.countries.find(c=>c.name==="Zambia")||DB.countries[0]).id;
+  const {data:conf} = await sb.from("fit_input_conflicts").select("id,country_id,field,current_value,proposed_value,proposed_source_url,created_at").is("resolved_at",null).order("created_at",{ascending:false});
+  if(VIEW!=="matching") return;
+  const dirty = SUB_ORDER.some(k=>MW[k]!==MW_SAVED[k]);
+  $("#mainEl").innerHTML = `
+  <div class="pageHead"><h2>Matching</h2><div class="meta">Weights for the fit score bureaux see on their Matches tab</div></div>
+  <div class="grid cols2" style="align-items:start">
+    <div class="card"><div class="cardHead"><h3>Weights</h3></div>
+      ${SUB_ORDER.map(k=>`<div class="wRow"><label for="w_${k}">${SUB_L[k]}</label><input type="range" id="w_${k}" min="0" max="100" step="5" value="${MW[k]}" oninput="setW('${k}',this.value)"><span class="v" id="wv_${k}">${MW[k]}</span></div>`).join("")}
+      <p style="font-size:12px;color:var(--muted)">Weights are relative, so they need not add up to 100. An input the call has no requirement for is left out of that call's score.</p>
+      <div style="display:flex;gap:8px"><button class="btn primary" id="wSave" ${dirty?"":"disabled"} onclick="saveWeights()">Save and rescore all</button><button class="btn ghost" ${dirty?"":"disabled"} onclick="MW={...MW_SAVED};rMatching()">Reset</button></div>
+    </div>
+    <div class="card"><div class="cardHead"><h3>Live preview</h3>
+      <select onchange="MW_CID=+this.value;previewWeights()">${DB.countries.filter(c=>c.type==="country").map(c=>`<option value="${c.id}" ${c.id===MW_CID?"selected":""}>${esc(c.name)}</option>`).join("")}</select></div>
+      <div id="wPrev"><div class="loadWrap"><div class="spin"></div></div></div>
+    </div>
+  </div>
+  <div class="card"><div class="cardHead"><h3>Agent conflicts</h3></div>
+    <p style="font-size:12.5px;color:var(--muted)">Values the agent proposed for a field already marked verified. The verified value was kept.</p>
+    ${conf?.length?`<div class="tblWrap"><table class="data sm"><thead><tr><th>Country</th><th>Field</th><th>Kept</th><th>Proposed</th><th>Source</th><th>Logged</th></tr></thead><tbody>
+      ${conf.map(x=>`<tr><td>${esc(DB.cById[x.country_id]?.name||"?")}</td><td>${esc(x.field)}</td><td>${esc(x.current_value??"–")}</td><td>${esc(x.proposed_value??"–")}</td><td>${x.proposed_source_url?`<a href="${esc(x.proposed_source_url)}" target="_blank" rel="noopener">source ↗</a>`:"–"}</td><td>${fmtD(x.created_at.slice(0,10))}</td></tr>`).join("")}
+    </tbody></table></div>`:'<div class="empty">No open conflicts.</div>'}
+  </div>`;
+  previewWeights();
+}
+window.setW = (k,v) => {
+  MW[k] = Number(v); $("#wv_"+k).textContent = v;
+  const dirty = SUB_ORDER.some(x=>MW[x]!==MW_SAVED[x]);
+  document.querySelectorAll("#wSave, #wSave + button").forEach(b=>b.disabled=!dirty);
+  clearTimeout(MW_TIMER); MW_TIMER = setTimeout(previewWeights, 250);
+};
+window.previewWeights = async () => {
+  const el = $("#wPrev"); if(!el) return;
+  const {data,error} = await sb.rpc("match_preview", {p_country_id:MW_CID, p_weights:MW});
+  if(!$("#wPrev")) return;
+  if(error) return el.innerHTML = `<p class="empty">${esc(error.message)}</p>`;
+  el.innerHTML = data.length ? `<div class="tblWrap"><table class="data sm"><thead><tr><th>#</th><th>Opportunity</th><th>Fit</th><th>Confidence</th></tr></thead><tbody>
+    ${data.map((r,i)=>`<tr class="rowlink" onclick="openOpp(${r.id},'Requirements')"><td>${i+1}</td><td>${esc(r.title)}</td><td><b>${r.score}</b></td><td>${matchConf(r.confidence)}</td></tr>`).join("")}
+  </tbody></table></div>` : `<p class="empty">This country has no fit inputs yet.</p>`;
+};
+window.saveWeights = async () => {
+  const b=$("#wSave"); if(b) b.disabled=true;
+  const rows = SUB_ORDER.map(k=>({input:k, weight:MW[k], updated_at:new Date().toISOString()}));
+  const {error} = await sb.from("match_weights").upsert(rows);
+  if(error){ if(b) b.disabled=false; return toast("Could not save weights: "+error.message); }
+  MW_SAVED = {...MW}; toast("Weights saved. Every match has been rescored."); rMatching();
+};
+
+/* ---------- Admin: Requirements editor on an opportunity ---------- */
+function reqPanel(o){
+  const opt = (pairs,cur,blank) => (blank!=null?`<option value="">${blank}</option>`:"") + pairs.map(([v,l])=>`<option value="${esc(v)}" ${String(cur??"")===String(v)?"selected":""}>${esc(l)}</option>`).join("");
+  const num = (k,l) => `<div class="field"><label for="rq_${k}">${l}</label><input id="rq_${k}" type="number" min="0" value="${o[k]??""}"></div>`;
+  setTimeout(()=>loadOppTop(o.id),0);
+  return `
+  <p style="font-size:12.8px;color:var(--muted);margin-top:0">These drive the fit score. Leave a field blank when the call does not state it. A blank requirement is left out of the score, never counted as a fail.</p>
+  <div class="edSec">Size</div>
+  <div class="frow">${num("delegates_min","Delegates (min)")}${num("delegates_max","Delegates (max)")}${num("plenary_seats_min","Plenary seats needed")}</div>
+  <div class="edSec">Audience and host</div>
+  <div class="frow">
+    <div class="field"><label for="rq_origin_mix">Delegate origin</label><select id="rq_origin_mix">${opt(Object.entries(ORIGIN_L),o.origin_mix,"Not stated")}</select></div>
+    <div class="field"><label for="rq_visa_sensitivity">Visa sensitivity</label><select id="rq_visa_sensitivity">${opt(Object.entries(SENS_L),o.visa_sensitivity,"Not stated (medium)")}</select></div>
+    <div class="field"><label for="rq_host_type">Who must lead the bid</label><select id="rq_host_type">${opt(Object.entries(HOST_L),o.host_type,"Not stated")}</select></div>
+  </div>
+  <div class="edSec">Source</div>
+  <div class="frow">
+    <div class="field"><label for="rq_requirements_source_url">Requirements source URL</label><input id="rq_requirements_source_url" type="url" value="${esc(o.requirements_source_url??"")}"></div>
+    <div class="field"><label for="rq_requirements_verified_on">Requirements checked on</label><input id="rq_requirements_verified_on" type="date" value="${o.requirements_verified_on??""}"></div>
+  </div>
+  <div class="edSec">Next action</div>
+  <div class="field"><label for="rq_next_action">Shown to every bureau on its Matches tab</label><textarea id="rq_next_action">${esc(o.next_action??"")}</textarea></div>
+  <div class="edActions"><button class="btn primary" id="rq_save" onclick="saveReq(${o.id})">Save requirements</button></div>
+  <h5 style="margin-top:22px">Best-fitting destinations</h5><div id="rq_top"><div class="loadWrap"><div class="spin"></div></div></div>`;
+}
+async function loadOppTop(id){
+  const {data,error} = await sb.from("match_scores").select("country_id,score,confidence,gaps").eq("opportunity_id",id).order("score",{ascending:false}).limit(8);
+  const el = $("#rq_top"); if(!el) return;
+  if(error) return el.innerHTML = `<p class="empty">${esc(error.message)}</p>`;
+  el.innerHTML = data.length ? data.map(r=>{ const c=DB.cById[r.country_id]; return `<div class="fitRow"><span class="nm" style="width:150px">${flag(c?.iso2)} ${esc(c?.name||"?")}</span><span class="bar"><i style="width:${r.score}%"></i></span><span class="sc">${r.score}</span>${matchConf(r.confidence)}</div>`; }).join("")
+    : `<p class="empty">Not scored. Only open and watchlist calls are scored.</p>`;
+}
+window.saveReq = async id => {
+  const int = k => { const v=val("rq_"+k); return v===""? null : parseInt(v,10); };
+  const rec = {
+    delegates_min:int("delegates_min"), delegates_max:int("delegates_max"), plenary_seats_min:int("plenary_seats_min"),
+    origin_mix:nz(val("rq_origin_mix")), visa_sensitivity:nz(val("rq_visa_sensitivity")), host_type:nz(val("rq_host_type")),
+    requirements_source_url:nz(val("rq_requirements_source_url")), requirements_verified_on:nz(val("rq_requirements_verified_on")),
+    next_action:nz(val("rq_next_action"))
+  };
+  if([rec.delegates_min,rec.delegates_max,rec.plenary_seats_min].some(n=>n!=null&&(isNaN(n)||n<0))) return toast("Delegates and seats must be whole numbers.");
+  if(rec.delegates_min!=null && rec.delegates_max!=null && rec.delegates_min>rec.delegates_max) return toast("Minimum delegates cannot exceed the maximum.");
+  if(rec.requirements_source_url && !/^https?:\/\//i.test(rec.requirements_source_url)) return toast("Links must start with http:// or https://");
+  const b=$("#rq_save"); b.disabled=true;
+  const r = await sb.rpc("opportunity_set_requirements", {p_id:id, patch:rec});
+  b.disabled=false;
+  if(r.error) return toast("Could not save: "+r.error.message);
+  await reload(true); openOpp(id,"Requirements"); toast("Requirements saved and matches rescored.");
 };
 
 /* =====================================================================
@@ -1410,9 +1589,9 @@ window.startPreview = async (cid, tier) => {
   $("#mainEl").innerHTML = `<div class="loadWrap"><div class="spin"></div>Loading preview…</div>`;
   const {data,error} = await sb.rpc("bureau_portal_preview",{cid});
   if(error){ toast(error.message); MODE="admin"; VIEW="access"; buildNav(); return render(); }
-  PORTAL = data; MODE="preview"; VIEW="b_home"; buildNav(); render();
+  PORTAL = data; MATCHES = null; MODE="preview"; VIEW="b_home"; buildNav(); render();
 };
-window.exitPreview = () => { MODE="admin"; VIEW="access"; PORTAL=null; buildNav(); render(); };
+window.exitPreview = () => { MODE="admin"; VIEW="access"; PORTAL=null; MATCHES=null; buildNav(); render(); };
 
 /* =====================================================================
    BUREAU PORTAL (client view)
