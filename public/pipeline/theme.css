@@ -2,7 +2,7 @@
  * Shared design tokens and primitives for the pipeline pages.
  * They mirror the landing page (src/index.css): navy ground, one teal accent,
  * Manrope. Link it with an absolute path (/pipeline/theme.css) because
- * /pipeline, /pipeline/history, /pipeline/partner and /pipeline/submit are
+ * /pipeline, /pipeline/partner and /pipeline/submit are
  * served through rewrites without a trailing slash.
  */
 :root{
@@ -92,7 +92,7 @@ input[type=checkbox],input[type=radio]{accent-color:var(--accent)}
 .ok:not(.chip){background:var(--t-accent);color:var(--ink);border:1px solid rgba(25,195,177,.3);padding:16px;border-radius:8px;margin-top:12px}
 .ok:not(.chip) b{display:block;margin-bottom:4px;color:var(--accent2)}
 
-/* ---------- public page shell (submit, partner, history) ---------- */
+/* ---------- public page shell (submit, partner) ---------- */
 .siteBar{position:sticky;top:0;z-index:50;border-bottom:1px solid var(--line);background:rgba(11,18,32,.85);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px)}
 .siteBar .in{max-width:1152px;margin:0 auto;height:64px;padding:0 32px;display:flex;align-items:center;justify-content:space-between;gap:16px}
 .siteBar .acts{display:flex;gap:10px;align-items:center}
