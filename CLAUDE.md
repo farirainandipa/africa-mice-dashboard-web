@@ -96,6 +96,20 @@ supabase/migrations/    pipeline migrations from the move onwards
   `bid_history*` / `bid_wins_teaser` RPCs) is admin only. Bureaux and
   anonymous visitors have no access (migration
   `20261117081600_bid_history_admin_only`). Do not reopen it without asking.
+- **Matching** (migration `20261117130614_bureau_match_view`). Requirement
+  columns on `bid_opportunities` (delegates, plenary seats, origin mix, visa
+  sensitivity, host type, `next_action`) are edited by admins through
+  `opportunity_set_requirements(p_id, patch)`. `destination_fit_inputs` holds
+  one row per country with per-field trust in `meta`; `match_weights` holds the
+  admin weights. `score_match()` is internal and `rescore_matches()` fills
+  `match_scores`, run by triggers on requirements, sectors, fit inputs and
+  weights, and nightly by pg_cron (`match_rescore_nightly`). Bureaux read their
+  own country through `bureau_matches()`, which adds the top three other
+  African scores per call (country names on Bureau Plus only) and never
+  includes bid history. The agent writes fit inputs only through
+  `fit_inputs_agent_upsert()`, which stores values as unverified and logs a
+  differing value for a verified field in `fit_input_conflicts` instead.
+  `countries_ready_for_scoring` lists countries with every weighted input set.
 - **Anonymous visitors** can only read `econ_sectors`, insert into
   `submissions` (status forced to `review`), insert into `contact_submissions`,
   and call the public-form RPCs `partner_form_options`,
