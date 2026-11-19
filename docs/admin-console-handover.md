@@ -71,7 +71,7 @@ quickly, redeploy version 3 from git history and say so.
 
 Submit the landing page access form, check the request appears under Signups,
 approve it (country and tier), and sign in with the temporary password. Then
-test Reject, Spam and Reopen on further requests, and confirm a seventh
+test Reject, Spam and Reopen on further requests, and confirm a sixth
 request inside an hour from one network shows the rate limit message.
 
 ### 4. Click through the remaining screens
