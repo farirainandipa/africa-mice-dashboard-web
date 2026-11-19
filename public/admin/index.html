@@ -22,17 +22,31 @@
 .authCard h1{font-size:26px;font-weight:800;letter-spacing:-.02em;margin:12px 0 6px}
 .authCard p.sub{color:var(--muted);margin-bottom:24px;font-size:14px}
 /* ---------- shell ---------- */
-.top{position:sticky;top:0;z-index:50;background:rgba(11,18,32,.92);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);border-bottom:1px solid var(--line)}
-.top .in{max-width:1320px;margin:0 auto;padding:0 24px;min-height:60px;display:flex;align-items:center;gap:20px;flex-wrap:wrap}
-.tabs{display:flex;gap:2px;flex:1 1 480px;min-width:0;overflow-x:auto}
-.tabs button{background:none;border:none;color:var(--muted);padding:19px 12px;font-size:13.5px;font-weight:600;border-bottom:2px solid transparent;white-space:nowrap}
-.tabs button:hover{color:var(--ink)}
-.tabs button.active{color:var(--ink);border-bottom-color:var(--accent)}
-.tabs .badge{display:inline-block;margin-left:6px;background:var(--accent);color:var(--navy);border-radius:999px;font-size:10.5px;font-weight:800;padding:1px 7px}
-.who{font-size:12.5px;color:var(--muted);display:flex;gap:12px;align-items:center}
-.who button{background:none;border:none;color:var(--muted);font-size:12.5px;text-decoration:underline}
+/* Left sidebar on wide screens; a top bar with a scrolling row of sections below 900px. */
+#appView{display:flex;min-height:100vh}
+.side{position:sticky;top:0;height:100vh;width:236px;flex:none;z-index:50;background:rgba(11,18,32,.96);border-right:1px solid var(--line);display:flex;flex-direction:column;gap:18px;padding:18px 12px;overflow-y:auto}
+.side .wordmark{padding:4px 10px}
+.tabs{display:flex;flex-direction:column;gap:2px;flex:1}
+.tabs button{display:flex;align-items:center;justify-content:space-between;gap:8px;width:100%;text-align:left;background:none;border:none;border-radius:10px;color:var(--muted);padding:10px 12px;font-size:13.5px;font-weight:600;white-space:nowrap}
+.tabs button:hover{color:var(--ink);background:rgba(255,255,255,.04)}
+.tabs button.active{color:var(--ink);background:rgba(25,195,177,.12);box-shadow:inset 3px 0 0 var(--accent)}
+.tabs .badge{display:inline-block;background:var(--accent);color:var(--navy);border-radius:999px;font-size:10.5px;font-weight:800;padding:1px 7px}
+.who{font-size:12.5px;color:var(--muted);display:flex;flex-direction:column;align-items:flex-start;gap:6px;padding:14px 10px 0;border-top:1px solid var(--line)}
+.who #whoEmail{overflow-wrap:anywhere;margin-bottom:2px}
+.who button{background:none;border:none;padding:0;color:var(--muted);font-size:12.5px;text-decoration:underline}
 .who button:hover{color:var(--ink)}
-main{min-height:calc(100vh - 61px);padding:28px 24px 72px}
+main{flex:1;min-width:0;min-height:100vh;padding:28px 32px 72px}
+@media(max-width:900px){
+  #appView{flex-direction:column}
+  .side{height:auto;width:auto;flex-direction:row;flex-wrap:wrap;align-items:center;gap:8px 16px;padding:10px 16px;border-right:none;border-bottom:1px solid var(--line);overflow:visible}
+  .side .wordmark{padding:0}
+  .tabs{flex-direction:row;flex:1 1 100%;order:3;overflow-x:auto}
+  .tabs button{width:auto;padding:8px 12px}
+  .tabs .badge{margin-left:6px}
+  .who{flex-direction:row;flex-wrap:wrap;align-items:center;gap:6px 12px;margin-left:auto;padding:0;border-top:none}
+  main{min-height:0;padding:24px 16px 56px}
+  .side{position:sticky;top:0}
+}
 main .inner{max-width:1320px;margin:0 auto}
 .pageHead{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;flex-wrap:wrap;margin-bottom:20px}
 .pageHead h1{font-size:24px;font-weight:800;letter-spacing:-.02em}
@@ -80,7 +94,7 @@ td.acts .btn{margin-left:4px}
 .pwBox{background:var(--t-accent);border:1px solid rgba(25,195,177,.3);border-radius:10px;padding:14px;margin:12px 0;font-size:13px}
 .pwBox code{font-size:15px;font-weight:700;padding:3px 8px}
 .toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);background:var(--navy);border:1px solid var(--line2);color:#eef1f6;padding:11px 18px;border-radius:10px;font-size:13px;z-index:200;box-shadow:0 20px 50px rgba(0,0,0,.45)}
-@media(max-width:640px){.grid2{grid-template-columns:1fr}.top .in{padding:0 14px}main{padding:20px 14px 56px}}
+@media(max-width:640px){.grid2{grid-template-columns:1fr}main{padding:20px 14px 56px}}
 </style>
 </head>
 <body>
@@ -104,11 +118,11 @@ td.acts .btn{margin-left:4px}
 </div>
 
 <div id="appView" class="hidden">
-  <header class="top"><div class="in">
+  <aside class="side">
     <a class="wordmark" href="/pipeline" aria-label="Back to the pipeline"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="0.5" y="0.5" width="23" height="23" rx="6" fill="#121A2B" stroke="rgba(255,255,255,0.12)"/><g fill="#19C3B1"><circle cx="7" cy="7" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="17" cy="17" r="1.6"/></g></svg><b>System admin</b></a>
     <nav class="tabs" id="navTabs" aria-label="Admin sections"></nav>
     <div class="who"><span id="whoEmail"></span><button id="btnPw">Change password</button><button id="btnOut">Sign out</button></div>
-  </div></header>
+  </aside>
   <main class="light"><div class="inner" id="mainEl"></div></main>
 </div>
 <div id="modalBack" class="hidden light"><div class="modal" id="modalEl" role="dialog" aria-modal="true"></div></div>
