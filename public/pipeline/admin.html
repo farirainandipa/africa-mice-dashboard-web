@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>System admin · Africa MICE Dashboard</title>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg?v=3">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/pipeline/theme.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<style>
+.hidden{display:none!important}
+/* ---------- sign-in ---------- */
+#authView{min-height:100vh;display:flex;flex-direction:column}
+.authBar{max-width:1152px;width:100%;margin:0 auto;height:64px;padding:0 32px;display:flex;align-items:center;justify-content:space-between}
+.authBar a.txt{font-size:14px;font-weight:500;color:var(--muted)}
+.authMain{flex:1;display:flex;align-items:center;justify-content:center;padding:32px 20px 72px}
+.authCard{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:36px;width:min(420px,100%);box-shadow:0 30px 80px rgba(0,0,0,.35)}
+.authCard h1{font-size:26px;font-weight:800;letter-spacing:-.02em;margin:12px 0 6px}
+.authCard p.sub{color:var(--muted);margin-bottom:24px;font-size:14px}
+/* ---------- shell ---------- */
+.top{position:sticky;top:0;z-index:50;background:rgba(11,18,32,.92);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);border-bottom:1px solid var(--line)}
+.top .in{max-width:1320px;margin:0 auto;padding:0 24px;min-height:60px;display:flex;align-items:center;gap:20px;flex-wrap:wrap}
+.tabs{display:flex;gap:2px;flex:1;overflow-x:auto}
+.tabs button{background:none;border:none;color:var(--muted);padding:19px 12px;font-size:13.5px;font-weight:600;border-bottom:2px solid transparent;white-space:nowrap}
+.tabs button:hover{color:var(--ink)}
+.tabs button.active{color:var(--ink);border-bottom-color:var(--accent)}
+.tabs .badge{display:inline-block;margin-left:6px;background:var(--accent);color:var(--navy);border-radius:999px;font-size:10.5px;font-weight:800;padding:1px 7px}
+.who{font-size:12.5px;color:var(--muted);display:flex;gap:12px;align-items:center}
+.who button{background:none;border:none;color:var(--muted);font-size:12.5px;text-decoration:underline}
+.who button:hover{color:var(--ink)}
+main{min-height:calc(100vh - 61px);padding:28px 24px 72px}
+main .inner{max-width:1320px;margin:0 auto}
+.pageHead{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;flex-wrap:wrap;margin-bottom:20px}
+.pageHead h1{font-size:24px;font-weight:800;letter-spacing:-.02em}
+.pageHead p{color:var(--muted);font-size:13.5px;margin-top:4px;max-width:720px}
+.filters{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.filters select,.filters input{padding:8px 10px;font-size:13px}
+/* ---------- content ---------- */
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:20px}
+.kpi{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:16px 18px}
+.kpi .n{font-size:28px;font-weight:800;letter-spacing:-.02em;line-height:1.15}
+.kpi .l{font-size:10.5px;font-weight:600;color:var(--faint);margin-top:6px;text-transform:uppercase;letter-spacing:.14em}
+.kpi.alert .n{color:var(--red)}
+.kpi.warnk .n{color:var(--amber)}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(380px,1fr));gap:20px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:20px;margin-bottom:20px;overflow-x:auto}
+.card h3{font-size:15px;margin-bottom:12px}
+.card p.note{color:var(--muted);font-size:13px;margin-bottom:12px}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{text-align:left;font-size:10.5px;font-weight:600;color:var(--faint);text-transform:uppercase;letter-spacing:.12em;padding:8px 10px;border-bottom:1px solid var(--line2);white-space:nowrap}
+td{padding:10px;border-bottom:1px solid var(--line);vertical-align:top}
+tr:last-child td{border-bottom:none}
+td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
+td .sub{color:var(--muted);font-size:12px}
+td.acts{white-space:nowrap;text-align:right}
+td.acts .btn{margin-left:4px}
+.mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px}
+.empty{color:var(--muted);padding:26px 10px;text-align:center}
+.chip{display:inline-block;padding:3px 9px;border-radius:999px;font-size:11.5px;font-weight:600;white-space:nowrap;background:var(--t-n);color:var(--muted)}
+.chip.good{background:var(--t-accent);color:var(--accent2)}
+.chip.warnc{background:var(--t-amber);color:var(--amber)}
+.chip.bad{background:var(--t-red);color:var(--red)}
+.chip.info{background:var(--t-sky);color:var(--sky)}
+.bars{display:flex;align-items:flex-end;gap:3px;height:70px;margin-top:6px}
+.bars i{flex:1;background:var(--accent);border-radius:2px 2px 0 0;min-height:2px;opacity:.85}
+.diff{font-size:12px;color:var(--muted);max-width:520px;word-break:break-word}
+.diff b{color:var(--ink);font-weight:600}
+/* ---------- modal and toast ---------- */
+#modalBack{position:fixed;inset:0;background:rgba(5,9,18,.72);z-index:80;display:flex;align-items:flex-start;justify-content:center;padding:6vh 16px;overflow-y:auto}
+.modal{background:var(--panel);border:1px solid var(--line2);border-radius:16px;width:min(560px,100%);box-shadow:0 30px 80px rgba(0,0,0,.5);overflow:hidden}
+.modal .mHead{background:var(--panel2);padding:18px 22px;display:flex;justify-content:space-between;gap:12px;border-bottom:1px solid var(--line)}
+.modal .mHead h3{font-size:18px;font-weight:800}
+.modal .mHead button{background:none;border:none;color:var(--muted);font-size:16px}
+.modal .mBody{padding:20px 22px}
+.modal .mBody p{font-size:13.5px;color:var(--muted);margin-bottom:14px}
+.pwBox{background:var(--t-accent);border:1px solid rgba(25,195,177,.3);border-radius:10px;padding:14px;margin:12px 0;font-size:13px}
+.pwBox code{font-size:15px;font-weight:700;padding:3px 8px}
+.toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);background:var(--navy);border:1px solid var(--line2);color:#eef1f6;padding:11px 18px;border-radius:10px;font-size:13px;z-index:200;box-shadow:0 20px 50px rgba(0,0,0,.45)}
+@media(max-width:640px){.grid2{grid-template-columns:1fr}.top .in{padding:0 14px}main{padding:20px 14px 56px}}
+</style>
+</head>
+<body>
+
+<div id="authView">
+  <div class="authBar">
+    <a class="wordmark" href="/" aria-label="Africa MICE Dashboard home"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="0.5" y="0.5" width="23" height="23" rx="6" fill="#121A2B" stroke="rgba(255,255,255,0.12)"/><g fill="#19C3B1"><circle cx="7" cy="7" r="1.6"/><circle cx="12" cy="7" r="1.6" opacity=".4"/><circle cx="17" cy="7" r="1.6" opacity=".4"/><circle cx="7" cy="12" r="1.6" opacity=".4"/><circle cx="12" cy="12" r="1.6"/><circle cx="17" cy="12" r="1.6" opacity=".4"/><circle cx="12" cy="17" r="1.6" opacity=".4"/><circle cx="17" cy="17" r="1.6"/></g></svg><b>Africa MICE Dashboard</b></a>
+    <a class="txt" href="/pipeline">Back to the pipeline</a>
+  </div>
+  <div class="authMain">
+    <div class="authCard">
+      <span class="overline">System admin</span>
+      <h1>Sign in</h1>
+      <p class="sub">For the agency team only. Bureau logins do not work here.</p>
+      <div id="authErr" class="err hidden" style="margin:0 0 14px"></div>
+      <div class="field"><label for="inEmail">Email</label><input type="email" id="inEmail" autocomplete="username"></div>
+      <div class="field"><label for="inPass">Password</label><input type="password" id="inPass" autocomplete="current-password"></div>
+      <button class="btn primary" id="btnLogin">Sign in</button>
+    </div>
+  </div>
+</div>
+
+<div id="appView" class="hidden">
+  <header class="top"><div class="in">
+    <a class="wordmark" href="/pipeline" aria-label="Back to the pipeline"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="0.5" y="0.5" width="23" height="23" rx="6" fill="#121A2B" stroke="rgba(255,255,255,0.12)"/><g fill="#19C3B1"><circle cx="7" cy="7" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="17" cy="17" r="1.6"/></g></svg><b>System admin</b></a>
+    <nav class="tabs" id="navTabs" aria-label="Admin sections"></nav>
+    <div class="who"><span id="whoEmail"></span><button id="btnPw">Change password</button><button id="btnOut">Sign out</button></div>
+  </div></header>
+  <main class="light"><div class="inner" id="mainEl"></div></main>
+</div>
+<div id="modalBack" class="hidden light"><div class="modal" id="modalEl" role="dialog" aria-modal="true"></div></div>
+
+<script>
+const SUPABASE_URL = "https://upzkvszgoqhoefkiwoep.supabase.co";
+const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVwemt2c3pnb3Fob2Vma2l3b2VwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIxMzg1MjQsImV4cCI6MjA5NzcxNDUyNH0.4RB-5FCWW7JXvGBKs0PlzkYcUeG5kTVxTVdoXUNp8ao";
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+const $ = s => document.querySelector(s);
+const esc = s => (s==null?"":String(s)).replace(/[&<>"']/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const when = t => t ? new Date(t).toLocaleString("en-GB",{day:"2-digit",month:"short",year:"numeric",hour:"2-digit",minute:"2-digit"}) : "";
+const day = t => t ? new Date(t).toLocaleDateString("en-GB",{day:"2-digit",month:"short",year:"numeric"}) : "";
+const ago = t => { if(!t) return "never"; const s=(Date.now()-new Date(t))/1000; if(s<90) return "just now"; if(s<5400) return Math.round(s/60)+" min ago"; if(s<129600) return Math.round(s/3600)+" h ago"; return Math.round(s/86400)+" days ago"; };
+const words = s => String(s||"").replace(/_/g," ");
+const chip = (t,c="") => `<span class="chip ${c}">${esc(words(t))}</span>`;
+function toast(msg){ const t=document.createElement("div"); t.className="toast"; t.setAttribute("role","status"); t.textContent=msg; document.body.appendChild(t); setTimeout(()=>t.remove(),3600); }
+function showModal(title, body){ $("#modalEl").innerHTML=`<div class="mHead"><h3>${esc(title)}</h3><button onclick="closeModal()" aria-label="Close">✕</button></div><div class="mBody">${body}</div>`; $("#modalBack").classList.remove("hidden"); }
+window.closeModal = ()=> $("#modalBack").classList.add("hidden");
+const table = (heads, rows, emptyMsg) => rows.length
+  ? `<table><thead><tr>${heads.map(h=>`<th${/^#/.test(h)?' class="num"':""}>${esc(h.replace(/^#/,""))}</th>`).join("")}</tr></thead><tbody>${rows.join("")}</tbody></table>`
+  : `<div class="empty">${esc(emptyMsg||"Nothing to show.")}</div>`;
+
+async function rpc(name, args){
+  const {data,error} = await sb.rpc(name, args||{});
+  if(error){ toast(error.message); throw error; }
+  return data;
+}
+// Account actions that change a sign-in go through the bureau-admin function.
+async function accountAction(payload){
+  const {data:{session}} = await sb.auth.getSession();
+  const res = await fetch(SUPABASE_URL+"/functions/v1/bureau-admin", {method:"POST",
+    headers:{"content-type":"application/json", apikey:SUPABASE_KEY, Authorization:"Bearer "+session.access_token}, body:JSON.stringify(payload)});
+  const out = await res.json().catch(()=>({error:"Unexpected response"}));
+  if(!res.ok || out.error){ toast(out.error||"The action failed."); throw new Error(out.error); }
+  return out;
+}
+function showPassword(title, out){
+  showModal(title, `<p>Send these details to the user through a private channel. The password is shown once and cannot be retrieved later.</p>
+    <div class="pwBox">Email <code>${esc(out.email)}</code><br><br>Temporary password <code>${esc(out.temp_password)}</code>${out.expires_at?`<br><br>Valid until ${esc(day(out.expires_at))}. The user must choose a new password at first sign-in.`:""}</div>
+    <button class="btn primary" onclick="navigator.clipboard.writeText(${esc(JSON.stringify(out.temp_password))}).then(()=>toast('Password copied'))">Copy password</button>`);
+}
+
+let ME = null, VIEW = "overview", LOOKUPS = null;
+const TABS = [["overview","Overview"],["signups","Signups"],["accounts","Accounts"],["reports","Reports"],["activity","Activity"],["logs","Logs"],["audit","Audit log"],["limits","Rate limits"],["team","Team"]];
+const isSuper = ()=> ME && ME.level==="super";
+
+/* ---------- sign-in ---------- */
+function authErr(m){ const el=$("#authErr"); el.textContent=m; el.classList.remove("hidden"); }
+$("#btnLogin").onclick = async ()=>{
+  const {data,error} = await sb.auth.signInWithPassword({email:$("#inEmail").value.trim(), password:$("#inPass").value});
+  if(error) return authErr(error.message==="Invalid login credentials" ? "Invalid email or password." : error.message);
+  enter(data.session);
+};
+$("#inPass").addEventListener("keydown",e=>{ if(e.key==="Enter") $("#btnLogin").click(); });
+async function enter(session){
+  const {data,error} = await sb.rpc("admin_lookups");
+  if(error){ await sb.auth.signOut(); return authErr("This account has no access to the admin console."); }
+  ME = data; LOOKUPS = data;
+  $("#authView").classList.add("hidden"); $("#appView").classList.remove("hidden");
+  $("#whoEmail").textContent = session.user.email + (isSuper() ? " · super admin" : " · staff");
+  buildNav(); render();
+}
+$("#btnOut").onclick = async ()=>{ await sb.auth.signOut(); location.reload(); };
+$("#btnPw").onclick = ()=> showModal("Change password", `<div class="field"><label for="pw1">New password (at least 12 characters)</label><input type="password" id="pw1" autocomplete="new-password"></div>
+  <div class="field"><label for="pw2">Repeat new password</label><input type="password" id="pw2" autocomplete="new-password"></div>
+  <button class="btn primary" onclick="savePw()">Update password</button>`);
+window.savePw = async ()=>{
+  const p=$("#pw1").value; if(p.length<12) return toast("Use at least 12 characters."); if(p!==$("#pw2").value) return toast("The passwords do not match.");
+  const {error} = await sb.auth.updateUser({password:p}); if(error) return toast(error.message);
+  closeModal(); toast("Password updated.");
+};
+sb.auth.getSession().then(({data})=>{ if(data.session) enter(data.session); });
+
+function buildNav(badges){
+  const b = badges||{};
+  $("#navTabs").innerHTML = TABS.filter(([k])=> k!=="team" || isSuper()).map(([k,l])=>
+    `<button data-v="${k}" class="${k===VIEW?"active":""}">${esc(l)}${b[k]?`<span class="badge">${b[k]}</span>`:""}</button>`).join("");
+}
+$("#navTabs").addEventListener("click",e=>{ const b=e.target.closest("button"); if(!b) return; VIEW=b.dataset.v;
+  document.querySelectorAll("#navTabs button").forEach(x=>x.classList.toggle("active",x===b)); render(); });
+const head = (title, sub, right="") => `<div class="pageHead"><div><h1>${esc(title)}</h1><p>${esc(sub)}</p></div><div class="filters">${right}</div></div>`;
+function render(){ ({overview:rOverview, signups:rSignups, accounts:rAccounts, reports:rReports, activity:rActivity, logs:rLogs, audit:rAudit, limits:rLimits, team:rTeam}[VIEW])().catch(()=>{}); }
+window.render = render;
+
+/* ---------- overview ---------- */
+async function rOverview(){
+  const m = await rpc("admin_metrics");
+  buildNav({signups:m.signups.pending, reports:m.reports.open});
+  const k = (n,l,c="") => `<div class="kpi ${c}"><div class="n">${esc(n)}</div><div class="l">${esc(l)}</div></div>`;
+  const s = m.security, tiers = Object.entries(m.accounts.by_tier), opp = Object.entries(m.data.opportunities);
+  const trend = m.trend||[], maxA = Math.max(1,...trend.map(t=>t.activity_events||0));
+  $("#mainEl").innerHTML = head("Overview", "System health at "+when(m.generated_at)+".", `<button class="btn ghost sm" onclick="render()">Refresh</button>`)
+  + `<div class="kpis">`
+  + k(m.signups.pending,"Signups awaiting review", m.signups.pending?"warnk":"")
+  + k(m.reports.open,"Open reports", m.reports.open?"warnk":"")
+  + k(m.accounts.active,"Active bureau accounts")
+  + k(m.activity.active_7d,"Users active in 7 days")
+  + k(s.errors_24h,"Errors in 24 hours", s.errors_24h?"alert":"")
+  + k(s.rate_limit_blocks_24h,"Rate limit blocks in 24 hours", s.rate_limit_blocks_24h?"warnk":"")
+  + `</div><div class="grid2">
+  <div class="card"><h3>Accounts</h3>${table(["Measure","#Count"],[
+      ["Bureau accounts",m.accounts.total],["Suspended",m.accounts.suspended],["Awaiting first sign-in",m.accounts.awaiting_first_signin],
+      ...tiers.map(([t,n])=>["Tier "+words(t),n]),["Super admins",m.team.super],["Staff",m.team.staff]
+    ].map(([a,b])=>`<tr><td>${esc(a)}</td><td class="num">${esc(b)}</td></tr>`))}</div>
+  <div class="card"><h3>Usage</h3>${table(["Measure","#Count"],[
+      ["Users active in 24 hours",m.activity.active_24h],["Users active in 30 days",m.activity.active_30d],["Sign-ins recorded in 7 days",m.activity.signins_7d],
+      ["Activity events in 24 hours",m.activity.events_24h],["Signup requests in 7 days",m.signups.last_7d],["Reports closed in 7 days",m.reports.resolved_7d]
+    ].map(([a,b])=>`<tr><td>${esc(a)}</td><td class="num">${esc(b)}</td></tr>`))}
+    ${trend.length>1?`<h3 style="margin-top:16px">Daily activity, last ${trend.length} days</h3><div class="bars" role="img" aria-label="Daily activity events">${trend.map(t=>`<i title="${esc(t.day)}: ${t.activity_events||0}" style="height:${Math.round(100*(t.activity_events||0)/maxA)}%"></i>`).join("")}</div>`:`<p class="note" style="margin-top:12px">A daily trend appears here after two nightly snapshots.</p>`}</div>
+  <div class="card"><h3>Security and reliability</h3>${table(["Measure","#Count"],[
+      ["Warnings in 24 hours",s.warnings_24h],["Failed scheduled jobs in 7 days",s.cron_failed_7d],["Failed outbound calls in 7 days",s.http_failed_7d],["Audit entries in 7 days",s.audit_entries_7d]
+    ].map(([a,b])=>`<tr><td>${esc(a)}</td><td class="num">${esc(b)}</td></tr>`))}</div>
+  <div class="card"><h3>Pipeline data</h3>${table(["Measure","#Count"],[
+      ["Strategic events",m.data.events],...opp.map(([t,n])=>["Bid opportunities, "+words(t),n]),["Bid history records",m.data.bid_wins],["Event submissions in review",m.data.event_submissions_in_review]
+    ].map(([a,b])=>`<tr><td>${esc(a)}</td><td class="num">${esc(b)}</td></tr>`))}</div>
+  <div class="card"><h3>Scheduled jobs</h3>${table(["Job","Schedule","Last run","Result"], m.system.jobs.map(j=>
+      `<tr><td>${esc(words(j.job))}</td><td class="mono">${esc(j.schedule)}</td><td>${esc(ago(j.last_run))}</td><td>${j.last_status?chip(j.last_status, j.last_status==="succeeded"?"good":"bad"):chip("not run yet")}${!j.active?" "+chip("paused","warnc"):""}</td></tr>`))}</div>
+  <div class="card"><h3>Database</h3><p class="note">Size ${esc(m.system.db_size)}, with ${esc(m.system.connections)} open connections.</p>${table(["Largest tables","#Rows","#Size"], m.system.largest_tables.map(t=>
+      `<tr><td class="mono">${esc(t.table)}</td><td class="num">${esc(t.rows)}</td><td class="num">${esc(t.size)}</td></tr>`))}</div>
+  </div>`;
+}
+
+/* ---------- signups ---------- */
+let SG_STATUS = "pending", SG = [];
+async function rSignups(){
+  SG = await rpc("admin_signups", {p_status:SG_STATUS});
+  const sel = ["pending","approved","rejected","spam","all"].map(s=>`<option value="${s}" ${s===SG_STATUS?"selected":""}>${esc(s[0].toUpperCase()+s.slice(1))}</option>`).join("");
+  $("#mainEl").innerHTML = head("Signups", "Access requests from the landing page. Approving one creates the login and shows a temporary password to pass on.",
+    `<label class="sub" for="sgSel">Status</label><select id="sgSel" onchange="SG_STATUS=this.value;render()">${sel}</select>`)
+  + `<div class="card">${table(["Requested","Contact","Organisation","Message","Status",""], SG.map(r=>`<tr>
+      <td>${esc(day(r.created_at))}<div class="sub">${esc(ago(r.created_at))}</div></td>
+      <td><b>${esc(r.contact_name)}</b><div class="sub">${esc(r.email)}</div>${r.existing_account?chip("already has a login","warnc"):""}${r.same_network_7d>1?" "+chip(r.same_network_7d+" other requests from this network","warnc"):""}</td>
+      <td>${esc(r.org_name)}<div class="sub">${esc([r.org_type,r.country_name].filter(Boolean).join(" · "))}</div></td>
+      <td class="diff">${esc(r.message||"")}${r.review_note?`<div class="sub">Note: ${esc(r.review_note)}</div>`:""}</td>
+      <td>${chip(r.status, r.status==="approved"?"good":r.status==="pending"?"info":"bad")}${r.reviewed_by?`<div class="sub">${esc(r.reviewed_by)}</div>`:""}</td>
+      <td class="acts">${r.status==="pending"?`<button class="btn sm" onclick="sgApprove(${r.id})">Approve</button><button class="btn ghost sm" onclick="sgDecide(${r.id},'rejected')">Reject</button><button class="btn danger sm" onclick="sgDecide(${r.id},'spam')">Spam</button>`
+        : r.status!=="approved"?`<button class="btn ghost sm" onclick="sgDecide(${r.id},'pending')">Reopen</button>`:""}</td></tr>`), "No requests with this status.")}</div>`;
+}
+window.sgApprove = id => { const r = SG.find(x=>x.id===id);
+  const guess = LOOKUPS.countries.find(c=>c.name.toLowerCase()===String(r.country_name||"").trim().toLowerCase());
+  showModal("Approve access request", `<p>${esc(r.contact_name)} at ${esc(r.org_name)} (${esc(r.email)}).</p>
+    <div class="field"><label for="apC">Country view</label><select id="apC"><option value="">Select a country</option>${LOOKUPS.countries.map(c=>`<option value="${c.id}" ${guess&&guess.id===c.id?"selected":""}>${esc(c.name)}</option>`).join("")}</select><div class="hint">They wrote: ${esc(r.country_name||"no country given")}</div></div>
+    <div class="field"><label for="apT">Licence tier</label><select id="apT">${LOOKUPS.tiers.map(t=>`<option value="${t}">${esc(words(t))}</option>`).join("")}</select></div>
+    <div class="field"><label for="apN">Internal note (optional)</label><input id="apN"></div>
+    <button class="btn primary" id="apGo">Create login</button>`);
+  $("#apGo").onclick = async ()=>{ if(!$("#apC").value) return toast("Choose a country.");
+    $("#apGo").disabled = true;
+    try{ const out = await accountAction({action:"create", signup_request_id:id, country_id:Number($("#apC").value), tier:$("#apT").value, note:$("#apN").value});
+      showPassword("Login created", out); render(); }catch(_){ $("#apGo").disabled = false; } };
+};
+window.sgDecide = async (id, decision) => {
+  const note = decision==="pending" ? null : prompt(decision==="spam" ? "Optional note for marking this as spam" : "Optional note for rejecting this request", "");
+  if(note===null && decision!=="pending") return;
+  await rpc("admin_signup_decide", {p_id:id, p_decision:decision, p_note:note}); toast("Request updated."); render();
+};
+
+/* ---------- accounts ---------- */
+let US = [];
+async function rAccounts(){
+  US = await rpc("admin_users");
+  $("#mainEl").innerHTML = head("Accounts", "Bureau logins. New accounts normally come from an approved signup; super admins can also create one from the pipeline's access tab.")
+  + `<div class="card">${table(["Account","Country","Tier","Status","Last sign-in","#Activity, 30 days",""], US.map(u=>`<tr>
+      <td><b>${esc(u.org_name||u.email)}</b><div class="sub">${esc([u.contact_name,u.email].filter(Boolean).join(" · "))}</div></td>
+      <td>${esc(u.country||"")}</td><td>${chip(u.tier||"none","info")}</td>
+      <td>${u.active?chip("active","good"):chip("suspended","bad")}${u.temp_password_expired?" "+chip("temporary password expired","bad"):u.must_change_password?" "+chip("awaiting first sign-in","warnc"):""}${u.open_reports?" "+chip(u.open_reports+" open reports","warnc"):""}</td>
+      <td>${esc(ago(u.last_sign_in_at))}</td><td class="num">${esc(u.activity_30d)}</td>
+      <td class="acts">${isSuper()?`<button class="btn ghost sm" onclick="usEdit('${u.user_id}')">Edit</button>`:""}<button class="btn ghost sm" onclick="usReset('${u.user_id}')">Reset password</button><button class="btn ${u.active?"danger":"ghost"} sm" onclick="usActive('${u.user_id}',${!u.active})">${u.active?"Suspend":"Reinstate"}</button></td></tr>`), "No bureau accounts yet.")}</div>`;
+}
+window.usEdit = id => { const u = US.find(x=>x.user_id===id);
+  showModal("Edit account", `<p>${esc(u.email)}</p>
+    <div class="field"><label for="edO">Organisation</label><input id="edO" value="${esc(u.org_name||"")}"></div>
+    <div class="field"><label for="edN">Contact name</label><input id="edN" value="${esc(u.contact_name||"")}"></div>
+    <div class="field"><label for="edC">Country view</label><select id="edC">${LOOKUPS.countries.map(c=>`<option value="${c.id}" ${c.id===u.country_id?"selected":""}>${esc(c.name)}</option>`).join("")}</select></div>
+    <div class="field"><label for="edT">Licence tier</label><select id="edT">${LOOKUPS.tiers.map(t=>`<option value="${t}" ${t===u.tier?"selected":""}>${esc(words(t))}</option>`).join("")}</select></div>
+    <button class="btn primary" id="edGo">Save changes</button>`);
+  $("#edGo").onclick = async ()=>{ await rpc("admin_user_update", {p_user_id:id, patch:{org_name:$("#edO").value, contact_name:$("#edN").value, country_id:Number($("#edC").value), tier:$("#edT").value}});
+    closeModal(); toast("Account updated."); render(); };
+};
+window.usReset = async id => { const u = US.find(x=>x.user_id===id);
+  if(!confirm("Issue a new temporary password for "+u.email+"? This signs the user out everywhere.")) return;
+  showPassword("Temporary password issued", await accountAction({action:"reset_password", user_id:id})); render(); };
+window.usActive = async (id, active) => { const u = US.find(x=>x.user_id===id); let reason = "";
+  if(!active){ reason = prompt("Reason for suspending "+u.email+" (kept in the audit log)", ""); if(reason===null) return; }
+  await accountAction({action:"set_active", user_id:id, active, reason}); toast(active?"Account reinstated.":"Account suspended and signed out."); render(); };
+
+/* ---------- reports ---------- */
+let RP_STATUS = "active", RP_KIND = "", RP = [];
+const KINDS = {data_issue:"Data issue", support:"Support", bug:"Bug", abuse:"Abuse"};
+async function rReports(){
+  RP = await rpc("admin_reports", {p_filter:{status:RP_STATUS, kind:RP_KIND}});
+  const st = [["active","Open and in progress"],["open","Open"],["in_progress","In progress"],["resolved","Resolved"],["dismissed","Dismissed"],["all","All"]];
+  $("#mainEl").innerHTML = head("Reports", "Data flags, support requests, bug reports and abuse reports filed by signed-in users.",
+    `<label class="sub" for="rpS">Status</label><select id="rpS" onchange="RP_STATUS=this.value;render()">${st.map(([v,l])=>`<option value="${v}" ${v===RP_STATUS?"selected":""}>${l}</option>`).join("")}</select>
+     <label class="sub" for="rpK">Type</label><select id="rpK" onchange="RP_KIND=this.value;render()"><option value="">All types</option>${Object.entries(KINDS).map(([v,l])=>`<option value="${v}" ${v===RP_KIND?"selected":""}>${l}</option>`).join("")}</select>`)
+  + `<div class="card">${table(["Filed","Type","Report","From","Status",""], RP.map(r=>`<tr>
+      <td>${esc(day(r.created_at))}<div class="sub">${esc(ago(r.created_at))}</div></td>
+      <td>${chip(KINDS[r.kind], r.kind==="abuse"?"bad":r.kind==="data_issue"?"info":"")}${r.priority!=="normal"?" "+chip(r.priority+" priority", r.priority==="high"?"bad":""):""}</td>
+      <td class="diff"><b>${esc(r.title)}</b>${r.subject_label||r.subject_id?`<div class="sub">About ${esc(r.subject_label||(words(r.subject_type)+" "+r.subject_id))}</div>`:""}<div>${esc(r.body||"")}</div>${r.resolution_note?`<div class="sub">Resolution: ${esc(r.resolution_note)}</div>`:""}</td>
+      <td>${esc(r.reporter_email||"")}<div class="sub">${esc(r.reporter_country||"")}</div></td>
+      <td>${chip(r.status, r.status==="resolved"?"good":r.status==="dismissed"?"":"warnc")}${r.assigned_to?`<div class="sub">${esc(r.assigned_to)}</div>`:""}</td>
+      <td class="acts"><button class="btn ghost sm" onclick="rpEdit(${r.id})">Update</button></td></tr>`), "No reports match these filters.")}</div>`;
+}
+window.rpEdit = id => { const r = RP.find(x=>x.id===id);
+  const opt = (list, cur) => list.map(v=>`<option value="${v}" ${v===cur?"selected":""}>${esc(words(v))}</option>`).join("");
+  showModal("Update report", `<p>${esc(r.title)}</p>
+    <div class="field"><label for="ruS">Status</label><select id="ruS">${opt(["open","in_progress","resolved","dismissed"], r.status)}</select></div>
+    <div class="field"><label for="ruP">Priority</label><select id="ruP">${opt(["low","normal","high"], r.priority)}</select></div>
+    <div class="field"><label for="ruA">Assigned to</label><input id="ruA" value="${esc(r.assigned_to||ME.email)}"></div>
+    <div class="field"><label for="ruN">Resolution note (the reporter can see this)</label><textarea id="ruN">${esc(r.resolution_note||"")}</textarea></div>
+    <button class="btn primary" id="ruGo">Save</button>`);
+  $("#ruGo").onclick = async ()=>{ await rpc("admin_report_update", {p_id:id, patch:{status:$("#ruS").value, priority:$("#ruP").value, assigned_to:$("#ruA").value, resolution_note:$("#ruN").value}});
+    closeModal(); toast("Report updated."); render(); };
+};
+
+/* ---------- activity ---------- */
+let AC_USER = null;
+async function rActivity(){
+  const a = await rpc("admin_user_activity", {p_user_id:AC_USER, p_limit:200});
+  const picked = AC_USER && a.by_user.find(u=>u.user_id===AC_USER);
+  $("#mainEl").innerHTML = head("Activity", "What signed-in users did in the last 30 days. A high count of networks for one login can mean a shared password.",
+    AC_USER?`<button class="btn ghost sm" onclick="AC_USER=null;render()">Show all users</button>`:"")
+  + `<div class="card"><h3>By user</h3>${table(["User","#Sign-ins","#Views","#Exports","#All events","#Networks","Last active",""], a.by_user.map(u=>`<tr>
+      <td><b>${esc(u.org_name||u.email)}</b><div class="sub">${esc([u.email,u.country].filter(Boolean).join(" · "))}</div></td>
+      <td class="num">${u.signins_30d}</td><td class="num">${u.views_30d}</td><td class="num">${u.exports_30d}</td><td class="num">${u.events_30d}</td>
+      <td class="num">${u.networks_30d>3?chip(u.networks_30d,"warnc"):u.networks_30d}</td><td>${esc(ago(u.last_active_at))}</td>
+      <td class="acts"><button class="btn ghost sm" onclick="AC_USER='${u.user_id}';render()">Timeline</button></td></tr>`), "No activity recorded yet. Events appear once users sign in to the updated portal.")}</div>
+  <div class="card"><h3>${picked?"Timeline for "+esc(picked.email):"Latest events"}</h3>${table(["When","User","Event","Detail"], a.recent.map(e=>`<tr>
+      <td>${esc(when(e.at))}</td><td>${esc(e.email||"")}</td><td>${chip(e.event, e.event==="export"||e.event==="download"?"warnc":e.event==="signin"?"good":"")}</td>
+      <td class="mono">${esc(e.detail?Object.entries(e.detail).map(([k,v])=>k+": "+v).join(", "):"")}</td></tr>`), "No events.")}</div>`;
+}
+
+/* ---------- logs ---------- */
+let LG = {source:"", level:"", q:"", hours:168};
+async function rLogs(){
+  const rows = await rpc("admin_logs", {p_filter:LG});
+  const o = (list, cur) => list.map(([v,l])=>`<option value="${v}" ${String(v)===String(cur)?"selected":""}>${l}</option>`).join("");
+  $("#mainEl").innerHTML = head("Logs", "Application events, browser errors, rate limit blocks, scheduled jobs and failed outbound calls in one view.",
+    `<select aria-label="Source" onchange="LG.source=this.value;render()">${o([["","All sources"],["rate_limit","Rate limits"],["signup","Signups"],["browser","Browser errors"],["cron","Scheduled jobs"],["http","Outbound calls"]], LG.source)}</select>
+     <select aria-label="Level" onchange="LG.level=this.value;render()">${o([["","All levels"],["error","Errors"],["warn","Warnings"],["info","Information"]], LG.level)}</select>
+     <select aria-label="Period" onchange="LG.hours=Number(this.value);render()">${o([[24,"Last 24 hours"],[168,"Last 7 days"],[720,"Last 30 days"],[2160,"Last 90 days"]], LG.hours)}</select>
+     <input type="search" aria-label="Search logs" placeholder="Search" value="${esc(LG.q)}" onchange="LG.q=this.value;render()">`)
+  + `<div class="card">${table(["When","Level","Source","Event","Message"], rows.map(l=>`<tr>
+      <td style="white-space:nowrap">${esc(when(l.at))}</td><td>${chip(l.level, l.level==="error"?"bad":l.level==="warn"?"warnc":"")}</td><td>${esc(words(l.source))}</td>
+      <td class="mono">${esc(l.event)}</td><td class="diff">${esc(l.message||"")}${l.user_email?`<div class="sub">${esc(l.user_email)}</div>`:""}${l.context?`<div class="sub mono">${esc(JSON.stringify(l.context))}</div>`:""}</td></tr>`), "No log entries match these filters.")}</div>`;
+}
+
+/* ---------- audit ---------- */
+let AU = {entity:"", actor:"", q:"", days:30};
+function diffText(a){
+  const o=a.old_row, n=a.new_row;
+  if(a.summary) return esc(a.summary);
+  if(o && n) return Object.keys(n).filter(k=>JSON.stringify(o[k])!==JSON.stringify(n[k])).map(k=>`<b>${esc(words(k))}</b> ${esc(JSON.stringify(o[k]))} to ${esc(JSON.stringify(n[k]))}`).join("; ");
+  const r=n||o; if(!r) return "";
+  return (n?"Added ":"Removed ")+esc(Object.entries(r).filter(([,v])=>v!==null&&typeof v!=="object").slice(0,6).map(([k,v])=>words(k)+" "+v).join(", "));
+}
+async function rAudit(){
+  const rows = await rpc("admin_audit", {p_filter:AU});
+  const ents = [["","Everything"],["user_access","Accounts"],["signup_requests","Signups"],["user_reports","Reports"],["allowlist","Super admins"],["admin_staff","Staff"],["rate_limit_rules","Rate limit rules"],["admin_settings","Settings"]];
+  $("#mainEl").innerHTML = head("Audit log", "Who changed what and when. Entries cannot be edited or deleted.",
+    `<select aria-label="Record type" onchange="AU.entity=this.value;render()">${ents.map(([v,l])=>`<option value="${v}" ${v===AU.entity?"selected":""}>${l}</option>`).join("")}</select>
+     <select aria-label="Period" onchange="AU.days=Number(this.value);render()">${[[7,"Last 7 days"],[30,"Last 30 days"],[365,"Last year"],[3650,"All time"]].map(([v,l])=>`<option value="${v}" ${v===AU.days?"selected":""}>${l}</option>`).join("")}</select>
+     <input type="search" aria-label="Filter by admin" placeholder="Admin email" value="${esc(AU.actor)}" onchange="AU.actor=this.value;render()">`)
+  + `<div class="card">${table(["When","By","Action","Record","Change"], rows.map(a=>`<tr>
+      <td style="white-space:nowrap">${esc(when(a.at))}</td><td>${esc(a.actor)}</td><td class="mono">${esc(a.action)}</td>
+      <td class="mono">${esc((a.entity_id||"").length>20?(a.entity_id||"").slice(0,8)+"…":a.entity_id||"")}</td><td class="diff">${diffText(a)}</td></tr>`), "No audit entries in this period.")}</div>`;
+}
+
+/* ---------- rate limits ---------- */
+const span = s => s%86400===0 ? (s/86400)+(s===86400?" day":" days") : s%3600===0 ? (s/3600)+(s===3600?" hour":" hours") : s%60===0 ? (s/60)+" minutes" : s+" seconds";
+let RL = null;
+async function rLimits(){
+  RL = await rpc("admin_rate_limits");
+  $("#mainEl").innerHTML = head("Rate limits", "Each rule caps how often one user, email or network can do something. Sign-in attempts are limited separately by the authentication service.")
+  + `<div class="card"><h3>Rules</h3>${table(["Rule","Limit","#Hits this window","#Blocks in 24 hours","Status",""], RL.rules.map(r=>`<tr>
+      <td><b>${esc(r.description)}</b><div class="sub mono">${esc(r.key)}</div></td><td>${r.max_hits} per ${esc(span(r.window_seconds))}</td>
+      <td class="num">${r.hits_now}</td><td class="num">${r.blocks_24h?chip(r.blocks_24h,"warnc"):0}</td><td>${r.enabled?chip("on","good"):chip("off","bad")}</td>
+      <td class="acts">${isSuper()?`<button class="btn ghost sm" onclick="rlEdit('${r.key}')">Change</button>`:""}</td></tr>`))}</div>
+  <div class="card"><h3>Blocked right now</h3>${table(["Who","Rule","#Attempts","Blocked until",""], RL.blocked_now.map((b,i)=>`<tr>
+      <td>${esc(b.label)}</td><td class="mono">${esc(b.rule)}</td><td class="num">${b.hits} of ${b.max_hits}</td><td>${esc(when(b.until))}</td>
+      <td class="acts">${isSuper()?`<button class="btn ghost sm" onclick="rlClear(${i})">Lift block</button>`:""}</td></tr>`), "Nobody is blocked at the moment.")}</div>
+  <div class="card"><h3>Retention</h3>${table(["Setting","#Days",""], RL.settings.map(s=>`<tr><td>${esc(s.description)}</td><td class="num">${esc(s.value)}</td>
+      <td class="acts">${isSuper()?`<button class="btn ghost sm" onclick="setEdit('${s.key}',${Number(s.value)})">Change</button>`:""}</td></tr>`))}<p class="note" style="margin-top:12px">The audit log is kept indefinitely.</p></div>`;
+}
+window.rlEdit = key => { const r = RL.rules.find(x=>x.key===key);
+  showModal("Change rule", `<p>${esc(r.description)}</p>
+    <div class="field"><label for="rlM">Maximum attempts</label><input type="number" id="rlM" min="1" value="${r.max_hits}"></div>
+    <div class="field"><label for="rlW">Window in seconds</label><input type="number" id="rlW" min="10" value="${r.window_seconds}"><div class="hint">3600 is one hour and 86400 is one day.</div></div>
+    <div class="field"><label for="rlE">Status</label><select id="rlE"><option value="true" ${r.enabled?"selected":""}>On</option><option value="false" ${r.enabled?"":"selected"}>Off</option></select></div>
+    <button class="btn primary" id="rlGo">Save rule</button>`);
+  $("#rlGo").onclick = async ()=>{ await rpc("admin_rate_limit_set", {p_key:key, patch:{max_hits:Number($("#rlM").value), window_seconds:Number($("#rlW").value), enabled:$("#rlE").value==="true"}});
+    closeModal(); toast("Rule saved."); render(); };
+};
+window.rlClear = async i => { const b = RL.blocked_now[i]; await rpc("admin_rate_limit_clear", {p_rule:b.rule, p_subject:b.subject}); toast("Block lifted."); render(); };
+window.setEdit = async (key, cur) => { const v = prompt("Number of days (7 to 3650)", cur); if(v===null) return;
+  await rpc("admin_setting_set", {p_key:key, p_value:Number(v)}); toast("Setting saved."); render(); };
+
+/* ---------- team ---------- */
+async function rTeam(){
+  const t = await rpc("admin_team");
+  $("#mainEl").innerHTML = head("Team", "Staff can review signups and reports, suspend accounts, reset passwords and read every screen here. Only super admins change tiers, rules, settings and the team.",
+    `<button class="btn sm" onclick="stAdd()">Add staff member</button>`)
+  + `<div class="card"><h3>Staff</h3>${table(["Staff member","Status","Last sign-in","Added by",""], t.staff.map(s=>`<tr>
+      <td><b>${esc(s.full_name||s.email)}</b><div class="sub">${esc(s.email)}</div></td>
+      <td>${s.active?chip("active","good"):chip("disabled","bad")}${s.has_login?"":" "+chip("no login yet","warnc")}</td><td>${esc(ago(s.last_sign_in_at))}</td><td>${esc(s.added_by||"")}</td>
+      <td class="acts">${s.has_login?`<button class="btn ghost sm" onclick="stLogin('${esc(s.email)}','reset_staff_password')">Reset password</button>`:`<button class="btn sm" onclick="stLogin('${esc(s.email)}','create_staff')">Create login</button>`}
+        <button class="btn ghost sm" onclick="stSet('${esc(s.email)}',${!s.active})">${s.active?"Disable":"Enable"}</button><button class="btn danger sm" onclick="stRemove('${esc(s.email)}')">Remove</button></td></tr>`), "No staff yet. Add a team member to share the queues.")}</div>
+  <div class="card"><h3>Super admins</h3><p class="note">Super admins are managed directly in the database for safety. Ask your developer to add or remove one.</p>${table(["Email","Last sign-in"], t.super.map(a=>`<tr><td>${esc(a.email)}</td><td>${esc(ago(a.last_sign_in_at))}</td></tr>`))}</div>`;
+}
+window.stAdd = () => { showModal("Add staff member", `<div class="field"><label for="stE">Work email</label><input type="email" id="stE"></div>
+    <div class="field"><label for="stN">Full name</label><input id="stN"></div><button class="btn primary" id="stGo">Add and create login</button>`);
+  $("#stGo").onclick = async ()=>{ const r = await rpc("admin_staff_set", {p_email:$("#stE").value, p_full_name:$("#stN").value, p_active:true});
+    try{ showPassword("Staff login created", await accountAction({action:"create_staff", email:r.email})); }catch(_){ closeModal(); } render(); };
+};
+window.stLogin = async (email, action) => { showPassword(action==="create_staff"?"Staff login created":"Temporary password issued", await accountAction({action, email})); render(); };
+window.stSet = async (email, active) => { await rpc("admin_staff_set", {p_email:email, p_active:active}); toast(active?"Staff member enabled.":"Staff member disabled."); render(); };
+window.stRemove = async email => { if(!confirm("Remove "+email+" from staff? Their access to this console ends at once.")) return;
+  await rpc("admin_staff_remove", {p_email:email}); toast("Staff member removed."); render(); };
+</script>
+</body>
+</html>

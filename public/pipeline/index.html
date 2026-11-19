@@ -274,6 +274,8 @@ footer.ft{color:var(--faint);font-size:12px;padding:22px 28px;border-top:1px sol
     <div class="userChip">
       <button id="userBtn"><span id="userEmail"></span> ▾</button>
       <div class="userMenu hidden" id="userMenu">
+        <button id="btnReport">Report a problem</button>
+        <button id="btnSysAdmin" class="hidden">System admin</button>
         <button id="btnChangePw">Change password</button>
         <button id="btnLogout">Sign out</button>
       </div>
@@ -498,6 +500,9 @@ $("#inPass").addEventListener("keydown",e=>{ if(e.key==="Enter") doLogin(); });
 let failCount = 0, lockUntil = 0, LAST_PW = null;
 async function doLogin(){
   $("#authErr").classList.add("hidden");
+  const {data,error} = await sb.auth.signInWithPassword({email:$("#inEmail").value.trim(), password:$("#inPass").value});
+  if(error){ const el=$("#authErr"); el.textContent = error.message==="Invalid login credentials" ? "Invalid email or password." : error.message; el.classList.remove("hidden"); return; }
+  sb.rpc("track_activity",{p_event:"signin"}).then(()=>{},()=>{});
   const wait = Math.ceil((lockUntil-Date.now())/1000);
   if(wait>0) return showAuthErr(`Too many failed attempts. Try again in ${wait} seconds.`);
   const email = $("#inEmail").value.trim(), password = $("#inPass").value;
@@ -524,13 +529,35 @@ async function enter(session){
   $("#userEmail").textContent = session.user.email;
   if(error){ $("#mainEl").innerHTML = `<div class="card"><h3>Could not check your access</h3><p>${esc(error.message)}</p></div>`; return; }
   ME = acc;
-  if(acc.role==="admin"){ MODE="admin"; buildNav(); await loadData(); }
+  if(acc.role==="admin"){ MODE="admin"; $("#btnSysAdmin").classList.remove("hidden"); buildNav(); await loadData(); }
   else if(acc.role==="bureau"){ MODE="bureau"; VIEW="b_home"; buildNav(); await loadPortal(); }
   else { $("#navTabs").innerHTML=""; $("#mainEl").innerHTML = `<div class="card"><h3>Account not authorised</h3><p>Your login works but this account has no access yet. Contact ${AGENCY_EMAIL} to be added.</p></div>`; }
 }
 $("#userBtn").onclick = ()=> $("#userMenu").classList.toggle("hidden");
 document.addEventListener("click",e=>{ if(!e.target.closest(".userChip")) $("#userMenu").classList.add("hidden"); });
 $("#btnLogout").onclick = async ()=>{ try{ localStorage.removeItem(IDLE_KEY); }catch(_){} await sb.auth.signOut(); location.reload(); };
+$("#btnSysAdmin").onclick = ()=>{ location.href = "/pipeline/admin"; };
+// Report a problem: files a ticket for the agency team (migration 20261119090334_admin_console).
+$("#btnReport").onclick = ()=>{
+  $("#userMenu").classList.add("hidden");
+  showModal(`<div class="mHead"><div><h3>Report a problem</h3><div class="sub">The agency team reviews every report.</div></div><button class="x" onclick="closeModal()">✕</button></div>
+  <div class="mBody"><div class="field"><label for="rpKind">What is it about</label><select id="rpKind"><option value="data_issue">Incorrect or outdated data</option><option value="support">Help using the dashboard</option><option value="bug">Something is not working</option><option value="abuse">Misuse or a security concern</option></select></div>
+  <div class="field"><label for="rpTitle">Short summary</label><input id="rpTitle" maxlength="200"></div>
+  <div class="field"><label for="rpBody">Details</label><textarea id="rpBody" maxlength="4000" placeholder="For a data issue, name the event or bid and say what should change."></textarea></div>
+  <button class="btn primary" onclick="sendReport()">Send report</button></div>`);
+};
+window.sendReport = async ()=>{
+  const title=$("#rpTitle").value.trim(); if(!title) return toast("Add a short summary.");
+  const {data,error} = await sb.rpc("report_submit",{payload:{kind:$("#rpKind").value, title, body:$("#rpBody").value, page_url:location.pathname+"#"+VIEW}});
+  if(error) return toast(error.message);
+  if(!data.ok) return toast(data.error==="rate_limited" ? "You have sent several reports recently. Try again in an hour." : "The report could not be sent.");
+  closeModal(); toast("Report sent. Thank you.");
+};
+// Usage and error logging for the admin console. Failures are ignored.
+function trackView(){ if(MODE==="bureau") sb.rpc("track_activity",{p_event:"view",p_detail:{tab:VIEW}}).then(()=>{},()=>{}); }
+let errSent=0;
+window.addEventListener("error",e=>{ if(!entered || errSent++>=5) return;
+  sb.rpc("client_log",{p_event:"js.error",p_message:String(e.message||"").slice(0,500),p_context:{file:String(e.filename||"").slice(-80),line:e.lineno||0,view:VIEW}}).then(()=>{},()=>{}); });
 $("#btnChangePw").onclick = ()=>{
   $("#userMenu").classList.add("hidden");
   showModal(`<div class="mHead"><div><h3>Change password</h3><div class="sub">Other devices are signed out once it is saved.</div></div><button class="x" onclick="closeModal()">✕</button></div>
@@ -665,7 +692,7 @@ $("#navTabs").addEventListener("click",e=>{
   const b=e.target.closest("button"); if(!b) return;
   VIEW=b.dataset.v;
   document.querySelectorAll("#navTabs button").forEach(x=>x.classList.toggle("active",x===b));
-  render();
+  render(); trackView();
 });
 function render(){
   const R = {overview:rOverview, pipeline:rPipeline, matching:rMatching, b_match:bMatch, events:rEvents, history:rHistory, destinations:rDest, policies:rPolicies, submissions:rSubmissions, partner:rPartner, access:rAccess,
