@@ -184,8 +184,7 @@ supabase/migrations/    pipeline migrations from the move onwards
 - `netlify.toml`: build `npm run build`, publish `dist`, Node 22.
 - `/pipeline`, `/pipeline/partner` and `/pipeline/submit` are rewritten to
   their `.html` files, and `/admin` to `pipeline/admin.html`, **before** the
-  SPA catch-all. Keep that order. The old `/pipeline/admin` address
-  301-redirects to `/admin`.
+  SPA catch-all. Keep that order.
 - This repo is the only source of the pipeline pages. farirainandipa-web no
   longer carries a copy (removed in its PR #18), so edit them here.
 - farirainandipa.co.zw/pipeline/* 301-redirects here (path and query kept), so

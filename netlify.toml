@@ -19,16 +19,10 @@
   status = 200
 
 # System admin console (sign-in required, agency team only), served at /admin.
-# The old /pipeline/admin address redirects there.
 [[redirects]]
   from = "/admin"
   to = "/pipeline/admin.html"
   status = 200
-
-[[redirects]]
-  from = "/pipeline/admin"
-  to = "/admin"
-  status = 301
 
 # Public event submission form (no login), linked from the landing page.
 [[redirects]]
