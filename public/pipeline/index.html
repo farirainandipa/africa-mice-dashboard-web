@@ -34,6 +34,12 @@
 .authNote{font-size:12.5px;color:var(--muted);margin-top:18px;line-height:1.6}
 .authAlt{margin-top:18px;padding-top:18px;border-top:1px solid var(--line);font-size:13px;color:var(--muted)}
 .authAlt a{font-weight:600}
+.authOk{background:var(--t-accent);color:var(--ink);border:1px solid rgba(25,195,177,.3);border-radius:8px;padding:10px 12px;font-size:13px;margin-bottom:14px}
+.authCard .btn.wide{width:100%;margin-top:4px;padding:12px 20px;font-size:15px}
+.pwRules{list-style:none;margin:-6px 0 16px;padding:0;display:grid;gap:4px;font-size:12.5px;color:var(--muted)}
+.pwRules li::before{content:"○";display:inline-block;width:18px;color:var(--faint)}
+.pwRules li.met{color:var(--ink)}
+.pwRules li.met::before{content:"✓";color:var(--accent)}
 /* ---------- shell ---------- */
 #appView{min-height:100vh;display:flex;flex-direction:column;background:#eef2f7}
 main.light{background:transparent}
@@ -245,6 +251,8 @@ footer.ft{color:var(--faint);font-size:12px;padding:22px 28px;border-top:1px sol
   </div>
   <div class="authMain">
     <div class="authCard">
+      <div id="authFirst" class="hidden"></div>
+      <div id="authSignin">
       <span class="overline">Bid pipeline</span>
       <h1>Sign in</h1>
       <p class="sub">Authorised access for the agency team and partner convention bureaux.</p>
@@ -254,6 +262,7 @@ footer.ft{color:var(--faint);font-size:12px;padding:22px 28px;border-top:1px sol
       <button class="btn primary" id="btnLogin">Sign in</button>
       <p class="authNote">Access is by invitation. Contact <a href="mailto:nandie@farirainandipa.co.zw">nandie@farirainandipa.co.zw</a>.</p>
       <p class="authAlt">Organising a movable conference? <a href="/pipeline/submit.html">Submit an event</a> without signing in.</p>
+      </div>
     </div>
   </div>
 </div>
@@ -381,6 +390,56 @@ let state = {pipeStatus:"all", pipeQ:"", pipeSector:"all", evSector:"all", evSco
 /* =====================================================================
    AUTH
    ===================================================================== */
+/* Sign-in security. Bureau logins start on a temporary password (seven days)
+   and must confirm their email with a one-time code, then choose their own
+   password, before the portal shows anything. The server enforces this:
+   bureau_country_id() and my_tier() return null until complete_first_signin()
+   has checked the code and the change (migration 20261119043319). */
+const PW_MIN = 8;            // keep in step with Supabase Auth > Password requirements
+const PW_COMMON = ["password","passw0rd","qwerty","letmein","welcome","admin","123456","africa","mice","bureau","pipeline","tourism","convention"];
+const PW_RULES = [
+  [p=>p.length>=PW_MIN, `At least ${PW_MIN} characters`],
+  [p=>/[a-z]/.test(p) && /[A-Z]/.test(p), "Upper and lower case letters"],
+  [p=>/\d/.test(p), "At least one number"],
+  [p=>/[^A-Za-z0-9]/.test(p), "At least one symbol"],
+];
+function pwProblems(p, email, old){
+  const out = PW_RULES.filter(([t])=>!t(p)).map(([,l])=>l.toLowerCase());
+  const low = p.toLowerCase(), local = (email||"").split("@")[0].toLowerCase();
+  if(p.length>72) out.push("no more than 72 characters");
+  if(local.length>=4 && low.includes(local)) out.push("nothing from your email address");
+  if(PW_COMMON.some(w=>low.includes(w))) out.push("no common words such as password, welcome or africa");
+  if(/(.)\1\1\1/.test(p)) out.push("no character repeated four times in a row");
+  if(old && p===old) out.push("something other than the temporary password");
+  return out;
+}
+const pwFieldsHtml = id => `
+  <div class="field"><label for="${id}1">New password</label><input type="password" id="${id}1" autocomplete="new-password" maxlength="72"></div>
+  <ul class="pwRules" id="${id}Rules">${PW_RULES.map(([,l])=>`<li>${esc(l)}</li>`).join("")}</ul>
+  <div class="field"><label for="${id}2">Repeat new password</label><input type="password" id="${id}2" autocomplete="new-password" maxlength="72"></div>`;
+function wirePwRules(id){
+  const inp = $("#"+id+"1"), items = [...document.querySelectorAll("#"+id+"Rules li")];
+  inp.addEventListener("input",()=>PW_RULES.forEach(([t],i)=>items[i].classList.toggle("met",t(inp.value))));
+}
+function readNewPw(id, email, old){
+  const p = $("#"+id+"1").value, probs = pwProblems(p, email, old);
+  if(probs.length) return {err:"The password needs "+probs.join(", ")+"."};
+  if(p!==$("#"+id+"2").value) return {err:"The two passwords do not match."};
+  return {p};
+}
+function authMsg(error){
+  const m = error?.message||"Something went wrong.", c = error?.code||"";
+  if(c==="weak_password" || /weak|pwned|breach/i.test(m)) return "That password is too weak or has appeared in a known data breach. Choose another.";
+  if(c==="same_password") return "Choose a password different from your current one.";
+  if(error?.status===429 || /rate limit|too many/i.test(m)) return "Too many attempts. Wait a few minutes and try again.";
+  if(c==="otp_expired" || /expired|invalid/i.test(m) && /token|otp|code/i.test(m)) return "That code is wrong or has expired. Request a new one.";
+  return m;
+}
+function jwtClaims(s){
+  try{ return JSON.parse(atob(s.access_token.split(".")[1].replace(/-/g,"+").replace(/_/g,"/"))); }catch{ return {}; }
+}
+const sessionHasOtp = s => (jwtClaims(s).amr||[]).some(a=>a.method==="otp"||a.method==="magiclink");
+
 async function init(){
   try{ if(sessionStorage.getItem("pl_idle_out")){ sessionStorage.removeItem("pl_idle_out"); const el=$("#authErr"); el.textContent="You were signed out after 10 minutes of inactivity. Sign in again to continue."; el.classList.remove("hidden"); } }catch(_){}
   const {data:{session}} = await sb.auth.getSession();
@@ -433,21 +492,36 @@ function idleStart(){
 }
 $("#btnStay").onclick = ()=>{ idleMark(true); $("#idleBack").classList.add("hidden"); };
 $("#btnIdleOut").onclick = async ()=>{ try{ localStorage.removeItem(IDLE_KEY); }catch(_){} await sb.auth.signOut(); location.reload(); };
+function showAuthErr(msg){ const el=$("#authErr"); el.textContent=msg; el.classList.remove("hidden"); }
 $("#btnLogin").onclick = doLogin;
 $("#inPass").addEventListener("keydown",e=>{ if(e.key==="Enter") doLogin(); });
+let failCount = 0, lockUntil = 0, LAST_PW = null;
 async function doLogin(){
   $("#authErr").classList.add("hidden");
-  const {data,error} = await sb.auth.signInWithPassword({email:$("#inEmail").value.trim(), password:$("#inPass").value});
-  if(error){ const el=$("#authErr"); el.textContent = error.message==="Invalid login credentials" ? "Invalid email or password." : error.message; el.classList.remove("hidden"); return; }
+  const wait = Math.ceil((lockUntil-Date.now())/1000);
+  if(wait>0) return showAuthErr(`Too many failed attempts. Try again in ${wait} seconds.`);
+  const email = $("#inEmail").value.trim(), password = $("#inPass").value;
+  if(!email || !password) return showAuthErr("Enter your email and password.");
+  const btn = $("#btnLogin"); btn.disabled = true; btn.textContent = "Signing in…";
+  const {data,error} = await sb.auth.signInWithPassword({email, password});
+  btn.disabled = false; btn.textContent = "Sign in";
+  if(error){
+    failCount++;
+    if(failCount>=5) lockUntil = Date.now() + Math.min(300, 30*2**(failCount-5))*1000;
+    return showAuthErr(error.message==="Invalid login credentials" ? "Invalid email or password." : authMsg(error));
+  }
+  failCount = 0; LAST_PW = password; $("#inPass").value = "";
   enter(data.session);
 }
 let entered=false;
 async function enter(session){
   if(entered) return; entered=true;
   idleStart();
+  const {data:acc, error} = await sb.rpc("my_access");
+  if(!error && acc?.role==="bureau" && acc.must_change_password) return firstSignin(session, acc);
+  LAST_PW = null;
   $("#authView").classList.add("hidden"); $("#appView").classList.remove("hidden");
   $("#userEmail").textContent = session.user.email;
-  const {data:acc, error} = await sb.rpc("my_access");
   if(error){ $("#mainEl").innerHTML = `<div class="card"><h3>Could not check your access</h3><p>${esc(error.message)}</p></div>`; return; }
   ME = acc;
   if(acc.role==="admin"){ MODE="admin"; buildNav(); await loadData(); }
@@ -459,18 +533,117 @@ document.addEventListener("click",e=>{ if(!e.target.closest(".userChip")) $("#us
 $("#btnLogout").onclick = async ()=>{ try{ localStorage.removeItem(IDLE_KEY); }catch(_){} await sb.auth.signOut(); location.reload(); };
 $("#btnChangePw").onclick = ()=>{
   $("#userMenu").classList.add("hidden");
-  showModal(`<div class="mHead"><div><h3>Change password</h3></div><button class="x" onclick="closeModal()">✕</button></div>
-  <div class="mBody"><div class="field"><label>New password (min 8 characters)</label><input type="password" id="pw1"></div>
-  <div class="field"><label>Repeat new password</label><input type="password" id="pw2"></div>
-  <button class="btn primary" onclick="savePw()">Update password</button></div>`);
+  showModal(`<div class="mHead"><div><h3>Change password</h3><div class="sub">Other devices are signed out once it is saved.</div></div><button class="x" onclick="closeModal()">✕</button></div>
+  <div class="mBody">${pwFieldsHtml("pw")}
+  <div class="field hidden" id="pwNonceWrap"><label for="pwNonce">Code from the email</label><input id="pwNonce" inputmode="numeric" autocomplete="one-time-code" maxlength="10">
+    <div class="hint">For your security we have emailed you a code. Enter it to confirm the change.</div></div>
+  <button class="btn primary" id="pwSave" onclick="savePw()">Update password</button></div>`);
+  wirePwRules("pw");
 };
 window.savePw = async ()=>{
-  const p=$("#pw1").value; if(p.length<8) return toast("Password must be at least 8 characters.");
-  if(p!==$("#pw2").value) return toast("Passwords do not match.");
-  const {error} = await sb.auth.updateUser({password:p});
-  if(error) return toast("Could not change password: "+error.message);
-  closeModal(); toast("Password updated.");
+  const {data:{session}} = await sb.auth.getSession();
+  const r = readNewPw("pw", session?.user?.email);
+  if(r.err) return toast(r.err);
+  const nonce = $("#pwNonceWrap").classList.contains("hidden") ? undefined : $("#pwNonce").value.trim();
+  $("#pwSave").disabled = true;
+  const {error} = await sb.auth.updateUser(nonce ? {password:r.p, nonce} : {password:r.p});
+  $("#pwSave").disabled = false;
+  if(error?.code==="reauthentication_needed" || /reauthenticat/i.test(error?.message||"")){
+    const {error:e2} = await sb.auth.reauthenticate();
+    if(e2) return toast(authMsg(e2));
+    $("#pwNonceWrap").classList.remove("hidden"); $("#pwNonce").focus();
+    return toast("We have emailed you a code to confirm the change.");
+  }
+  if(error) return toast("Could not change password. "+authMsg(error));
+  await sb.auth.signOut({scope:"others"});
+  closeModal(); toast("Password updated. Other devices have been signed out.");
 };
+
+/* First sign-in: confirm the email with a one-time code, then set a password. */
+async function firstSignin(session, acc){
+  const email = session.user.email, box = $("#authFirst");
+  $("#authSignin").classList.add("hidden"); box.classList.remove("hidden");
+  const cancel = ()=>{ const a=$("#fsCancel"); if(a) a.onclick = async ev=>{ ev.preventDefault(); await sb.auth.signOut({scope:"local"}); location.reload(); }; };
+  const err = m => { const el=$("#fsErr"); el.textContent=m; el.classList.toggle("hidden",!m); };
+  if(acc.temp_password_expired){
+    box.innerHTML = `<span class="overline">First sign-in</span><h1>Temporary password expired</h1>
+      <p class="sub">Temporary passwords last seven days. Ask <a href="mailto:${AGENCY_EMAIL}">${AGENCY_EMAIL}</a> for a new one.</p>
+      <p class="authAlt"><a href="#" id="fsCancel">Back to sign in</a></p>`;
+    return cancel();
+  }
+
+  const stepCode = (msg)=>{
+    box.innerHTML = `<span class="overline">First sign-in · step 1 of 2</span><h1>Confirm your email</h1>
+      <p class="sub">For your security we will email a one-time code to <b>${esc(email)}</b>.</p>
+      <div id="fsErr" class="authErr hidden"></div><div id="fsOk" class="authOk hidden"></div>
+      <button class="btn primary wide" id="fsSend">Email me a code</button>
+      <div id="fsCodeWrap" class="hidden">
+        <div class="field"><label for="fsCode">Code from the email</label><input id="fsCode" inputmode="numeric" autocomplete="one-time-code" maxlength="10"></div>
+        <button class="btn primary wide" id="fsVerify">Confirm code</button>
+        <p class="authNote">Nothing after a few minutes? Check your spam folder, then <a href="#" id="fsResend">send a new code</a>. You can also open the link in the email on this device.</p>
+      </div>
+      <p class="authAlt"><a href="#" id="fsCancel">Sign out</a></p>`;
+    cancel(); if(msg) err(msg);
+    let sentAt = 0, tries = 0;
+    const send = async ()=>{
+      const wait = Math.ceil((sentAt+60000-Date.now())/1000);
+      if(wait>0) return err(`You can ask for another code in ${wait} seconds.`);
+      err(""); $("#fsSend").disabled = true;
+      const {error} = await sb.auth.signInWithOtp({email, options:{shouldCreateUser:false, emailRedirectTo:location.origin+"/pipeline"}});
+      $("#fsSend").disabled = false;
+      if(error) return err(authMsg(error));
+      sentAt = Date.now(); tries = 0;
+      $("#fsSend").classList.add("hidden"); $("#fsCodeWrap").classList.remove("hidden");
+      const ok=$("#fsOk"); ok.textContent = "Code sent. It is valid for a limited time and can be used once."; ok.classList.remove("hidden");
+      $("#fsCode").value = ""; $("#fsCode").focus();
+    };
+    const verify = async ()=>{
+      const token = $("#fsCode").value.replace(/\s+/g,"");
+      if(!/^\d{6,10}$/.test(token)) return err("Enter the code exactly as it appears in the email.");
+      if(++tries>5) return err("Too many wrong codes. Send a new code and try again.");
+      err(""); $("#fsVerify").disabled = true;
+      const {data, error} = await sb.auth.verifyOtp({email, token, type:"email"});
+      $("#fsVerify").disabled = false;
+      if(error || !data?.session) return err(authMsg(error));
+      stepPassword();
+    };
+    $("#fsSend").onclick = send;
+    $("#fsResend").onclick = ev=>{ ev.preventDefault(); send(); };
+    $("#fsVerify").onclick = verify;
+    $("#fsCode").addEventListener("keydown",e=>{ if(e.key==="Enter") verify(); });
+  };
+
+  const stepPassword = ()=>{
+    box.innerHTML = `<span class="overline">First sign-in · step 2 of 2</span><h1>Choose your password</h1>
+      <p class="sub">Replace the temporary password with one only you know.</p>
+      <div id="fsErr" class="authErr hidden"></div>
+      ${pwFieldsHtml("fsPw")}
+      <button class="btn primary wide" id="fsSave">Save and continue</button>
+      <p class="authAlt"><a href="#" id="fsCancel">Sign out</a></p>`;
+    cancel(); wirePwRules("fsPw"); $("#fsPw1").focus();
+    const save = async ()=>{
+      const r = readNewPw("fsPw", email, LAST_PW);
+      if(r.err) return err(r.err);
+      err(""); $("#fsSave").disabled = true; $("#fsSave").textContent = "Saving…";
+      const done = ()=>{ $("#fsSave").disabled = false; $("#fsSave").textContent = "Save and continue"; };
+      const {error} = await sb.auth.updateUser({password:r.p});
+      if(error){ done(); return err(authMsg(error)); }
+      const {error:e2} = await sb.rpc("complete_first_signin");
+      if(e2){ done(); return /confirm your email/i.test(e2.message) ? stepCode(e2.message) : err(e2.message); }
+      await sb.auth.signOut({scope:"others"});
+      LAST_PW = null;
+      box.classList.add("hidden"); box.innerHTML = ""; $("#authSignin").classList.remove("hidden");
+      const {data:{session:s}} = await sb.auth.getSession();
+      entered = false; await enter(s);
+      toast("Password saved. You are signed in.");
+    };
+    $("#fsSave").onclick = save;
+    $("#fsPw2").addEventListener("keydown",e=>{ if(e.key==="Enter") save(); });
+  };
+
+  sessionHasOtp(session) ? stepPassword() : stepCode();
+}
+
 
 /* =====================================================================
    NAV
@@ -1612,7 +1785,7 @@ function rAccess(){
   ${rows.length? `<table class="data"><thead><tr><th>Organisation</th><th>Country</th><th>Login</th><th>Tier</th><th>Status</th><th>Last seen</th><th></th></tr></thead><tbody>
   ${rows.map(a=>{ const c=DB.cById[a.country_id]; return `<tr><td><b>${esc(a.org_name||"–")}</b><br><span style="font-size:12px;color:var(--muted)">${esc(a.contact_name||"")}</span></td><td>${flag(c?.iso2)} ${esc(c?.name)}</td><td>${esc(a.email)}</td>
     <td><select onchange="setTier('${a.user_id}',this.value)" style="padding:5px 7px;border:1px solid var(--line);border-radius:7px;font-size:12.5px">${a.tier?"":`<option value="" selected>No tier</option>`}${Object.entries(LIC_L).map(([k,l])=>`<option value="${k}" ${a.tier===k?"selected":""}>${esc(l)}</option>`).join("")}</select></td>
-    <td>${a.active?'<span class="chip ok">active</span>':'<span class="chip closed">disabled</span>'}</td><td style="font-size:12.5px">${a.last_seen_at?new Date(a.last_seen_at).toLocaleString("en-GB",{day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"}):"never"}</td>
+    <td>${a.active?'<span class="chip ok">active</span>':'<span class="chip closed">disabled</span>'}${a.must_change_password?' <span class="chip">awaiting first sign-in</span>':""}</td><td style="font-size:12.5px">${a.last_seen_at?new Date(a.last_seen_at).toLocaleString("en-GB",{day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"}):"never"}</td>
     <td style="white-space:nowrap"><button class="btn sm ghost" onclick="bureauAct('reset_password','${a.user_id}')">Reset password</button> <button class="btn sm ${a.active?"danger":"ghost"}" onclick="bureauAct('set_active','${a.user_id}',${!a.active})">${a.active?"Disable":"Enable"}</button></td></tr>`;}).join("")}
   </tbody></table>` : `<p class="empty">No bureau logins yet.</p>`}
   <div id="ba_out2"></div></div>`;
@@ -1624,9 +1797,9 @@ async function callBureauAdmin(payload){
   if(!r.ok || j.error) throw new Error(j.error||("HTTP "+r.status));
   return j;
 }
-const pwHtml = (j,c) => `<div class="pwBox"><b>Login ready.</b> Send these to the bureau over a channel you trust; the password is shown only once.<br><br>
+const pwHtml = (j,c) => `<div class="pwBox"><b>Login ready.</b> Send the temporary password by a different channel from the welcome email (a call or a message, for example). It is shown only once${j.expires_at?` and expires on <b>${esc(new Date(j.expires_at).toLocaleString("en-GB",{day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"}))}</b>`:""}.<br><br>
   Portal: <a href="${location.origin+location.pathname}" target="_blank">${esc(location.origin+location.pathname)}</a><br>Email: <b>${esc(j.email)}</b><br>Temporary password: <code>${esc(j.temp_password)}</code><br><br>
-  They can change it under their email menu → Change password.${c?`<br><br><a href="mailto:${esc(j.email)}?subject=${encodeURIComponent((c.name||"")+" bid intelligence portal")}&body=${encodeURIComponent("Dear colleague,\n\nYour login to the Africa MICE bid intelligence portal is ready. It shows the international and regional congresses and calls for bids that align with "+c.name+"'s national development priorities.\n\nPortal: "+location.origin+location.pathname+"\nEmail: "+j.email+"\n\nI will share your temporary password separately.\n\nKind regards,\nFarirai Nandipa")}">Draft the welcome email (without the password) ↗</a>`:""}</div>`;
+  At first sign-in they confirm their email with a one-time code and choose their own password. Until then the portal shows nothing.${c?`<br><br><a href="mailto:${esc(j.email)}?subject=${encodeURIComponent((c.name||"")+" bid intelligence portal")}&body=${encodeURIComponent("Dear colleague,\n\nYour login to the Africa MICE bid intelligence portal is ready. It shows the international and regional congresses and calls for bids that align with "+c.name+"'s national development priorities.\n\nPortal: "+location.origin+location.pathname+"\nEmail: "+j.email+"\n\nI will share your temporary password separately. It is valid for seven days. When you first sign in, we will email you a one-time code to confirm your address, and you will then choose your own password.\n\nKind regards,\nFarirai Nandipa")}">Draft the welcome email (without the password) ↗</a>`:""}</div>`;
 window.createBureau = async () => {
   const email=val("ba_email"), cid=+val("ba_c"), tier=val("ba_t");
   if(!email) return toast("Enter the login email.");
