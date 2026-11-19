@@ -1,6 +1,6 @@
 import { useState, type ChangeEvent, type FormEvent, type ReactElement } from 'react';
 import { Check, CheckCircle2 } from 'lucide-react';
-import { ACCESS, CONTACT_EMAIL } from '../content';
+import { ACCESS, CONTACT_EMAIL, SUPABASE_ANON_KEY, SUPABASE_URL } from '../content';
 import { buildMailto } from '../lib/mailto';
 import { Button } from './Button';
 import Reveal from './Reveal';
@@ -41,11 +41,41 @@ function buildBody(v: FormValues): string {
 const inputClass =
   'mt-2 block w-full rounded-lg border bg-navy px-3.5 py-2.5 text-[15px] text-ink placeholder:text-faint transition-colors focus:outline-none focus:ring-2 focus:ring-accent/40';
 
-/** Access section: subscription note and the request form (opens a prefilled mailto). */
+type SendResult = 'ok' | 'rate_limited' | 'failed';
+
+/** Files the request in the admin signup queue. `website` is a hidden field only bots fill in. */
+async function sendRequest(v: FormValues, website: string): Promise<SendResult> {
+  try {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/request_access`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', apikey: SUPABASE_ANON_KEY, authorization: `Bearer ${SUPABASE_ANON_KEY}` },
+      body: JSON.stringify({
+        payload: {
+          name: v.name.trim(),
+          organisation: v.organisation.trim(),
+          org_type: v.orgType,
+          country: v.country.trim(),
+          email: v.email.trim(),
+          message: v.message.trim(),
+          website,
+        },
+      }),
+    });
+    if (!res.ok) return 'failed';
+    const out = (await res.json()) as { ok?: boolean; error?: string };
+    if (out.ok) return 'ok';
+    return out.error === 'rate_limited' ? 'rate_limited' : 'failed';
+  } catch {
+    return 'failed';
+  }
+}
+
+/** Access section: subscription note and the request form (queued for admin review; falls back to a prefilled mailto). */
 export default function AccessForm() {
   const [values, setValues] = useState<FormValues>(EMPTY);
   const [errors, setErrors] = useState<FormErrors>({});
-  const [sent, setSent] = useState(false);
+  const [status, setStatus] = useState<'idle' | 'sending' | 'sent' | 'rate_limited' | 'fallback'>('idle');
+  const [website, setWebsite] = useState('');
 
   const onChange = (e: ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const name = e.target.name as FieldName;
@@ -54,7 +84,7 @@ export default function AccessForm() {
     if (errors[name]) setErrors((prev) => ({ ...prev, [name]: undefined }));
   };
 
-  const onSubmit = (e: FormEvent<HTMLFormElement>) => {
+  const onSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const found = validate(values);
     setErrors(found);
@@ -63,8 +93,18 @@ export default function AccessForm() {
       document.getElementById(`field-${firstInvalid}`)?.focus();
       return;
     }
-    window.location.href = buildMailto(CONTACT_EMAIL, ACCESS.emailSubject, buildBody(values));
-    setSent(true);
+    setStatus('sending');
+    const result = await sendRequest(values, website);
+    if (result === 'ok') {
+      setStatus('sent');
+      setValues(EMPTY);
+    } else if (result === 'rate_limited') {
+      setStatus('rate_limited');
+    } else {
+      // The queue is unreachable, so fall back to email and lose nothing.
+      setStatus('fallback');
+      window.location.href = buildMailto(CONTACT_EMAIL, ACCESS.emailSubject, buildBody(values));
+    }
   };
 
   /** Shared label + control + error wiring for each field. */
@@ -142,17 +182,24 @@ export default function AccessForm() {
               </div>
             </div>
 
-            <Button type="submit" className="mt-7 w-full py-3 text-[15px] sm:w-auto sm:px-7">
-              {ACCESS.submitLabel}
+            <div className="hidden" aria-hidden="true">
+              <label htmlFor="field-website">Website</label>
+              <input id="field-website" name="website" type="text" tabIndex={-1} autoComplete="off" value={website} onChange={(e) => setWebsite(e.target.value)} />
+            </div>
+
+            <Button type="submit" disabled={status === 'sending'} className="mt-7 w-full py-3 text-[15px] sm:w-auto sm:px-7">
+              {status === 'sending' ? ACCESS.sendingLabel : ACCESS.submitLabel}
             </Button>
 
             <p className="mt-4 text-xs leading-relaxed text-faint" aria-live="polite">
-              {sent && (
+              {status === 'sent' && (
                 <span className="inline-flex items-center gap-1.5 text-accent">
                   <CheckCircle2 size={14} aria-hidden="true" />
                   {ACCESS.successNote}
                 </span>
               )}
+              {status === 'rate_limited' && <span className="text-red-300">{ACCESS.rateLimitNote}</span>}
+              {status === 'fallback' && <span>{ACCESS.fallbackNote}</span>}
             </p>
           </form>
         </Reveal>

@@ -18,6 +18,12 @@
   to = "/pipeline/partner.html"
   status = 200
 
+# System admin console (sign-in required, agency team only).
+[[redirects]]
+  from = "/pipeline/admin"
+  to = "/pipeline/admin.html"
+  status = 200
+
 # Public event submission form (no login), linked from the landing page.
 [[redirects]]
   from = "/pipeline/submit"

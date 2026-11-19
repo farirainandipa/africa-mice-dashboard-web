@@ -9,8 +9,9 @@ Farirai Nandipa MICE Consultancy. The site has two parts, deployed together on
 Netlify.
 
 1. **Landing page** (`/`): Vite + React 19 + TypeScript + Tailwind CSS v4
-   single-page marketing site. No backend. The access form opens a prefilled
-   `mailto:`. "Submit an event" (nav, footer, the event-owner card and the
+   single-page marketing site. The access form files a request in the admin
+   signup queue through the public `request_access` RPC and falls back to a
+   prefilled `mailto:` if that call fails. "Submit an event" (nav, footer, the event-owner card and the
    Contribute section) and the destination partner link go to the public
    pipeline forms.
 2. **Africa MICE Bid Pipeline** (`/pipeline`, `/pipeline/submit.html`): a
@@ -45,6 +46,7 @@ public/
   pipeline/index.html   Bid Pipeline app (HTML + CSS + JS in one file, ~125 KB)
   pipeline/submit.html  public event submission form
   pipeline/partner.html public destination-partner submission form
+  pipeline/admin.html   system admin console at /pipeline/admin (agency team only)
   pipeline/theme.css    shared tokens and primitives for all pipeline pages
 netlify.toml            build, /pipeline rewrite, security headers
 supabase/README.md      where the database schema and migrations live
@@ -110,11 +112,29 @@ supabase/migrations/    pipeline migrations from the move onwards
   `fit_inputs_agent_upsert()`, which stores values as unverified and logs a
   differing value for a verified field in `fit_input_conflicts` instead.
   `countries_ready_for_scoring` lists countries with every weighted input set.
+- **System admin console** (migration `20261119090334_admin_console`,
+  page `public/pipeline/admin.html`). `admin_level()` returns `super` for an
+  allowlisted email and `staff` for an active row in `admin_staff`. Staff work
+  the signup and report queues, suspend accounts, reset passwords and read
+  every console screen; only super admins change tiers, rate limit rules,
+  settings and the team. Staff have no access to pipeline tables, which stay
+  gated by `is_allowlisted()`. The console tables (`signup_requests`,
+  `user_reports`, `user_activity`, `system_log`, `admin_audit_log`,
+  `rate_limit_rules`, `rate_limit_counters`, `admin_staff`, `admin_settings`,
+  `metrics_daily`) have no policies on purpose and are reached only through
+  the `admin_*` RPCs. `admin_audit_log` is append-only (triggers reject update,
+  delete and truncate) and is fed by `audit_row()` triggers on `user_access`,
+  `allowlist` and the console tables. `rate_limit_hit(rule, subject)` counts a
+  hit and returns false over the limit; callers must return an error value
+  and not raise, or the count rolls back. Signed-in users call
+  `report_submit`, `my_reports`, `track_activity` and `client_log`.
+  `admin_maintenance()` runs nightly by pg_cron (`admin_maintenance_nightly`)
+  to snapshot metrics and prune old logs.
 - **Anonymous visitors** can only read `econ_sectors`, insert into
   `submissions` (status forced to `review`), insert into `contact_submissions`,
   and call the public-form RPCs `partner_form_options`,
   `profile_submit`, `profile_verify`, `profile_status`,
-  `submission_upload_allowed`. Every other function has EXECUTE revoked from
+  `submission_upload_allowed`, `request_access`. Every other function has EXECUTE revoked from
   `anon` (migration 023). New SECURITY DEFINER functions must
   `revoke execute ... from public, anon` unless they are meant for public forms,
   and must set `search_path`.
@@ -143,13 +163,15 @@ supabase/migrations/    pipeline migrations from the move onwards
 ### Edge functions used by the pipeline
 
 - `dashboard` (`/functions/v1/dashboard/logo`): serves the logo image.
-- `bureau-admin`: create bureau logins, reset passwords, set tier/active.
+- `bureau-admin`: create bureau logins (also when approving a signup request),
+  reset passwords, set tier/active, and create or reset staff logins. Callers
+  are checked with `admin_level()`, rate limited and written to the audit log.
 - `bids`: serves the separate Bid Workspace app from `site_assets`.
 
 ## Deployment (Netlify)
 
 - `netlify.toml`: build `npm run build`, publish `dist`, Node 22.
-- `/pipeline`, `/pipeline/partner` and `/pipeline/submit` are rewritten to
+- `/pipeline`, `/pipeline/admin`, `/pipeline/partner` and `/pipeline/submit` are rewritten to
   their `.html` files **before** the SPA catch-all. Keep that order.
 - This repo is the only source of the pipeline pages. farirainandipa-web no
   longer carries a copy (removed in its PR #18), so edit them here.

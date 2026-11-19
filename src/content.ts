@@ -17,6 +17,14 @@ export const DASHBOARD_URL = '/pipeline';
 export const SUBMIT_URL = '/pipeline/submit.html';
 
 /** Address that receives access requests and event submissions. */
+/**
+ * Supabase project behind the access request queue. The anon key is public by
+ * design; the request_access function validates and rate limits every call.
+ */
+export const SUPABASE_URL = 'https://upzkvszgoqhoefkiwoep.supabase.co';
+export const SUPABASE_ANON_KEY =
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVwemt2c3pnb3Fob2Vma2l3b2VwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIxMzg1MjQsImV4cCI6MjA5NzcxNDUyNH0.4RB-5FCWW7JXvGBKs0PlzkYcUeG5kTVxTVdoXUNp8ao';
+
 export const CONTACT_EMAIL = 'nandie@farirainandipa.co.zw';
 
 export const BRAND = {
@@ -151,7 +159,10 @@ export const ACCESS = {
   orgTypes: ['Convention bureau', 'Tourism board', 'PCO', 'Venue', 'DMC', 'Event owner', 'Other'],
   submitLabel: 'Request a walkthrough',
   emailSubject: 'Access request – Africa MICE Dashboard',
-  successNote: 'Your email app should now open with your request ready to send.',
+  successNote: 'Thank you. Your request is with our team and we will be in touch to arrange a walkthrough.',
+  sendingLabel: 'Sending…',
+  rateLimitNote: 'We have already received several requests from you. Please try again later or email us.',
+  fallbackNote: 'We could not send the form, so your email app should now open with your request ready to send.',
 };
 
 export const FOOTER = {
