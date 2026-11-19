@@ -500,9 +500,6 @@ $("#inPass").addEventListener("keydown",e=>{ if(e.key==="Enter") doLogin(); });
 let failCount = 0, lockUntil = 0, LAST_PW = null;
 async function doLogin(){
   $("#authErr").classList.add("hidden");
-  const {data,error} = await sb.auth.signInWithPassword({email:$("#inEmail").value.trim(), password:$("#inPass").value});
-  if(error){ const el=$("#authErr"); el.textContent = error.message==="Invalid login credentials" ? "Invalid email or password." : error.message; el.classList.remove("hidden"); return; }
-  sb.rpc("track_activity",{p_event:"signin"}).then(()=>{},()=>{});
   const wait = Math.ceil((lockUntil-Date.now())/1000);
   if(wait>0) return showAuthErr(`Too many failed attempts. Try again in ${wait} seconds.`);
   const email = $("#inEmail").value.trim(), password = $("#inPass").value;
@@ -516,6 +513,7 @@ async function doLogin(){
     return showAuthErr(error.message==="Invalid login credentials" ? "Invalid email or password." : authMsg(error));
   }
   failCount = 0; LAST_PW = password; $("#inPass").value = "";
+  sb.rpc("track_activity",{p_event:"signin"}).then(()=>{},()=>{});
   enter(data.session);
 }
 let entered=false;
