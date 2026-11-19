@@ -178,6 +178,15 @@ supabase/migrations/    pipeline migrations from the move onwards
   reset passwords, set tier/active, and create or reset staff logins. Callers
   are checked with `admin_level()`, rate limited and written to the audit log.
 - `bids`: serves the separate Bid Workspace app from `site_assets`.
+- `admin-notify` (source in `supabase/functions/admin-notify/`): emails every
+  super admin and active staff member when a new access request or problem
+  report arrives. The `admin_notify_queue_event()` triggers on
+  `signup_requests` and `user_reports` (migration
+  `20261119211046_admin_notifications`) post only `{ kind, id }` through
+  `pg_net`, signed with the `contact_webhook_secret` vault value. The
+  function checks it against `WEBHOOK_SECRET`, reads the row with the
+  service role and sends over the project's `SMTP_*` secrets. Responses land
+  in `net._http_response`.
 
 ## Deployment (Netlify)
 
