@@ -22,17 +22,31 @@
 .authCard h1{font-size:26px;font-weight:800;letter-spacing:-.02em;margin:12px 0 6px}
 .authCard p.sub{color:var(--muted);margin-bottom:24px;font-size:14px}
 /* ---------- shell ---------- */
-.top{position:sticky;top:0;z-index:50;background:rgba(11,18,32,.92);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);border-bottom:1px solid var(--line)}
-.top .in{max-width:1320px;margin:0 auto;padding:0 24px;min-height:60px;display:flex;align-items:center;gap:20px;flex-wrap:wrap}
-.tabs{display:flex;gap:2px;flex:1;overflow-x:auto}
-.tabs button{background:none;border:none;color:var(--muted);padding:19px 12px;font-size:13.5px;font-weight:600;border-bottom:2px solid transparent;white-space:nowrap}
-.tabs button:hover{color:var(--ink)}
-.tabs button.active{color:var(--ink);border-bottom-color:var(--accent)}
-.tabs .badge{display:inline-block;margin-left:6px;background:var(--accent);color:var(--navy);border-radius:999px;font-size:10.5px;font-weight:800;padding:1px 7px}
-.who{font-size:12.5px;color:var(--muted);display:flex;gap:12px;align-items:center}
-.who button{background:none;border:none;color:var(--muted);font-size:12.5px;text-decoration:underline}
+/* Left sidebar on wide screens; a top bar with a scrolling row of sections below 900px. */
+#appView{display:flex;min-height:100vh}
+.side{position:sticky;top:0;height:100vh;width:236px;flex:none;z-index:50;background:rgba(11,18,32,.96);border-right:1px solid var(--line);display:flex;flex-direction:column;gap:18px;padding:18px 12px;overflow-y:auto}
+.side .wordmark{padding:4px 10px}
+.tabs{display:flex;flex-direction:column;gap:2px;flex:1}
+.tabs button{display:flex;align-items:center;justify-content:space-between;gap:8px;width:100%;text-align:left;background:none;border:none;border-radius:10px;color:var(--muted);padding:10px 12px;font-size:13.5px;font-weight:600;white-space:nowrap}
+.tabs button:hover{color:var(--ink);background:rgba(255,255,255,.04)}
+.tabs button.active{color:var(--ink);background:rgba(25,195,177,.12);box-shadow:inset 3px 0 0 var(--accent)}
+.tabs .badge{display:inline-block;background:var(--accent);color:var(--navy);border-radius:999px;font-size:10.5px;font-weight:800;padding:1px 7px}
+.who{font-size:12.5px;color:var(--muted);display:flex;flex-direction:column;align-items:flex-start;gap:6px;padding:14px 10px 0;border-top:1px solid var(--line)}
+.who #whoEmail{overflow-wrap:anywhere;margin-bottom:2px}
+.who button{background:none;border:none;padding:0;color:var(--muted);font-size:12.5px;text-decoration:underline}
 .who button:hover{color:var(--ink)}
-main{min-height:calc(100vh - 61px);padding:28px 24px 72px}
+main{flex:1;min-width:0;min-height:100vh;padding:28px 32px 72px}
+@media(max-width:900px){
+  #appView{flex-direction:column}
+  .side{height:auto;width:auto;flex-direction:row;flex-wrap:wrap;align-items:center;gap:8px 16px;padding:10px 16px;border-right:none;border-bottom:1px solid var(--line);overflow:visible}
+  .side .wordmark{padding:0}
+  .tabs{flex-direction:row;flex:1 1 100%;order:3;overflow-x:auto}
+  .tabs button{width:auto;padding:8px 12px}
+  .tabs .badge{margin-left:6px}
+  .who{flex-direction:row;flex-wrap:wrap;align-items:center;gap:6px 12px;margin-left:auto;padding:0;border-top:none}
+  main{min-height:0;padding:24px 16px 56px}
+  .side{position:sticky;top:0}
+}
 main .inner{max-width:1320px;margin:0 auto}
 .pageHead{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;flex-wrap:wrap;margin-bottom:20px}
 .pageHead h1{font-size:24px;font-weight:800;letter-spacing:-.02em}
@@ -80,7 +94,7 @@ td.acts .btn{margin-left:4px}
 .pwBox{background:var(--t-accent);border:1px solid rgba(25,195,177,.3);border-radius:10px;padding:14px;margin:12px 0;font-size:13px}
 .pwBox code{font-size:15px;font-weight:700;padding:3px 8px}
 .toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);background:var(--navy);border:1px solid var(--line2);color:#eef1f6;padding:11px 18px;border-radius:10px;font-size:13px;z-index:200;box-shadow:0 20px 50px rgba(0,0,0,.45)}
-@media(max-width:640px){.grid2{grid-template-columns:1fr}.top .in{padding:0 14px}main{padding:20px 14px 56px}}
+@media(max-width:640px){.grid2{grid-template-columns:1fr}main{padding:20px 14px 56px}}
 </style>
 </head>
 <body>
@@ -104,11 +118,11 @@ td.acts .btn{margin-left:4px}
 </div>
 
 <div id="appView" class="hidden">
-  <header class="top"><div class="in">
+  <aside class="side">
     <a class="wordmark" href="/pipeline" aria-label="Back to the pipeline"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="0.5" y="0.5" width="23" height="23" rx="6" fill="#121A2B" stroke="rgba(255,255,255,0.12)"/><g fill="#19C3B1"><circle cx="7" cy="7" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="17" cy="17" r="1.6"/></g></svg><b>System admin</b></a>
     <nav class="tabs" id="navTabs" aria-label="Admin sections"></nav>
     <div class="who"><span id="whoEmail"></span><button id="btnPw">Change password</button><button id="btnOut">Sign out</button></div>
-  </div></header>
+  </aside>
   <main class="light"><div class="inner" id="mainEl"></div></main>
 </div>
 <div id="modalBack" class="hidden light"><div class="modal" id="modalEl" role="dialog" aria-modal="true"></div></div>
@@ -124,6 +138,7 @@ const when = t => t ? new Date(t).toLocaleString("en-GB",{day:"2-digit",month:"s
 const day = t => t ? new Date(t).toLocaleDateString("en-GB",{day:"2-digit",month:"short",year:"numeric"}) : "";
 const ago = t => { if(!t) return "never"; const s=(Date.now()-new Date(t))/1000; if(s<90) return "just now"; if(s<5400) return Math.round(s/60)+" min ago"; if(s<129600) return Math.round(s/3600)+" h ago"; return Math.round(s/86400)+" days ago"; };
 const words = s => String(s||"").replace(/_/g," ");
+const label = s => { const w = words(s); return w.charAt(0).toUpperCase() + w.slice(1); };
 const chip = (t,c="") => `<span class="chip ${c}">${esc(words(t))}</span>`;
 function toast(msg){ const t=document.createElement("div"); t.className="toast"; t.setAttribute("role","status"); t.textContent=msg; document.body.appendChild(t); setTimeout(()=>t.remove(),3600); }
 function showModal(title, body){ $("#modalEl").innerHTML=`<div class="mHead"><h3>${esc(title)}</h3><button onclick="closeModal()" aria-label="Close">✕</button></div><div class="mBody">${body}</div>`; $("#modalBack").classList.remove("hidden"); }
@@ -188,10 +203,17 @@ function buildNav(badges){
   $("#navTabs").innerHTML = TABS.filter(([k])=> k!=="team" || isSuper()).map(([k,l])=>
     `<button data-v="${k}" class="${k===VIEW?"active":""}">${esc(l)}${b[k]?`<span class="badge">${b[k]}</span>`:""}</button>`).join("");
 }
+// Keeps the Signups and Reports badges in step after a decision changes the queues.
+async function refreshBadges(){
+  try{ const m = await rpc("admin_metrics"); buildNav({signups:m.signups.pending, reports:m.reports.open}); }catch(_){}
+}
 $("#navTabs").addEventListener("click",e=>{ const b=e.target.closest("button"); if(!b) return; VIEW=b.dataset.v;
   document.querySelectorAll("#navTabs button").forEach(x=>x.classList.toggle("active",x===b)); render(); });
 const head = (title, sub, right="") => `<div class="pageHead"><div><h1>${esc(title)}</h1><p>${esc(sub)}</p></div><div class="filters">${right}</div></div>`;
-function render(){ ({overview:rOverview, signups:rSignups, accounts:rAccounts, reports:rReports, activity:rActivity, logs:rLogs, audit:rAudit, limits:rLimits, team:rTeam}[VIEW])().catch(()=>{}); }
+function render(){
+  ({overview:rOverview, signups:rSignups, accounts:rAccounts, reports:rReports, activity:rActivity, logs:rLogs, audit:rAudit, limits:rLimits, team:rTeam}[VIEW])()
+    .then(()=>{ if(VIEW==="signups" || VIEW==="reports") refreshBadges(); }).catch(()=>{});
+}
 window.render = render;
 
 /* ---------- overview ---------- */
@@ -252,7 +274,7 @@ window.sgApprove = id => { const r = SG.find(x=>x.id===id);
   const guess = LOOKUPS.countries.find(c=>c.name.toLowerCase()===String(r.country_name||"").trim().toLowerCase());
   showModal("Approve access request", `<p>${esc(r.contact_name)} at ${esc(r.org_name)} (${esc(r.email)}).</p>
     <div class="field"><label for="apC">Country view</label><select id="apC"><option value="">Select a country</option>${LOOKUPS.countries.map(c=>`<option value="${c.id}" ${guess&&guess.id===c.id?"selected":""}>${esc(c.name)}</option>`).join("")}</select><div class="hint">They wrote: ${esc(r.country_name||"no country given")}</div></div>
-    <div class="field"><label for="apT">Licence tier</label><select id="apT">${LOOKUPS.tiers.map(t=>`<option value="${t}">${esc(words(t))}</option>`).join("")}</select></div>
+    <div class="field"><label for="apT">Licence tier</label><select id="apT">${LOOKUPS.tiers.map(t=>`<option value="${t}">${esc(label(t))}</option>`).join("")}</select></div>
     <div class="field"><label for="apN">Internal note (optional)</label><input id="apN"></div>
     <button class="btn primary" id="apGo">Create login</button>`);
   $("#apGo").onclick = async ()=>{ if(!$("#apC").value) return toast("Choose a country.");
@@ -283,7 +305,7 @@ window.usEdit = id => { const u = US.find(x=>x.user_id===id);
     <div class="field"><label for="edO">Organisation</label><input id="edO" value="${esc(u.org_name||"")}"></div>
     <div class="field"><label for="edN">Contact name</label><input id="edN" value="${esc(u.contact_name||"")}"></div>
     <div class="field"><label for="edC">Country view</label><select id="edC">${LOOKUPS.countries.map(c=>`<option value="${c.id}" ${c.id===u.country_id?"selected":""}>${esc(c.name)}</option>`).join("")}</select></div>
-    <div class="field"><label for="edT">Licence tier</label><select id="edT">${LOOKUPS.tiers.map(t=>`<option value="${t}" ${t===u.tier?"selected":""}>${esc(words(t))}</option>`).join("")}</select></div>
+    <div class="field"><label for="edT">Licence tier</label><select id="edT">${LOOKUPS.tiers.map(t=>`<option value="${t}" ${t===u.tier?"selected":""}>${esc(label(t))}</option>`).join("")}</select></div>
     <button class="btn primary" id="edGo">Save changes</button>`);
   $("#edGo").onclick = async ()=>{ await rpc("admin_user_update", {p_user_id:id, patch:{org_name:$("#edO").value, contact_name:$("#edN").value, country_id:Number($("#edC").value), tier:$("#edT").value}});
     closeModal(); toast("Account updated."); render(); };
@@ -313,7 +335,7 @@ async function rReports(){
       <td class="acts"><button class="btn ghost sm" onclick="rpEdit(${r.id})">Update</button></td></tr>`), "No reports match these filters.")}</div>`;
 }
 window.rpEdit = id => { const r = RP.find(x=>x.id===id);
-  const opt = (list, cur) => list.map(v=>`<option value="${v}" ${v===cur?"selected":""}>${esc(words(v))}</option>`).join("");
+  const opt = (list, cur) => list.map(v=>`<option value="${v}" ${v===cur?"selected":""}>${esc(label(v))}</option>`).join("");
   showModal("Update report", `<p>${esc(r.title)}</p>
     <div class="field"><label for="ruS">Status</label><select id="ruS">${opt(["open","in_progress","resolved","dismissed"], r.status)}</select></div>
     <div class="field"><label for="ruP">Priority</label><select id="ruP">${opt(["low","normal","high"], r.priority)}</select></div>
