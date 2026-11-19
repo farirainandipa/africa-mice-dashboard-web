@@ -13,6 +13,9 @@
 /** Sign-in URL for the access-controlled Bid Pipeline (static page in public/pipeline/). */
 export const DASHBOARD_URL = '/pipeline';
 
+/** System admin console for the agency team (static page in public/admin/). */
+export const ADMIN_URL = '/admin';
+
 /** Public event submission form (no login), static page at public/pipeline/submit.html. */
 export const SUBMIT_URL = '/pipeline/submit.html';
 
@@ -169,5 +172,6 @@ export const FOOTER = {
   legalLinks: [
     { label: 'Privacy', href: '#' },
     { label: 'Terms', href: '#' },
+    { label: 'System admin', href: ADMIN_URL },
   ],
 };
