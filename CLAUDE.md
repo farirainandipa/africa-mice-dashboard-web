@@ -141,6 +141,22 @@ supabase/migrations/    pipeline migrations from the move onwards
   `report_submit`, `my_reports`, `track_activity` and `client_log`.
   `admin_maintenance()` runs nightly by pg_cron (`admin_maintenance_nightly`)
   to snapshot metrics and prune old logs.
+- **Console gaps closed** (migration `20261119212342_admin_console_gaps`).
+  Staff get the same first sign-in as bureaux. Creating or resetting a staff
+  login sets `admin_staff.must_change_password`, and `admin_level()` gives
+  such staff no access until `staff_complete_first_signin()` sees an emailed
+  code session and a password change after the temporary one (seven days).
+  The console asks `staff_signin_state()` to show that flow. Removing a staff
+  member goes through `bureau-admin` (`remove_staff`), which also deletes
+  their login. Signup Reject, Spam and Reopen write readable `signup.*` audit
+  entries. Bureau reads through `bureau_portal()` and `bureau_matches()` count
+  against the `portal_read` rule (120 an hour per login) and return
+  `{error: 'rate_limited'}` over it; admin previews are not counted.
+- **Left as they are, on purpose.** Super admins are added and removed only by
+  editing `public.allowlist` in the database; the console has no screen for
+  it. The `data_export` rule does nothing until an export feature calls
+  `track_activity('export')` and honours a refusal. Leaked password
+  protection is a Supabase Auth setting that needs the Pro plan.
 - **Anonymous visitors** can only read `econ_sectors`, insert into
   `submissions` (status forced to `review`), insert into `contact_submissions`,
   and call the public-form RPCs `partner_form_options`,
@@ -174,9 +190,11 @@ supabase/migrations/    pipeline migrations from the move onwards
 ### Edge functions used by the pipeline
 
 - `dashboard` (`/functions/v1/dashboard/logo`): serves the logo image.
-- `bureau-admin`: create bureau logins (also when approving a signup request),
-  reset passwords, set tier/active, and create or reset staff logins. Callers
-  are checked with `admin_level()`, rate limited and written to the audit log.
+- `bureau-admin` (source in `supabase/functions/bureau-admin/`, deployed as
+  version 5): create bureau logins (also when approving a signup request),
+  reset passwords, set tier/active, and create, reset or remove staff logins.
+  Callers are checked with `admin_level()`, rate limited and written to the
+  audit log. Deploy from the repo copy; it is the only source.
 - `bids`: serves the separate Bid Workspace app from `site_assets`.
 - `admin-notify` (source in `supabase/functions/admin-notify/`): emails every
   super admin and active staff member when a new access request or problem
@@ -202,7 +220,13 @@ supabase/migrations/    pipeline migrations from the move onwards
 - `/pipeline/*` and `/admin/*` are served with `X-Robots-Tag: noindex` and `no-cache`.
 - No build-time environment variables are needed.
 - When the site's domain changes, add it to Supabase Auth URL configuration
-  (Site URL / Redirect URLs) so sign-in and password flows work.
+  (Site URL / Redirect URLs) so sign-in and password flows work. Today the
+  Site URL is `https://africamicedashboard.com` and the Redirect URLs include
+  `/pipeline` and `/admin` on that domain.
+- Supabase Auth emails (sign-in codes, password resets) go out through Resend
+  SMTP from `noreply@africamicedashboard.com`. The "Magic link or OTP"
+  template shows the one-time code (`{{ .Token }}`) as well as the link,
+  because both first sign-in screens ask for the code.
 
 ## Copy style
 

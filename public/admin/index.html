@@ -105,7 +105,8 @@ td.acts .btn{margin-left:4px}
     <a class="txt" href="/pipeline">Back to the pipeline</a>
   </div>
   <div class="authMain">
-    <div class="authCard">
+    <div class="authCard hidden" id="authFirst"></div>
+    <div class="authCard" id="authSignin">
       <span class="overline">System admin</span>
       <h1>Sign in</h1>
       <p class="sub">For the agency team only. Bureau logins do not work here.</p>
@@ -173,19 +174,119 @@ const isSuper = ()=> ME && ME.level==="super";
 
 /* ---------- sign-in ---------- */
 function authErr(m){ const el=$("#authErr"); el.textContent=m; el.classList.remove("hidden"); }
+let LAST_PW = null; // the temporary password just typed, so first sign-in can refuse it as the new one
 $("#btnLogin").onclick = async ()=>{
   const {data,error} = await sb.auth.signInWithPassword({email:$("#inEmail").value.trim(), password:$("#inPass").value});
   if(error) return authErr(error.message==="Invalid login credentials" ? "Invalid email or password." : error.message);
+  LAST_PW = $("#inPass").value; $("#inPass").value = "";
   enter(data.session);
 };
 $("#inPass").addEventListener("keydown",e=>{ if(e.key==="Enter") $("#btnLogin").click(); });
 async function enter(session){
   const {data,error} = await sb.rpc("admin_lookups");
-  if(error){ await sb.auth.signOut(); return authErr("This account has no access to the admin console."); }
+  if(error){
+    // A staff login on a temporary password has no access until first sign-in is done.
+    const {data:st} = await sb.rpc("staff_signin_state");
+    if(st && st.must_change_password) return staffFirstSignin(session, st);
+    await sb.auth.signOut(); return authErr("This account has no access to the admin console.");
+  }
+  LAST_PW = null; $("#authFirst").classList.add("hidden"); $("#authSignin").classList.remove("hidden");
   ME = data; LOOKUPS = data;
   $("#authView").classList.add("hidden"); $("#appView").classList.remove("hidden");
   $("#whoEmail").textContent = session.user.email + (isSuper() ? " · super admin" : " · staff");
   buildNav(); render();
+}
+/* Staff first sign-in (migration admin_console_gaps): confirm the email with a
+   one-time code, then replace the temporary password. Until
+   staff_complete_first_signin() accepts both, admin_level() gives no access. */
+const STAFF_PW_RULES = [
+  [p=>p.length>=12, "At least 12 characters"],
+  [p=>/[a-z]/.test(p) && /[A-Z]/.test(p), "Upper and lower case letters"],
+  [p=>/\d/.test(p), "At least one number"],
+  [p=>/[^A-Za-z0-9]/.test(p), "At least one symbol"],
+];
+const PW_COMMON = ["password","passw0rd","qwerty","letmein","welcome","admin","123456","africa","mice","bureau","pipeline"];
+function staffFirstSignin(session, st){
+  const email = session.user.email, box = $("#authFirst");
+  $("#authSignin").classList.add("hidden"); box.classList.remove("hidden");
+  const err = m => { const el=$("#fsErr"); if(!el) return; el.textContent=m||""; el.classList.toggle("hidden",!m); };
+  const wireOut = ()=>{ $("#fsOut").onclick = async ev=>{ ev.preventDefault(); await sb.auth.signOut({scope:"local"}); location.reload(); }; };
+  if(st.expired){
+    box.innerHTML = `<span class="overline">First sign-in</span><h1>Temporary password expired</h1>
+      <p class="sub">Temporary passwords last seven days. Ask a super admin to reset yours.</p>
+      <p class="sub"><a href="#" id="fsOut">Back to sign in</a></p>`;
+    return wireOut();
+  }
+  const claims = (()=>{ try{ return JSON.parse(atob(session.access_token.split(".")[1].replace(/-/g,"+").replace(/_/g,"/"))); }catch(_){ return {}; } })();
+  const hasCode = (claims.amr||[]).some(a=>a.method==="otp" || a.method==="magiclink");
+
+  const stepCode = msg => {
+    box.innerHTML = `<span class="overline">First sign-in · step 1 of 2</span><h1>Confirm your email</h1>
+      <p class="sub">For your security we will email a one-time code to <b>${esc(email)}</b>.</p>
+      <div id="fsErr" class="err hidden" style="margin:0 0 14px"></div>
+      <button class="btn primary" id="fsSend">Email me a code</button>
+      <div id="fsCodeWrap" class="hidden">
+        <p class="sub" style="margin:14px 0">Code sent. It is valid for a limited time and can be used once.</p>
+        <div class="field"><label for="fsCode">Code from the email</label><input id="fsCode" inputmode="numeric" autocomplete="one-time-code" maxlength="10"></div>
+        <button class="btn primary" id="fsVerify">Confirm code</button>
+        <p class="sub" style="margin-top:14px">Nothing after a few minutes? Check your spam folder, then <a href="#" id="fsResend">send a new code</a>.</p>
+      </div>
+      <p class="sub" style="margin-top:18px"><a href="#" id="fsOut">Sign out</a></p>`;
+    wireOut(); err(msg);
+    let sentAt = 0, tries = 0;
+    const send = async ()=>{
+      const wait = Math.ceil((sentAt+60000-Date.now())/1000);
+      if(wait>0) return err(`You can ask for another code in ${wait} seconds.`);
+      err(""); $("#fsSend").disabled = true;
+      const {error} = await sb.auth.signInWithOtp({email, options:{shouldCreateUser:false, emailRedirectTo:location.origin+"/admin"}});
+      $("#fsSend").disabled = false;
+      if(error) return err(error.message);
+      sentAt = Date.now(); tries = 0;
+      $("#fsSend").classList.add("hidden"); $("#fsCodeWrap").classList.remove("hidden"); $("#fsCode").focus();
+    };
+    const verify = async ()=>{
+      const token = $("#fsCode").value.replace(/\s+/g,"");
+      if(!/^\d{6,10}$/.test(token)) return err("Enter the code exactly as it appears in the email.");
+      if(++tries>5) return err("Too many wrong codes. Send a new code and try again.");
+      err(""); $("#fsVerify").disabled = true;
+      const {data, error} = await sb.auth.verifyOtp({email, token, type:"email"});
+      $("#fsVerify").disabled = false;
+      if(error || !data?.session) return err("That code is wrong or has expired. Request a new one.");
+      stepPassword();
+    };
+    $("#fsSend").onclick = send;
+    $("#fsResend").onclick = ev=>{ ev.preventDefault(); send(); };
+    $("#fsVerify").onclick = verify;
+    $("#fsCode").addEventListener("keydown",e=>{ if(e.key==="Enter") verify(); });
+  };
+
+  const stepPassword = ()=>{
+    box.innerHTML = `<span class="overline">First sign-in · step 2 of 2</span><h1>Choose your password</h1>
+      <p class="sub">Replace the temporary password with one only you know. Use at least 12 characters, with upper and lower case letters, a number and a symbol.</p>
+      <div id="fsErr" class="err hidden" style="margin:0 0 14px"></div>
+      <div class="field"><label for="fsPw1">New password</label><input type="password" id="fsPw1" autocomplete="new-password" maxlength="72"></div>
+      <div class="field"><label for="fsPw2">Repeat new password</label><input type="password" id="fsPw2" autocomplete="new-password" maxlength="72"></div>
+      <button class="btn primary" id="fsSave">Save and continue</button>
+      <p class="sub" style="margin-top:18px"><a href="#" id="fsOut">Sign out</a></p>`;
+    wireOut(); $("#fsPw1").focus();
+    $("#fsSave").onclick = async ()=>{
+      const p = $("#fsPw1").value, low = p.toLowerCase();
+      const probs = STAFF_PW_RULES.filter(([t])=>!t(p)).map(([,l])=>l.toLowerCase());
+      if(PW_COMMON.some(w=>low.includes(w))) probs.push("no common words such as password, admin or africa");
+      if(LAST_PW && p===LAST_PW) probs.push("something other than the temporary password");
+      if(probs.length) return err("The password needs "+probs.join(", ")+".");
+      if(p!==$("#fsPw2").value) return err("The two passwords do not match.");
+      err(""); $("#fsSave").disabled = true;
+      const {error} = await sb.auth.updateUser({password:p});
+      if(error){ $("#fsSave").disabled = false; return err(error.message); }
+      const {error:e2} = await sb.rpc("staff_complete_first_signin");
+      if(e2){ $("#fsSave").disabled = false; return /confirm your email/i.test(e2.message) ? stepCode(e2.message) : err(e2.message); }
+      await sb.auth.signOut({scope:"others"});
+      const {data:{session:s}} = await sb.auth.getSession();
+      enter(s);
+    };
+  };
+  hasCode ? stepPassword() : stepCode();
 }
 $("#btnOut").onclick = async ()=>{ await sb.auth.signOut(); location.reload(); };
 $("#btnPw").onclick = ()=> showModal("Change password", `<div class="field"><label for="pw1">New password (at least 12 characters)</label><input type="password" id="pw1" autocomplete="new-password"></div>
@@ -435,7 +536,7 @@ async function rTeam(){
     `<button class="btn sm" onclick="stAdd()">Add staff member</button>`)
   + `<div class="card"><h3>Staff</h3>${table(["Staff member","Status","Last sign-in","Added by",""], t.staff.map(s=>`<tr>
       <td><b>${esc(s.full_name||s.email)}</b><div class="sub">${esc(s.email)}</div></td>
-      <td>${s.active?chip("active","good"):chip("disabled","bad")}${s.has_login?"":" "+chip("no login yet","warnc")}</td><td>${esc(ago(s.last_sign_in_at))}</td><td>${esc(s.added_by||"")}</td>
+      <td>${s.active?chip("active","good"):chip("disabled","bad")}${s.has_login?(s.must_change_password?" "+chip("awaiting first sign-in","warnc"):""):" "+chip("no login yet","warnc")}</td><td>${esc(ago(s.last_sign_in_at))}</td><td>${esc(s.added_by||"")}</td>
       <td class="acts">${s.has_login?`<button class="btn ghost sm" onclick="stLogin('${esc(s.email)}','reset_staff_password')">Reset password</button>`:`<button class="btn sm" onclick="stLogin('${esc(s.email)}','create_staff')">Create login</button>`}
         <button class="btn ghost sm" onclick="stSet('${esc(s.email)}',${!s.active})">${s.active?"Disable":"Enable"}</button><button class="btn danger sm" onclick="stRemove('${esc(s.email)}')">Remove</button></td></tr>`), "No staff yet. Add a team member to share the queues.")}</div>
   <div class="card"><h3>Super admins</h3><p class="note">Super admins are managed directly in the database for safety. Ask your developer to add or remove one.</p>${table(["Email","Last sign-in"], t.super.map(a=>`<tr><td>${esc(a.email)}</td><td>${esc(ago(a.last_sign_in_at))}</td></tr>`))}</div>`;
@@ -447,8 +548,9 @@ window.stAdd = () => { showModal("Add staff member", `<div class="field"><label 
 };
 window.stLogin = async (email, action) => { showPassword(action==="create_staff"?"Staff login created":"Temporary password issued", await accountAction({action, email})); render(); };
 window.stSet = async (email, active) => { await rpc("admin_staff_set", {p_email:email, p_active:active}); toast(active?"Staff member enabled.":"Staff member disabled."); render(); };
-window.stRemove = async email => { if(!confirm("Remove "+email+" from staff? Their access to this console ends at once.")) return;
-  await rpc("admin_staff_remove", {p_email:email}); toast("Staff member removed."); render(); };
+// Removing goes through bureau-admin so the staff member's login is deleted too.
+window.stRemove = async email => { if(!confirm("Remove "+email+" from staff? Their access ends at once and their login is deleted.")) return;
+  try{ await accountAction({action:"remove_staff", email}); toast("Staff member removed."); }catch(_){} render(); };
 </script>
 </body>
 </html>
