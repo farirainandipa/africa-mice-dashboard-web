@@ -46,8 +46,8 @@ public/
   pipeline/index.html   Bid Pipeline app (HTML + CSS + JS in one file, ~125 KB)
   pipeline/submit.html  public event submission form
   pipeline/partner.html public destination-partner submission form
-  pipeline/admin.html   system admin console at /admin (agency team only)
   pipeline/theme.css    shared tokens and primitives for all pipeline pages
+  admin/index.html      system admin console at /admin (agency team only)
 netlify.toml            build, /pipeline rewrite, security headers
 supabase/README.md      where the database schema and migrations live
 supabase/migrations/    pipeline migrations from the move onwards
@@ -124,7 +124,7 @@ supabase/migrations/    pipeline migrations from the move onwards
   differing value for a verified field in `fit_input_conflicts` instead.
   `countries_ready_for_scoring` lists countries with every weighted input set.
 - **System admin console** (migration `20261119090334_admin_console`,
-  page `public/pipeline/admin.html`). `admin_level()` returns `super` for an
+  page `public/admin/index.html`). `admin_level()` returns `super` for an
   allowlisted email and `staff` for an active row in `admin_staff`. Staff work
   the signup and report queues, suspend accounts, reset passwords and read
   every console screen; only super admins change tiers, rate limit rules,
@@ -183,14 +183,14 @@ supabase/migrations/    pipeline migrations from the move onwards
 
 - `netlify.toml`: build `npm run build`, publish `dist`, Node 22.
 - `/pipeline`, `/pipeline/partner` and `/pipeline/submit` are rewritten to
-  their `.html` files, and `/admin` to `pipeline/admin.html`, **before** the
+  their `.html` files, and `/admin` to `admin/index.html`, **before** the
   SPA catch-all. Keep that order.
 - This repo is the only source of the pipeline pages. farirainandipa-web no
   longer carries a copy (removed in its PR #18), so edit them here.
 - farirainandipa.co.zw/pipeline/* 301-redirects here (path and query kept), so
   old links and the partner verification emails, which still point at the
   old domain, keep working.
-- `/pipeline/*` and `/admin` are served with `X-Robots-Tag: noindex` and `no-cache`.
+- `/pipeline/*` and `/admin/*` are served with `X-Robots-Tag: noindex` and `no-cache`.
 - No build-time environment variables are needed.
 - When the site's domain changes, add it to Supabase Auth URL configuration
   (Site URL / Redirect URLs) so sign-in and password flows work.

@@ -18,10 +18,11 @@
   to = "/pipeline/partner.html"
   status = 200
 
-# System admin console (sign-in required, agency team only), served at /admin.
+# System admin console (sign-in required, agency team only), public/admin/.
+# Rewritten so /admin loads without a redirect to /admin/.
 [[redirects]]
   from = "/admin"
-  to = "/pipeline/admin.html"
+  to = "/admin/index.html"
   status = 200
 
 # Public event submission form (no login), linked from the landing page.
@@ -53,6 +54,12 @@
 
 [[headers]]
   for = "/admin"
+  [headers.values]
+    X-Robots-Tag = "noindex, nofollow"
+    Cache-Control = "no-cache"
+
+[[headers]]
+  for = "/admin/*"
   [headers.values]
     X-Robots-Tag = "noindex, nofollow"
     Cache-Control = "no-cache"
