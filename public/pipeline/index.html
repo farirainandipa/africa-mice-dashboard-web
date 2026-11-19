@@ -893,7 +893,7 @@ async function loadMatches(){
 }
 async function bMatch(){
   if(!MATCHES){ $("#mainEl").innerHTML = `<div class="loadWrap"><div class="spin"></div>Loading matches…</div>`; await loadMatches(); if(VIEW!=="b_match") return; }
-  if(MATCHES.error){ $("#mainEl").innerHTML = `<div class="card"><h3>Could not load matches</h3><p>${esc(MATCHES.error)}</p></div>`; return; }
+  if(MATCHES.error){ $("#mainEl").innerHTML = `<div class="card"><h3>Could not load matches</h3><p>${esc(portalErr(MATCHES.error))}</p></div>`; return; }
   const c = P().country, rows = MATCHES.matches||[], plus = MATCHES.tier==="bureau_plus";
   $("#mainEl").innerHTML = `
   <div class="pageHead"><h2>${flag(c.iso2)} Matches for ${esc(c.name)}</h2><div class="meta">${rows.length} open and watched calls, ranked by how well ${esc(c.name)} fits each one</div></div>
@@ -1860,9 +1860,13 @@ window.exitPreview = () => { MODE="admin"; VIEW="access"; PORTAL=null; MATCHES=n
 /* =====================================================================
    BUREAU PORTAL (client view)
    ===================================================================== */
+// Portal reads are limited per login (rate rule portal_read); say so plainly.
+const portalErr = e => e==="rate_limited"
+  ? `The portal has been loaded many times in the last hour. Wait a little and try again, or contact ${AGENCY_EMAIL}.`
+  : e;
 async function loadPortal(){
   const {data,error} = await sb.rpc("bureau_portal");
-  if(error || data?.error){ $("#mainEl").innerHTML = `<div class="card"><h3>Could not load your portal</h3><p>${esc(error?.message||data.error)}</p></div>`; return; }
+  if(error || data?.error){ $("#mainEl").innerHTML = `<div class="card"><h3>Could not load your portal</h3><p>${esc(portalErr(error?.message||data.error))}</p></div>`; return; }
   PORTAL = data; buildNav(); render();
   $("#footEl").textContent = "Prepared for "+(PORTAL.org?.org_name||PORTAL.country.name)+" by Farirai Nandipa MICE Agency · Confidential · Every bid and event carries a confidence badge and the date it was last checked against its official source";
 }

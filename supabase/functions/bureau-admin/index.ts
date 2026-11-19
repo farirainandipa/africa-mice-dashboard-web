@@ -13,6 +13,11 @@
 // reset a password and suspend or reinstate a login. Every action is rate
 // limited per admin and written to the audit log with the admin's email.
 // New actions create_staff and reset_staff_password manage staff logins.
+// v5 (Nov 2026): staff first sign-in (migration admin_console_gaps). Creating
+// or resetting a staff login sets admin_staff.must_change_password, so the
+// staff member has no console access until they confirm their email with a
+// code and choose their own password. New action remove_staff takes a staff
+// member off the team and deletes their login.
 import { createClient } from "npm:@supabase/supabase-js@2";
 
 const CORS = {
@@ -70,6 +75,15 @@ Deno.serve(async (req) => {
   const expiresAt = () => new Date(Date.now() + TEMP_DAYS * 86400_000).toISOString();
   const audit = (act: string, entity: string, id: string, summary: string) =>
     svc.rpc("audit_write", { p_action: act, p_entity: entity, p_entity_id: id, p_summary: summary, p_actor: actor });
+  // Flag a staff login as on a temporary password. Runs after the password is
+  // set, and clears the password_changed_at the auth trigger has just written,
+  // so only the staff member's own change counts.
+  const markTemporary = async (email: string) => {
+    const { error } = await svc.from("admin_staff")
+      .update({ must_change_password: true, temp_password_issued_at: new Date().toISOString(), password_changed_at: null })
+      .eq("email", email);
+    return error?.message ?? null;
+  };
 
   // 2. per-admin rate limit on account actions
   const { data: allowed } = await svc.rpc("rate_limit_hit", { p_rule: "admin_account_action", p_subject: actorId });
@@ -158,6 +172,29 @@ Deno.serve(async (req) => {
     return json({ ok: true, active });
   }
 
+  // Take a staff member off the team and delete their login, so a removed
+  // staff member cannot sign in anywhere.
+  if (action === "remove_staff") {
+    if (!isSuper) return json({ error: "Super admins only" }, 403);
+    const email = String(body.email || "").trim().toLowerCase();
+    const { data: st } = await svc.from("admin_staff").select("email").eq("email", email).maybeSingle();
+    if (!st) return json({ error: "Not on the staff list" }, 404);
+    const { data: al } = await svc.from("allowlist").select("email").ilike("email", email).maybeSingle();
+    const { data: ua } = await svc.from("user_access").select("user_id").ilike("email", email).maybeSingle();
+    const { error: delErr } = await svc.from("admin_staff").delete().eq("email", email);
+    if (delErr) return json({ error: delErr.message }, 400);
+    let loginDeleted = false;
+    const { data: existing } = await svc.rpc("admin_auth_user_id", { p_email: email });
+    if (existing && !al && !ua) {
+      await svc.rpc("revoke_user_sessions", { p_user_id: existing });
+      const { error } = await svc.auth.admin.deleteUser(existing);
+      loginDeleted = !error;
+    }
+    await audit("staff.remove", "admin_staff", email,
+      `Staff member ${email} removed${loginDeleted ? " and their login deleted" : ""}`);
+    return json({ ok: true, login_deleted: loginDeleted });
+  }
+
   // Staff logins. The email must already be on the staff list (admin_staff_set).
   if (action === "create_staff" || action === "reset_staff_password") {
     if (!isSuper) return json({ error: "Super admins only" }, 403);
@@ -172,15 +209,19 @@ Deno.serve(async (req) => {
       if (existing) return json({ error: "This staff member already has a login. Reset the password instead." }, 400);
       const { data: u, error } = await svc.auth.admin.createUser({ email, password: pw, email_confirm: true, user_metadata: { role: "staff" } });
       if (error) return json({ error: error.message }, 400);
+      const flagErr = await markTemporary(email);
+      if (flagErr) { await svc.auth.admin.deleteUser(u.user.id); return json({ error: flagErr }, 400); }
       await audit("staff.create_login", "admin_staff", email, `Login created for staff member ${email}`);
-      return json({ ok: true, user_id: u.user.id, email, temp_password: pw });
+      return json({ ok: true, user_id: u.user.id, email, temp_password: pw, expires_at: expiresAt() });
     }
     if (!existing) return json({ error: "This staff member has no login yet" }, 404);
     const { error } = await svc.auth.admin.updateUserById(existing, { password: pw });
     if (error) return json({ error: error.message }, 400);
+    const flagErr = await markTemporary(email);
+    if (flagErr) return json({ error: flagErr }, 400);
     await svc.rpc("revoke_user_sessions", { p_user_id: existing });
     await audit("staff.reset_password", "admin_staff", email, `Temporary password issued for staff member ${email}`);
-    return json({ ok: true, email, temp_password: pw });
+    return json({ ok: true, email, temp_password: pw, expires_at: expiresAt() });
   }
 
   return json({ error: "Unknown action" }, 400);
