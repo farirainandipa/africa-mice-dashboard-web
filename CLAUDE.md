@@ -92,8 +92,19 @@ supabase/migrations/    pipeline migrations from the move onwards
   visa fields through `bureau_country()` / `bureau_update_country(patch)`
   (migration `20261110221713_bureau_country_edit`), which reject any other
   column; admins edit `countries` directly. Accounts are created by the
-  `bureau-admin` edge function (admins only). Every tier gets the same
+  `bureau-admin` edge function (admins only; source in
+  `supabase/functions/bureau-admin/`). Every tier gets the same
   portal for now.
+- **First sign-in** (migration `20261119043319_bureau_first_signin_security`).
+  Create and reset give a temporary password (seven days) and set
+  `user_access.must_change_password`. Until `complete_first_signin()` clears
+  it, `bureau_country_id()` and `my_tier()` return null, so the bureau sees
+  nothing. That RPC requires a session opened with an emailed code (JWT `amr`
+  of `otp` or `magiclink`) and a password change after the temporary one
+  (`password_changed_at`, set by a trigger on `auth.users`). Route any new
+  bureau policy or RPC through `bureau_country_id()` so it honours the gate.
+  Password rules live in `PW_RULES` in `pipeline/index.html` and should match
+  the Supabase Auth password settings.
 - **Bid history** (`bid_wins`, `series`, `history_sync_log` and the
   `bid_history*` / `bid_wins_teaser` RPCs) is admin only. Bureaux and
   anonymous visitors have no access (migration
