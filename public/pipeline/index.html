@@ -536,7 +536,7 @@ async function enter(session){
 $("#userBtn").onclick = ()=> $("#userMenu").classList.toggle("hidden");
 document.addEventListener("click",e=>{ if(!e.target.closest(".userChip")) $("#userMenu").classList.add("hidden"); });
 $("#btnLogout").onclick = async ()=>{ try{ localStorage.removeItem(IDLE_KEY); }catch(_){} await sb.auth.signOut(); location.reload(); };
-$("#btnSysAdmin").onclick = ()=>{ location.href = "/pipeline/admin"; };
+$("#btnSysAdmin").onclick = ()=>{ location.href = "/admin"; };
 // Report a problem: files a ticket for the agency team (migration 20261119090334_admin_console).
 $("#btnReport").onclick = ()=>{
   $("#userMenu").classList.add("hidden");

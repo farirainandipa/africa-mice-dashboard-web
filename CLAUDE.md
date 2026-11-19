@@ -46,7 +46,7 @@ public/
   pipeline/index.html   Bid Pipeline app (HTML + CSS + JS in one file, ~125 KB)
   pipeline/submit.html  public event submission form
   pipeline/partner.html public destination-partner submission form
-  pipeline/admin.html   system admin console at /pipeline/admin (agency team only)
+  pipeline/admin.html   system admin console at /admin (agency team only)
   pipeline/theme.css    shared tokens and primitives for all pipeline pages
 netlify.toml            build, /pipeline rewrite, security headers
 supabase/README.md      where the database schema and migrations live
@@ -182,14 +182,16 @@ supabase/migrations/    pipeline migrations from the move onwards
 ## Deployment (Netlify)
 
 - `netlify.toml`: build `npm run build`, publish `dist`, Node 22.
-- `/pipeline`, `/pipeline/admin`, `/pipeline/partner` and `/pipeline/submit` are rewritten to
-  their `.html` files **before** the SPA catch-all. Keep that order.
+- `/pipeline`, `/pipeline/partner` and `/pipeline/submit` are rewritten to
+  their `.html` files, and `/admin` to `pipeline/admin.html`, **before** the
+  SPA catch-all. Keep that order. The old `/pipeline/admin` address
+  301-redirects to `/admin`.
 - This repo is the only source of the pipeline pages. farirainandipa-web no
   longer carries a copy (removed in its PR #18), so edit them here.
 - farirainandipa.co.zw/pipeline/* 301-redirects here (path and query kept), so
   old links and the partner verification emails, which still point at the
   old domain, keep working.
-- `/pipeline/*` is served with `X-Robots-Tag: noindex` and `no-cache`.
+- `/pipeline/*` and `/admin` are served with `X-Robots-Tag: noindex` and `no-cache`.
 - No build-time environment variables are needed.
 - When the site's domain changes, add it to Supabase Auth URL configuration
   (Site URL / Redirect URLs) so sign-in and password flows work.
