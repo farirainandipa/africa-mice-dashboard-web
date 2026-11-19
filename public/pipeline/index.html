@@ -216,6 +216,13 @@ table.data.sm th{padding:6px 8px}
 .mBody h5{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.2em;color:var(--accent);margin:20px 0 9px}
 .empty{color:var(--muted);font-style:italic;font-size:13px;padding:14px 0}
 .card.empty{padding:22px;font-style:normal}
+/* ---------- idle timeout warning ---------- */
+#idleBack{position:fixed;inset:0;background:rgba(5,9,18,.72);-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px);z-index:150;display:flex;align-items:center;justify-content:center;padding:16px}
+#idleBack.hidden{display:none}
+.idleCard{background:var(--panel);border:1px solid var(--line2);border-radius:16px;width:min(420px,100%);padding:26px;box-shadow:0 30px 80px rgba(0,0,0,.5)}
+.idleCard h3{font-size:19px;font-weight:800;letter-spacing:-.02em;margin-bottom:8px}
+.idleCard p{color:var(--muted);font-size:13.5px;margin-bottom:18px}
+.idleCard .acts{display:flex;gap:10px;flex-wrap:wrap}
 footer.ft{color:var(--faint);font-size:12px;padding:22px 28px;border-top:1px solid var(--line);text-align:center}
 .loadWrap{display:flex;align-items:center;justify-content:center;min-height:50vh;color:var(--muted);gap:10px}
 .spin{width:18px;height:18px;border:2.5px solid var(--line2);border-top-color:var(--accent);border-radius:50%;animation:sp .8s linear infinite}
@@ -278,6 +285,17 @@ footer.ft{color:var(--faint);font-size:12px;padding:22px 28px;border-top:1px sol
 </div>
 
 <div id="modalBack" class="hidden light"><div class="modal" id="modalEl"></div></div>
+
+<div id="idleBack" class="hidden light" role="alertdialog" aria-modal="true" aria-labelledby="idleTitle" aria-describedby="idleText">
+  <div class="idleCard">
+    <h3 id="idleTitle">Are you still there?</h3>
+    <p id="idleText">You will be signed out in <b id="idleCount">2:00</b> because of inactivity.</p>
+    <div class="acts">
+      <button class="btn primary" id="btnStay">Stay signed in</button>
+      <button class="btn ghost" id="btnIdleOut">Sign out now</button>
+    </div>
+  </div>
+</div>
 
 <script>
 const SUPABASE_URL = "https://upzkvszgoqhoefkiwoep.supabase.co";
@@ -377,7 +395,6 @@ let state = {pipeStatus:"all", pipeQ:"", pipeSector:"all", evSector:"all", evSco
    password, before the portal shows anything. The server enforces this:
    bureau_country_id() and my_tier() return null until complete_first_signin()
    has checked the code and the change (migration 20261119043319). */
-const IDLE_MIN = 30;           // sign out after this many minutes without activity
 const PW_MIN = 8;            // keep in step with Supabase Auth > Password requirements
 const PW_COMMON = ["password","passw0rd","qwerty","letmein","welcome","admin","123456","africa","mice","bureau","pipeline","tourism","convention"];
 const PW_RULES = [
@@ -424,14 +441,57 @@ function jwtClaims(s){
 const sessionHasOtp = s => (jwtClaims(s).amr||[]).some(a=>a.method==="otp"||a.method==="magiclink");
 
 async function init(){
-  try{ if(sessionStorage.getItem("pl_idle")){ sessionStorage.removeItem("pl_idle"); showAuthErr(`You were signed out after ${IDLE_MIN} minutes without activity.`); } }catch{}
+  try{ if(sessionStorage.getItem("pl_idle_out")){ sessionStorage.removeItem("pl_idle_out"); const el=$("#authErr"); el.textContent="You were signed out after 10 minutes of inactivity. Sign in again to continue."; el.classList.remove("hidden"); } }catch(_){}
   const {data:{session}} = await sb.auth.getSession();
-  if(session) enter(session);
+  if(session){
+    // A session left idle past the limit (tab closed, laptop asleep) is ended on return.
+    if(Date.now() - idleLast() >= IDLE_LIMIT){ await idleSignOut(); return; }
+    enter(session);
+  }
   sb.auth.onAuthStateChange((e,s)=>{
-    if(e==="SIGNED_OUT" && entered) return location.reload();
     if(s && $("#appView").classList.contains("hidden")) enter(s);
+    if(e==="SIGNED_OUT" && entered) location.reload(); // signed out in another tab
   });
 }
+
+/* ---- Idle timeout: 10 minutes without activity signs the user out.
+   A warning appears 2 minutes before. Activity is shared across tabs
+   through localStorage, so working in one tab keeps the others alive. ---- */
+const IDLE_LIMIT = 10*60*1000, IDLE_WARN = 2*60*1000, IDLE_KEY = "pl_last_active";
+let idleTick = null, idleWriteAt = 0;
+function idleLast(){ try{ const v=+localStorage.getItem(IDLE_KEY); return v>0 ? v : Date.now(); }catch(_){ return Date.now(); } }
+function idleMark(force){
+  const now=Date.now();
+  if(!force && now-idleWriteAt<5000) return; // throttle writes
+  idleWriteAt=now;
+  try{ localStorage.setItem(IDLE_KEY, String(now)); }catch(_){}
+}
+async function idleSignOut(){
+  clearInterval(idleTick); idleTick=null;
+  try{ localStorage.removeItem(IDLE_KEY); sessionStorage.setItem("pl_idle_out","1"); }catch(_){}
+  try{ await sb.auth.signOut({scope:"local"}); }catch(_){}
+  location.reload();
+}
+function idleCheck(){
+  const left = IDLE_LIMIT - (Date.now() - idleLast());
+  if(left<=0){ idleSignOut(); return; }
+  const back=$("#idleBack");
+  if(left<=IDLE_WARN){
+    const s=Math.ceil(left/1000);
+    $("#idleCount").textContent = Math.floor(s/60)+":"+String(s%60).padStart(2,"0");
+    if(back.classList.contains("hidden")){ back.classList.remove("hidden"); $("#btnStay").focus(); }
+  } else if(!back.classList.contains("hidden")) back.classList.add("hidden");
+}
+function idleStart(){
+  if(idleTick) return;
+  idleMark(true);
+  ["pointerdown","keydown","wheel","touchstart","scroll"].forEach(ev=>
+    document.addEventListener(ev, ()=>{ if($("#idleBack").classList.contains("hidden")) idleMark(); }, {passive:true, capture:true}));
+  document.addEventListener("visibilitychange", ()=>{ if(!document.hidden) idleCheck(); });
+  idleTick = setInterval(idleCheck, 1000);
+}
+$("#btnStay").onclick = ()=>{ idleMark(true); $("#idleBack").classList.add("hidden"); };
+$("#btnIdleOut").onclick = async ()=>{ try{ localStorage.removeItem(IDLE_KEY); }catch(_){} await sb.auth.signOut(); location.reload(); };
 function showAuthErr(msg){ const el=$("#authErr"); el.textContent=msg; el.classList.remove("hidden"); }
 $("#btnLogin").onclick = doLogin;
 $("#inPass").addEventListener("keydown",e=>{ if(e.key==="Enter") doLogin(); });
@@ -456,12 +516,12 @@ async function doLogin(){
 let entered=false;
 async function enter(session){
   if(entered) return; entered=true;
+  idleStart();
   const {data:acc, error} = await sb.rpc("my_access");
   if(!error && acc?.role==="bureau" && acc.must_change_password) return firstSignin(session, acc);
   LAST_PW = null;
   $("#authView").classList.add("hidden"); $("#appView").classList.remove("hidden");
   $("#userEmail").textContent = session.user.email;
-  startIdleWatch();
   if(error){ $("#mainEl").innerHTML = `<div class="card"><h3>Could not check your access</h3><p>${esc(error.message)}</p></div>`; return; }
   ME = acc;
   if(acc.role==="admin"){ MODE="admin"; buildNav(); await loadData(); }
@@ -470,7 +530,7 @@ async function enter(session){
 }
 $("#userBtn").onclick = ()=> $("#userMenu").classList.toggle("hidden");
 document.addEventListener("click",e=>{ if(!e.target.closest(".userChip")) $("#userMenu").classList.add("hidden"); });
-$("#btnLogout").onclick = async ()=>{ await sb.auth.signOut(); location.reload(); };
+$("#btnLogout").onclick = async ()=>{ try{ localStorage.removeItem(IDLE_KEY); }catch(_){} await sb.auth.signOut(); location.reload(); };
 $("#btnChangePw").onclick = ()=>{
   $("#userMenu").classList.add("hidden");
   showModal(`<div class="mHead"><div><h3>Change password</h3><div class="sub">Other devices are signed out once it is saved.</div></div><button class="x" onclick="closeModal()">✕</button></div>
@@ -584,22 +644,6 @@ async function firstSignin(session, acc){
   sessionHasOtp(session) ? stepPassword() : stepCode();
 }
 
-/* Idle sign-out. Activity in any open tab counts (shared through localStorage). */
-let idleWatching = false, lastAct = Date.now();
-function startIdleWatch(){
-  if(idleWatching) return; idleWatching = true;
-  const mark = ()=>{ const now=Date.now(); if(now-lastAct<15000) return; lastAct=now; try{ localStorage.setItem("pl_last_act", String(now)); }catch{} };
-  ["pointerdown","keydown","scroll","touchstart"].forEach(ev=>document.addEventListener(ev, mark, {passive:true, capture:true}));
-  try{ localStorage.setItem("pl_last_act", String(lastAct)); }catch{}
-  const check = async ()=>{
-    let last = lastAct; try{ last = Math.max(last, +localStorage.getItem("pl_last_act")||0); }catch{}
-    if(Date.now()-last < IDLE_MIN*60000) return;
-    try{ sessionStorage.setItem("pl_idle","1"); }catch{}
-    await sb.auth.signOut({scope:"local"}); location.reload();
-  };
-  setInterval(check, 60000);
-  document.addEventListener("visibilitychange", ()=>{ if(!document.hidden) check(); });
-}
 
 /* =====================================================================
    NAV
