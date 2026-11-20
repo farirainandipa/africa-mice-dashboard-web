@@ -1262,7 +1262,8 @@ function ctxRender(){
   const tabs = MODE==="admin" ? ADMIN_TABS : bureauTabs();
   const tabL = (tabs.find(t=>t[0]===VIEW)||[null,""])[1];
   const bid = !!(BL_CUR && BL_CUR.view===VIEW);
-  const place = MODE==="admin" ? (bid ? BL_CUR.scope.name : "") : PORTAL.country.name;
+  const intel = n => `${n} Bid Intelligence`;
+  const place = MODE==="admin" ? (bid ? (BL_CUR.scope.kind==="country" ? intel(BL_CUR.scope.name) : BL_CUR.scope.name) : "") : intel(PORTAL.country.name);
   const sec = bid ? (CTX_SEC_LABEL||"Bid pipeline") : (MODE==="admin" ? sentenceCase(tabL) : tabL);
   $("#ctxView").textContent = MODE==="admin" ? "Agency view" : MODE==="preview" ? "Country view, preview" : "Country view";
   $("#ctxPlace").textContent = place || sec;
