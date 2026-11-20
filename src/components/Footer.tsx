@@ -1,5 +1,6 @@
 import { BRAND, CTA, DASHBOARD_URL, FOOTER, NAV_LINKS } from '../content';
 import Wordmark from './Wordmark';
+import { LEGAL, fillLegal } from '../legal';
 
 /** Footer with the wordmark, description, navigation, legal links and attribution. */
 export default function Footer() {
@@ -30,15 +31,19 @@ export default function Footer() {
           </nav>
         </div>
 
-        <div className="mt-12 flex flex-col gap-4 border-t border-line pt-6 text-xs text-faint sm:flex-row sm:items-center sm:justify-between">
-          <div className="space-y-1">
-            <p>
-              © {BRAND.copyrightYear} {BRAND.name}
-            </p>
+        <div className="mt-12 flex flex-col gap-4 border-t border-line pt-6 text-xs text-faint sm:flex-row sm:items-start sm:justify-between">
+          <div className="max-w-2xl space-y-2 leading-relaxed">
+            <p>{fillLegal(LEGAL.footerNotice)}</p>
             <p className="text-faint/80">{BRAND.parentCompany}</p>
+            <p>
+              {LEGAL.rightsPrompt}{' '}
+              <a href={LEGAL.links.rights.href} className="text-muted underline-offset-2 transition-colors hover:text-ink hover:underline">
+                {LEGAL.rightsLinkText}
+              </a>
+            </p>
           </div>
-          <ul className="flex gap-6">
-            {FOOTER.legalLinks.map((link) => (
+          <ul className="flex flex-wrap gap-x-6 gap-y-2">
+            {[LEGAL.links.terms, LEGAL.links.notices, ...FOOTER.legalLinks].map((link) => (
               <li key={link.label}>
                 <a href={link.href} className="transition-colors hover:text-ink">
                   {link.label}

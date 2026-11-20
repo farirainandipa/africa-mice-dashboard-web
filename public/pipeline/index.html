@@ -11,6 +11,8 @@
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/pipeline/theme.css">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script src="/legal/config.js"></script>
+<script src="/legal/legal.js"></script>
 <style>
 :root{--rank1:var(--accent);--rank2:rgba(25,195,177,.62);--rank3:rgba(25,195,177,.3);--rank4:var(--track)}
 .light{--rank3:rgba(25,195,177,.35)}
@@ -224,6 +226,10 @@ table.data.sm th{padding:6px 8px}
 .idleCard p{color:var(--muted);font-size:13.5px;margin-bottom:18px}
 .idleCard .acts{display:flex;gap:10px;flex-wrap:wrap}
 footer.ft{color:var(--faint);font-size:12px;padding:22px 28px;border-top:1px solid var(--line);text-align:center}
+footer.legalFt{display:flex;flex-direction:column;align-items:center;gap:6px;padding-top:0;border-top:0}
+footer.legalFt .legalLinks{justify-content:center}
+footer.legalFt a{color:var(--muted)}
+.termsBox{max-height:300px;overflow:auto;border:1px solid var(--line);border-radius:8px;padding:14px 16px;font-size:13px;margin:14px 0 10px;background:var(--panel2);color:var(--muted)}
 .loadWrap{display:flex;align-items:center;justify-content:center;min-height:50vh;color:var(--muted);gap:10px}
 .spin{width:18px;height:18px;border:2.5px solid var(--line2);border-top-color:var(--accent);border-radius:50%;animation:sp .8s linear infinite}
 @keyframes sp{to{transform:rotate(360deg)}}
@@ -347,6 +353,7 @@ main.compact{padding-top:14px}
       </div>
     </div>
   </div>
+  <footer class="ft legalFt" data-legal-footer></footer>
 </div>
 
 <div id="appView" class="hidden appShell">
@@ -367,6 +374,7 @@ main.compact{padding-top:14px}
   <div id="ctxBar" class="ctxBar light hidden"><div class="in"><span class="vl" id="ctxView"></span><h1 id="ctxPlace"></h1><span class="sep" id="ctxSep" aria-hidden="true">/</span><span class="sec" id="ctxSec"></span><span class="cnt" id="ctxCnt" aria-live="polite"></span></div></div>
   <main id="mainEl" class="light"><div class="loadWrap"><div class="spin"></div>Loading pipeline…</div></main>
   <footer class="ft light" id="footEl">Prepared by Farirai Nandipa MICE Agency · Confidential · Each record shows its own confidence and the date it was last checked against its source</footer>
+  <footer class="ft light legalFt" data-legal-footer></footer>
 </div>
 
 <div id="modalBack" class="hidden light"><div class="modal" id="modalEl"></div></div>
@@ -418,7 +426,8 @@ function effConf(x){
   const lim=(st==="bid_open"||st==="open")?14:60;
   return age>lim?"stale":"verified";
 }
-function confChip(x){ const c=effConf(x); const t=`Confidence ${CONF_L[c]}${x.verified_on?" · last checked "+fmtD(x.verified_on):" · never checked"}${x.source_tier?" · "+TIER_L[x.source_tier]:""}`; return `<span class="chip c-${c}" title="${esc(t)}">${CONF_L[c]}</span>`; }
+function confChip(x){ const c=effConf(x); const t=`Confidence ${CONF_L[c]}${x.verified_on?" · last checked "+fmtD(x.verified_on):" · never checked"}${x.source_tier?" · "+TIER_L[x.source_tier]:""}`;
+  return c==="unverified" ? `<a class="chip c-${c}" href="/legal?doc=data_notice" title="${esc(t)}. Select for what this means." onclick="event.preventDefault();event.stopPropagation();showDataNotice()">${CONF_L[c]}</a>` : `<span class="chip c-${c}" title="${esc(t)}">${CONF_L[c]}</span>`; }
 function provenanceRows(kind,x){
   return `<dt>Confidence</dt><dd>${confChip(x)} <span style="font-size:12.5px;color:var(--muted)">${x.verified_on?"last checked "+fmtD(x.verified_on):"never checked against a primary source"}${x.source_tier?" · "+TIER_L[x.source_tier]:""}</span>
     ${MODE==="admin"?` <button class="btn sm ghost" onclick="markVerified('${kind}',${x.id})">Mark checked today</button>`:""}
@@ -436,30 +445,13 @@ window.markVerified = async (kind,id) => {
   if(r.error) return toast(r.error.message);
   await reload(true); toast("Marked as checked today."); kind==="opportunity"? openOpp(id) : openEv(id);
 };
-/* destination fit from the structured profile (0-100 scaled to the 0-5 bar used elsewhere) */
-function profileFit(e, p){
-  if(!p) return null;
-  const yes = v => /^yes/i.test(String(v||""));
-  const parts = [
-    ["Bureau", yes(p.bureau_exists)?15:(/partial/i.test(p.bureau_exists||"")?7:0), 15],
-    ["Bids formally", yes(p.bids_formally)?15:(/informal/i.test(p.bids_formally||"")?6:0), 15],
-    ["Subvention fund", yes(p.subvention_fund)?10:(/partial/i.test(p.subvention_fund||"")?5:0), 10],
-    ["Visa ease", p.visa_ease? Math.round(p.visa_ease/5*15):0, 15],
-    ["Air access", Math.min(15, Number(p.intl_nonstops)||0), 15],
-    ["Venue vs size", p.largest_plenary? (!e.typical_attendance? 12 : p.largest_plenary>=e.typical_attendance? 20 : Math.round(20*p.largest_plenary/e.typical_attendance)) : 0, 20],
-    ["ICCA 2024 top 10", p.icca_2024_top10?10:0, 10]
-  ];
-  const raw = parts.reduce((a,x)=>a+x[1],0);
-  const openKey = e.openness_2027_29||"unknown";
-  const mult = {open:1, partly:0.8, unknown:0.6, rotation:0.35, fixed:0}[openKey] ?? 0.6;
-  const adv = p.advisory_level==="red"?0 : p.advisory_level==="amber"?0.5 : 1;
-  return {score: Math.round(raw*mult*adv)/20, parts, mult, adv, openKey};
-}
-function fitBreakHtml(f){ return `<div class="fitBreak">${f.parts.map(x=>`<span>${esc(x[0])}</span><b>${x[1]} / ${x[2]}</b>`).join("")}<span>Winnability (${esc(f.openKey)})</span><b>× ${f.mult}</b><span>Travel advisory</span><b>× ${f.adv}</b></div>`; }
+/* Host-fit scores, their breakdowns and bid readiness are computed in the database (admin_fit_scores()
+   for admins, host_fit() inside portal_data() for bureaux). The points and multipliers live in the
+   admin-only host_fit_params table and are not shipped to the browser (IP change W4). */
+let FIT = {events:{}, opportunities:{}, readiness:{}};
+function fitBreakHtml(f){ return `<div class="fitBreak">${f.parts.map(x=>`<span>${esc(x[0])}</span><b>${x[1]} / ${x[2]}</b>`).join("")}<span>Winnability (${esc(f.open_key)})</span><b>× ${f.mult}</b><span>Travel advisory</span><b>× ${f.adv}</b></div>`; }
 /* one-line version shown beside the score on cards */
 function fitInline(f){ return `<div class="fitInline">${f.parts.map(x=>`${esc(x[0])} ${x[1]}/${x[2]}`).join(" · ")} · winnability ×${f.mult} · advisory ×${f.adv}</div>`; }
-/* RFPs carry no openness field: an open or watched call is open by definition, a closed one cannot be won */
-const oppAsFitInput = o => ({typical_attendance:null, openness_2027_29: effStatus(o)==="closed"?"fixed":"open"});
 const period = p => p.period_start||p.period_end ? `${p.period_start||"?"}–${p.period_end||"?"}` : "";
 function toast(msg){ const t=document.createElement("div"); t.className="toast"; t.textContent=msg; document.body.appendChild(t); setTimeout(()=>t.remove(),3200); }
 const val = id => { const el=document.getElementById(id); return el? (el.type==="checkbox"? el.checked : el.value.trim()) : null; };
@@ -605,6 +597,8 @@ async function enter(session){
   idleStart();
   const {data:acc, error} = await sb.rpc("my_access");
   if(!error && acc?.role==="bureau" && acc.must_change_password) return firstSignin(session, acc);
+  if(!error && acc?.role==="bureau" && acc.terms_required) return termsGate(session, acc);
+  loadDataNotice();
   LAST_PW = null;
   $("#authView").classList.add("hidden"); $("#appView").classList.remove("hidden");
   $("#userEmail").textContent = session.user.email;
@@ -752,6 +746,60 @@ async function firstSignin(session, acc){
   sessionHasOtp(session) ? stepPassword() : stepCode();
 }
 
+/* Terms of Access (IP change W2). A bureau login sees nothing until the current version is accepted:
+   bureau_country_id() and my_tier() return null until then, so this screen is a courtesy, not the gate. */
+async function termsGate(session, acc){
+  const box = $("#authFirst");
+  $("#authSignin").classList.add("hidden"); box.classList.remove("hidden");
+  const err = m => { const el=$("#fsErr"); if(el){ el.textContent=m; el.classList.toggle("hidden",!m); } };
+  const wireCancel = ()=>{ const a=$("#fsCancel"); if(a) a.onclick = async ev=>{ ev.preventDefault(); await sb.auth.signOut({scope:"local"}); location.reload(); }; };
+  box.innerHTML = `<span class="overline">Terms of Access</span><h1>Before you continue</h1><p class="sub">Loading the terms.</p>`;
+  let d;
+  try{ d = await Legal.fetchDoc(sb, "terms_of_access"); }
+  catch(_){
+    box.innerHTML = `<span class="overline">Terms of Access</span><h1>Before you continue</h1>
+      <div class="authErr">The Terms of Access could not load. Reload the page, or contact <a href="mailto:${AGENCY_EMAIL}">${AGENCY_EMAIL}</a>.</div>
+      <p class="authAlt"><a href="#" id="fsCancel">Sign out</a></p>`;
+    return wireCancel();
+  }
+  box.innerHTML = `<span class="overline">Terms of Access · version ${d.version}</span><h1>Before you continue</h1>
+    <p class="sub">${esc(acc.org_name||acc.country||"Your organisation")} uses the dashboard on these terms. Accept them on behalf of your organisation to continue.</p>
+    <div class="termsBox legalText">${Legal.html(d.body)}</div>
+    <p class="authNote"><a href="/legal?doc=terms_of_access" target="_blank" rel="noopener">Open the full terms in a new tab</a></p>
+    <div id="fsErr" class="authErr hidden"></div>
+    <label class="consent"><input type="checkbox" id="tmOk"> <span>${esc(d.accept_label)}</span></label>
+    <button class="btn primary wide" id="tmGo" style="margin-top:16px">Accept and continue</button>
+    <p class="authAlt"><a href="#" id="fsCancel">Sign out</a></p>`;
+  wireCancel();
+  $("#tmGo").onclick = async ()=>{
+    if(!$("#tmOk").checked) return err("Tick the box to accept the terms on behalf of your organisation.");
+    err(""); $("#tmGo").disabled = true;
+    const {data, error} = await sb.rpc("terms_accept", {p_version: d.version});
+    $("#tmGo").disabled = false;
+    if(data?.error==="version_changed") return termsGate(session, acc);
+    if(error || !data?.ok) return err("The acceptance could not be saved. "+(error?.message||"Try again."));
+    box.classList.add("hidden"); box.innerHTML = ""; $("#authSignin").classList.remove("hidden");
+    entered = false; await enter(session);
+    toast("Terms accepted. Welcome.");
+  };
+}
+
+/* Data notice (IP change W8): shown near every record list; unverified badges link to it. */
+let DATA_NOTICE = null;
+function loadDataNotice(){
+  if(DATA_NOTICE) return;
+  Legal.fetchDoc(sb, "data_notice").then(d=>{ DATA_NOTICE = d; document.querySelectorAll(".dataNote .dn").forEach(el=>{ el.textContent = Legal.fill(d.body); }); }).catch(()=>{});
+}
+const dataNote = () => `<p class="dataNote"><span class="dn">${esc(DATA_NOTICE ? Legal.fill(DATA_NOTICE.body) : "")}</span> <a href="/legal?doc=data_notice" onclick="event.preventDefault();showDataNotice()">About this data</a></p>`;
+window.showDataNotice = () => showModal(`<div class="mHead"><div><h3>${esc(DATA_NOTICE?.title||"About this data")}</h3></div><button class="x" onclick="closeModal()">✕</button></div>
+  <div class="mBody"><div class="legalText">${DATA_NOTICE ? Legal.html(DATA_NOTICE.body) : "<p>Loading.</p>"}</div>
+  <p style="font-size:12.5px;margin-top:12px"><a href="/legal?doc=terms_of_access" target="_blank" rel="noopener">Terms of Access</a> · <a href="/legal/rights" target="_blank" rel="noopener">Request a correction or removal</a></p></div>`);
+/* Source line on every record (IP change W5). */
+const hostOf = u => String(u||"").replace(/^https?:\/\/(www\.)?([^/:?#]+).*$/, "$2");
+const recordSrc = (name, url, checked, tier) => `<div class="srcLine">Source: ${url ? `${esc(name||hostOf(url))}, <a href="${esc(url)}" target="_blank" rel="noopener" onclick="event.stopPropagation()">${esc(url.replace(/^https?:\/\/(www\.)?/,"").slice(0,60))} ↗</a>` : "not recorded"}. Last checked ${checked ? fmtD(String(checked).slice(0,10)) : "not yet"}.${tier ? " "+esc(TIER_L[tier][0].toUpperCase()+TIER_L[tier].slice(1))+"." : ""}</div>`;
+/* Longest run of words inside quotation marks (IP change W6: quotes stay at 14 words or fewer). */
+const longestQuote = t => Math.max(0, ...[...String(t||"").matchAll(/["“]([^"“”]+)["”]/g)].map(m=>m[1].trim().split(/\s+/).length));
+
 
 /* =====================================================================
    NAV
@@ -804,12 +852,14 @@ async function loadData(){
     sb.from("bid_alignments").select("*"),
     sb.from("user_access").select("*").order("created_at",{ascending:false}),
     sb.from("destination_profiles").select("*"),
-    sb.from("submissions").select("*").order("created_at",{ascending:false})
+    sb.from("submissions").select("*").order("created_at",{ascending:false}),
+    sb.rpc("admin_fit_scores")
   ];
   const r = await Promise.all(q);
   const err = r.find(x=>x.error);
   if(err){ $("#mainEl").innerHTML = `<div class="card"><h3>Could not load data</h3><p>${esc(err.error.message)}</p></div>`; return; }
-  const [c,v,a,p,o,e,m,s,pf,cs,os,es,ba,ua,dp,su] = r.map(x=>x.data);
+  const [c,v,a,p,o,e,m,s,pf,cs,os,es,ba,ua,dp,su,fs] = r.map(x=>x.data);
+  FIT = fs || {events:{}, opportunities:{}, readiness:{}};
   DB = {countries:c, venues:v, airports:a, past:p, opps:o, events:e, matches:m, sectors:s, policies:pf, csec:cs, osec:os, esec:es, aligns:ba, access:ua, profiles:dp||[], subs:su||[]};
   DB.cById = Object.fromEntries(c.map(x=>[x.id,x]));
   DB.profById = Object.fromEntries((dp||[]).map(x=>[x.country_id,x]));
@@ -1032,7 +1082,7 @@ function blRender(surface){
   const main = $("#mainEl"); main.classList.add("compact");
   const title = surface==="agency" ? (sc.kind==="all" ? "All tracked bids" : `Bids scored for ${esc(sc.name)}`) : `Calls for bids for ${esc(sc.name)}`;
   const note = surface==="country" && MATCHES?.error ? `<p class="blNote">Fit scores could not be loaded just now. ${esc(portalErr(MATCHES.error))}</p>` : "";
-  main.innerHTML = snapHtml(surface, sc, items) + fbarHtml(surface, f, opts) + note + `
+  main.innerHTML = snapHtml(surface, sc, items) + fbarHtml(surface, f, opts) + note + dataNote() + `
   <section class="bidPanel" aria-labelledby="bpH">
     <div class="ph"><h2 id="bpH">${title}</h2><span>Select a card to see the full record.</span></div>
     <div class="bidScroll" id="bidScroll"></div>
@@ -1335,7 +1385,7 @@ window.openOpp = (id, tab) => {
   const o = DB.opps.find(x=>x.id===id); if(!o) return;
   const tabs = ["Details","Requirements","Host fit","Sectors & policy fit"];
   const st = effStatus(o);
-  const body = t => t==="Requirements" ? reqPanel(o) : t==="Host fit" ? hostFitPanel(oppAsFitInput(o), "opportunity") : t==="Details" ? `
+  const body = t => t==="Requirements" ? reqPanel(o) : t==="Host fit" ? hostFitPanel(o, "opportunity") : t==="Details" ? `
       <div class="chips" style="margin-bottom:16px">
         <span class="chip ${st}">${st}</span>
         ${o.event_type?`<span class="chip sector">${esc(o.event_type)}</span>`:""}
@@ -1354,7 +1404,7 @@ window.openOpp = (id, tab) => {
         ${o.host_year?`<dt>Host year</dt><dd>${esc(o.host_year)}</dd>`:""}
         ${o.why_uncertain?`<dt>Why uncertain</dt><dd>${esc(o.why_uncertain)}</dd>`:""}
         ${o.verify_next?`<dt>Verify next</dt><dd>${esc(o.verify_next)}</dd>`:""}
-        <dt>Sources</dt><dd>${o.primary_source_url?`<a href="${esc(o.primary_source_url)}" target="_blank" rel="noopener">${esc(o.primary_source_url.replace(/^https?:\/\//,"").slice(0,70))} ↗</a>`:"–"} ${o.secondary_url?` · <a href="${esc(o.secondary_url)}" target="_blank" rel="noopener">Secondary ↗</a>`:""}</dd>
+        <dt>Sources</dt><dd>${o.source_name?esc(o.source_name)+": ":""}${o.primary_source_url?`<a href="${esc(o.primary_source_url)}" target="_blank" rel="noopener">${esc(o.primary_source_url.replace(/^https?:\/\//,"").slice(0,70))} ↗</a>`:"–"} ${o.secondary_url?` · <a href="${esc(o.secondary_url)}" target="_blank" rel="noopener">Secondary ↗</a>`:""}</dd>
       </dl>
       ${o.summary?`<h5>Summary</h5><p>${esc(o.summary)}</p>`:""}
       ${o.verification_note?`<h5>Verification trail</h5><p style="font-size:12.5px;color:var(--muted)">${esc(o.verification_note)}</p>`:""}` : alignPanel("opportunity", id);
@@ -1376,7 +1426,9 @@ const subBars = subs => SUB_ORDER.map(k => subs?.[k]==null
   ? `<div class="fitRow"><span class="nm" style="width:130px">${SUB_L[k]}</span><span style="flex:1;color:var(--muted);font-size:12px">No requirement set, so not counted</span></div>`
   : `<div class="fitRow"><span class="nm" style="width:130px">${SUB_L[k]}</span><span class="bar"><i style="width:${subs[k]}%"></i></span><span class="sc">${subs[k]}</span></div>`).join("");
 const MCONF_L = {verified:"Verified", partial:"Partial", unverified:"Unverified"};
-const matchConf = c => `<span class="chip c-${c}" title="The weakest trust level among the destination inputs behind this score">${MCONF_L[c]||c}</span>`;
+const matchConf = c => c==="unverified"
+  ? `<a class="chip c-${c}" href="/legal?doc=data_notice" title="The weakest trust level among the destination inputs behind this score. Select for what this means." onclick="event.preventDefault();event.stopPropagation();showDataNotice()">${MCONF_L[c]||c}</a>`
+  : `<span class="chip c-${c}" title="The weakest trust level among the destination inputs behind this score">${MCONF_L[c]||c}</span>`;
 
 /* ---------- Bureau: Matches tab ---------- */
 async function loadMatches(){
@@ -1395,6 +1447,7 @@ async function bMatch(){
   $("#mainEl").innerHTML = `
   <div class="pageHead"><h2>${flag(c.iso2)} Matches for ${esc(c.name)}</h2><div class="meta">${all.length} open and watched calls, ranked by how well ${esc(c.name)} fits each one</div></div>
   <p class="lede">The fit score (0 to 100) weighs venue capacity, air access, visa ease, bidding capability and sector priority against what each call asks for. A requirement the call does not state is left out rather than counted against you. Rows due within 21 days are highlighted. Select a row for the breakdown.</p>
+  ${dataNote()}
   ${lfBar("matches",[{q:true, ph:"Event or organiser"},
     {k:"within", label:"Deadline", any:"Any time", opts:DEADLINE_OPTS},
     {k:"status", label:"Status", any:"Any status", opts:uniq(all,m=>m.status).map(k=>[k,BL_STATUS_L[k]||k])},
@@ -1408,7 +1461,7 @@ async function bMatch(){
         <td style="max-width:260px"><b>${esc(m.title)}</b><div style="font-size:12px;color:var(--muted)">${esc(m.issuing_body||"")}</div></td>
         <td style="white-space:nowrap">${delegatesTxt(m)}</td>
         <td style="white-space:nowrap">${fmtD(m.deadline)} ${m.deadline?dlChip(m.deadline):`<span class="chip watchlist">${m.status==="watchlist"?"watchlist":"no date"}</span>`}</td>
-        <td><span class="fitNum">${m.score}</span><div>${matchConf(m.confidence)}</div></td>
+        <td><span class="fitNum">${m.score}</span>${m.band?`<div style="font-size:11.5px;color:var(--muted);white-space:nowrap">${esc(m.band)}</div>`:""}<div>${matchConf(m.confidence)}</div></td>
         <td style="font-size:12.5px;max-width:200px">${esc(m.reasons?.[0]||"–")}</td>
         <td style="font-size:12.5px;max-width:200px">${esc(m.gaps?.[0]||"–")}</td>
         <td style="font-size:12.5px;max-width:200px">${esc(m.next_action||"–")}</td></tr>
@@ -1427,7 +1480,8 @@ function matchDetail(m, plus){
     <div><h5>Why it fits</h5>${(m.reasons||[]).map(r=>`<div style="font-size:12.8px;margin-bottom:4px">${esc(r)}</div>`).join("")||'<div class="empty">No strong signals yet.</div>'}
       <h5 style="margin-top:12px">Gaps to close</h5>${(m.gaps||[]).map(r=>`<div style="font-size:12.8px;margin-bottom:4px">${esc(r)}</div>`).join("")||'<div class="empty">None recorded.</div>'}</div>
   </div>
-  <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:14px">
+  <div style="margin-top:12px">${recordSrc(m.source_name, m.source_url, m.verified_on)}</div>
+  <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px">
     ${m.source_url?`<a class="btn sm ghost" href="${esc(m.source_url)}" target="_blank" rel="noopener" onclick="event.stopPropagation()">Official call ↗</a>`:""}
     <a class="btn sm primary" href="${interestLink(m.title)}" onclick="event.stopPropagation()">Express interest</a>
   </div>`;
@@ -1647,10 +1701,11 @@ function rEvents(){
   const topFits = e => {
     const m = DB.matches.filter(x=>x.event_id===e.id).sort((a,b)=>b.total_score-a.total_score).slice(0,3);
     if(m.length) return m.map(f=>({country_id:f.country_id, score:Number(f.total_score), title:f.rationale||"Host-fit score from the matches table", computed:false}));
-    return prios.map(c=>{ const f=profileFit(e, DB.profById[c.id]); return f? {country_id:c.id, score:f.score, title:"Computed from the structured destination profile", computed:true, f} : null; }).filter(Boolean).sort((a,b)=>b.score-a.score).slice(0,3);
+    return (FIT.events[e.id]||[]).slice(0,3).map(f=>({country_id:f.country_id, score:Number(f.score), title:"Computed from the structured destination profile", computed:true, f}));
   };
   $("#mainEl").innerHTML = `
   <div class="pageHead"><h2>Strategic Events</h2><div class="meta">${DB.events.length} rotating forums and congresses · host chosen by bid, call, invitation or rotation · sorted by openness for 2027–29</div></div>
+  ${dataNote()}
   ${lfBar("events",[{q:true, ph:"Forum or organiser"},
     {k:"sector", label:"Sector group", any:"All sector groups", opts:uniq(E,e=>e.sector).map(k=>[k,SECTORS[k]||k])},
     {k:"scope", label:"Scope", any:"All scopes", opts:uniq(E,e=>e.scope).map(k=>[k,k[0].toUpperCase()+k.slice(1)])},
@@ -1676,6 +1731,7 @@ function rEvents(){
         ${confChip(e)}
       </div>
       <div class="chips">${e.host_selection?`<span class="chip hs">${esc(HS_L[e.host_selection]||e.host_selection)}</span>`:""}${secChips("event",e.id)}</div>
+      ${recordSrc(e.source_name, e.source_url, e.verified_on)}
       <div style="font-size:12.5px;color:var(--muted)">AfCFTA alignment ${dots(e.afcfta_score)} ${e.afcfta_score||0}/5</div>
       ${e.afcfta_relevance?`<div style="font-size:12.5px">${esc(e.afcfta_relevance)}</div>`:""}
       ${e.rotation_pattern?`<div style="font-size:12.5px;color:var(--muted)"><b>Rotation:</b> ${esc(e.rotation_pattern)}</div>`:""}
@@ -1698,11 +1754,12 @@ function rEvents(){
 function hostFitPanel(e, kind){
   const m = kind==="opportunity" ? [] : DB.matches.filter(x=>x.event_id===e.id).sort((a,b)=>b.total_score-a.total_score);
   const prios = DB.countries.filter(c=>c.priority);
-  const rows = prios.map(c=>({c, f: profileFit(e, DB.profById[c.id]), m: m.find(x=>x.country_id===c.id)})).sort((a,b)=>((b.f?.score)||0)-((a.f?.score)||0));
+  const list = ((kind==="opportunity" ? FIT.opportunities : FIT.events)[e.id]||[]).map(f=>({...f, score:Number(f.score)}));
+  const rows = prios.map(c=>({c, f: list.find(x=>x.country_id===c.id), m: m.find(x=>x.country_id===c.id)})).sort((a,b)=>((b.f?.score)||0)-((a.f?.score)||0));
   const how = kind==="opportunity"
-    ? "then scaled by whether the call is still open (an open or watched call counts as open, a closed one scores zero) and by the travel advisory. Calls carry no delegate count, so venue scores 12 of 20 wherever a plenary is recorded."
+    ? "then scaled by whether the call is still open and by the travel advisory."
     : "then scaled by how winnable the forum is for 2027–29 and by the travel advisory. Where a hand-scored match exists it is shown beside it.";
-  return `<p style="font-size:12.5px;color:var(--muted);margin-bottom:10px">Score out of 5 for each priority destination, computed from its structured profile (bureau, bid practice, subvention, visa ease, air access, venue versus typical size, ICCA standing), ${how} Weights are provisional.</p>
+  return `<p style="font-size:12.5px;color:var(--muted);margin-bottom:10px">Score out of 5 for each priority destination, computed from its structured profile (bureau, bid practice, subvention, visa ease, air access, venue versus typical size, ICCA standing), ${how} The points are set in the database and are never sent to bureaux, who see the score only.</p>
   ${rows.map(({c,f,m})=>`<div style="margin-bottom:12px"><div class="fitRow"><span class="nm">${flag(c.iso2)} <b>${esc(c.name)}</b></span><span class="bar"><i style="width:${f?(f.score/5)*100:0}%"></i></span><span class="sc">${f?f.score.toFixed(1):"–"}</span>${m?`<span style="font-size:11.5px;color:var(--muted);margin-left:8px">hand-scored ${Number(m.total_score).toFixed(1)}</span>`:""}</div>${f?fitBreakHtml(f):'<div class="empty">No destination profile yet.</div>'}</div>`).join("")}
   ${m.length? `<h5>Hand-scored matches (all countries)</h5><div class="tblWrap"><table class="data"><thead><tr><th>Country</th><th>Capacity</th><th>Sector</th><th>Access</th><th>Cost</th><th>Track record</th><th>AfCFTA</th><th>Total</th></tr></thead><tbody>${m.map(x=>`<tr><td>${flag(DB.cById[x.country_id]?.iso2)} ${esc(DB.cById[x.country_id]?.name)}</td><td>${x.capacity_fit??"–"}</td><td>${x.sector_fit??"–"}</td><td>${x.access_visa??"–"}</td><td>${x.cost_fit??"–"}</td><td>${x.track_record??"–"}</td><td>${x.afcfta_fit??"–"}</td><td><b>${Number(x.total_score).toFixed(1)}</b></td></tr>`).join("")}</tbody></table></div>`:""}`;
 }
@@ -1729,7 +1786,7 @@ window.openEv = (id, tab) => {
       ${e.decision_date?`<dt>Decision date</dt><dd>${fmtD(e.decision_date)}</dd>`:""}
       <dt>Status</dt><dd>${esc((e.bid_status||"").replace(/_/g," "))}</dd>
       ${DB.cById[e.recommended_destination_id]?`<dt>Recommended host</dt><dd>${flag(DB.cById[e.recommended_destination_id].iso2)} ${esc(DB.cById[e.recommended_destination_id].name)}</dd>`:""}
-      <dt>Source</dt><dd>${e.source_url?`<a href="${esc(e.source_url)}" target="_blank" rel="noopener">Source ↗</a>`:"–"}${e.bid_document_url?` · <a href="${esc(e.bid_document_url)}" target="_blank" rel="noopener">Bid document ↗</a>`:""}</dd>
+      <dt>Source</dt><dd>${e.source_name?esc(e.source_name)+": ":""}${e.source_url?`<a href="${esc(e.source_url)}" target="_blank" rel="noopener">Source ↗</a>`:"–"}${e.bid_document_url?` · <a href="${esc(e.bid_document_url)}" target="_blank" rel="noopener">Bid document ↗</a>`:""}</dd>
     </dl>${e.notes?`<h5>Notes</h5><p style="white-space:pre-line">${esc(e.notes)}</p>`:""}` : t==="Host fit" ? hostFitPanel(e, "event") : alignPanel("event", id);
   showTabbedModal(`<div><h3>${esc(e.event_name)}</h3><div class="sub">${esc(e.organiser||"")}</div></div>`, ["Details","Host fit","Sectors & policy fit"], body, tab);
 };
@@ -1789,7 +1846,7 @@ window.editEv = id => {
   </div>
 
   <div class="edSec">Sources and confidence</div>
-  <div class="frow">${txt("source_url","Source URL",e.source_url,'type="url"')}${txt("bid_document_url","Bid document URL",e.bid_document_url,'type="url"')}</div>
+  <div class="frow">${txt("source_name","Source name",e.source_name,'placeholder="Filled from the link if left blank"')}${txt("source_url","Source URL (required)",e.source_url,'type="url" required')}${txt("bid_document_url","Bid document URL",e.bid_document_url,'type="url"')}</div>
   <div class="frow">
     ${sel("source_tier","Source tier",Object.entries(EV_TIERS),e.source_tier,"–")}
     ${sel("confidence","Confidence",EV_CONF.map(s=>[s,nice(s)]),e.confidence)}
@@ -1804,6 +1861,7 @@ window.editEv = id => {
 window.saveEv = async id => {
   const e = DB.events.find(x=>x.id===id); if(!e) return;
   const name = val("ee_event_name"); if(!name) return toast("The event name cannot be empty.");
+  if(!val("ee_source_url") && e.source_url) return toast("Every record needs a source link.");
   const int = k => { const v=val(k); return v===""? null : parseInt(v,10); };
   const url = k => { const v=val(k); if(v && !/^https?:\/\//i.test(v)) throw new Error("Links must start with http:// or https://"); return nz(v); };
   let rec;
@@ -1818,7 +1876,7 @@ window.saveEv = async id => {
       decision_body:nz(val("ee_decision_body")), lead_time:nz(val("ee_lead_time")), host_requirements:nz(val("ee_host_requirements")),
       next_available_edition:nz(val("ee_next_available_edition")), recommended_destination_id:int("ee_recommended_destination_id"),
       bid_status:nz(val("ee_bid_status")), bid_deadline:nz(val("ee_bid_deadline")), decision_date:nz(val("ee_decision_date")),
-      source_url:url("ee_source_url"), bid_document_url:url("ee_bid_document_url"), source_tier:int("ee_source_tier"),
+      source_name:nz(val("ee_source_name")), source_url:url("ee_source_url"), bid_document_url:url("ee_bid_document_url"), source_tier:int("ee_source_tier"),
       confidence:val("ee_confidence")||"unverified", verified_on:nz(val("ee_verified_on")),
       conflict_note:nz(val("ee_conflict_note")), notes:nz(val("ee_notes")), updated_at:new Date().toISOString()
     };
@@ -1859,17 +1917,11 @@ function destCardHtml(c){
     </div>
   </div>`;
 }
-function readiness(p){
-  if(!p) return null;
-  const yes = v => /^yes/i.test(String(v||""));
-  const s = (yes(p.bureau_exists)?15:(/partial/i.test(p.bureau_exists||"")?7:0))+(yes(p.bids_formally)?15:(/informal/i.test(p.bids_formally||"")?6:0))+(yes(p.subvention_fund)?10:(/partial/i.test(p.subvention_fund||"")?5:0))+Math.round((p.visa_ease||0)/5*15)+Math.min(15,Number(p.intl_nonstops)||0)+(p.largest_plenary?Math.min(20,Math.round(p.largest_plenary/150)):0)+(p.icca_2024_top10?10:0);
-  return Math.round(s*(p.advisory_level==="red"?0:p.advisory_level==="amber"?0.5:1));
-}
-function readinessChip(c){ const p=DB.profById?.[c.id]; const r=readiness(p); if(r==null) return ""; const cls=p.advisory_level==="red"?"no":p.advisory_level==="amber"?"watchlist":"lvl"; return `<span class="chip ${cls}" title="Bid readiness from the structured profile (0-100); ${p.advisory_level} travel advisory">readiness ${r}</span>`; }
+function readinessChip(c){ const p=DB.profById?.[c.id]; const r=FIT.readiness?.[c.id]; if(r==null) return ""; const cls=p.advisory_level==="red"?"no":p.advisory_level==="amber"?"watchlist":"lvl"; return `<span class="chip ${cls}" title="Bid readiness from the structured profile (0-100); ${p.advisory_level} travel advisory">readiness ${r}</span>`; }
 function afChip(c){ const a=AF_LABEL[c.afcfta_status]; return a?`<span class="chip ${a[1]}" title="${a[0]}">${a[0].replace("AfCFTA ","")}</span>`:(c.type==="territory"?'<span class="chip terr">territory</span>':""); }
 function rDest(){
   const f = lf("dest"), q = (f.q||"").toLowerCase(), C = DB.countries;
-  const band = c => { const r = readiness(DB.profById?.[c.id]); return r==null ? "none" : r>=70 ? "70" : r>=50 ? "50" : "low"; };
+  const band = c => { const r = FIT.readiness?.[c.id]; return r==null ? "none" : r>=70 ? "70" : r>=50 ? "50" : "low"; };
   const all = C.filter(c => (!q || c.name.toLowerCase().includes(q)) && (!f.region || c.region===f.region) &&
     (!f.prio || (f.prio==="yes")===!!c.priority) && (!f.af || (c.afcfta_status||"none")===f.af) &&
     (!f.visa || (c.visa_africa||"none")===f.visa) && (!f.ready || band(c)===f.ready));
@@ -1916,6 +1968,7 @@ function destProfileKv(id){
   return `
       <dl class="kv">
         ${prof?`<dt>Bid readiness</dt><dd>${readinessChip(c)} <span style="font-size:12.5px;color:var(--muted)">${prof.profile_depth==="full"?"full 21-field profile":"12-field base profile"} · verified ${fmtD(prof.verified_on)} · <a href="#" onclick="event.preventDefault();openDest(${id},'Framework')">see the fields</a></span></dd>`:""}
+        ${prof?`<dt>Profile text</dt><dd>${profTextHtml(id, prof)}</dd>`:""}
         <dt>MICE positioning</dt><dd>${esc(c.mice_summary||"To be researched.")}</dd>
         <dt>Visa (African delegates)</dt><dd>${c.visa_africa?VISA_AF[c.visa_africa]:esc(c.visa_regime||"To be researched.")} · <a href="#" onclick="event.preventDefault();openDest(${id},'Visa')">full visa profile</a></dd>
         <dt>Transport network</dt><dd>${esc(c.transport_summary||"To be researched.")}</dd>
@@ -1947,6 +2000,19 @@ window.openDest = (id, tab) => {
     return pe.length? `<div class="tblWrap"><table class="data"><thead><tr><th>Event</th><th>City</th><th>Year</th><th>Sector</th><th>Attendance</th></tr></thead><tbody>${pe.map(p=>`<tr><td><b>${esc(p.event_name)}</b>${p.notes?`<br><span style="font-size:11.5px;color:var(--muted)">${esc(p.notes)}</span>`:""}</td><td>${esc(p.city||"")}</td><td style="white-space:nowrap">${p.year||"recurring"}${(!p.year||p.year>=new Date().getFullYear()-5)?' <span class="chip open" style="font-size:10px">recent</span>':""}</td><td>${esc(p.sector||"")}</td><td>${p.attendance?p.attendance.toLocaleString():"–"}</td></tr>`).join("")}</tbody></table></div>${peAll.length>pe.length?`<p style="font-size:12.5px;color:var(--muted);margin-top:8px">Showing the ${pe.length} most recent of ${peAll.length} hosted events.</p>`:""}` : `<p class="empty">No hosted-event records yet for this destination.</p>`;
   };
   showTabbedModal(`<div><h3>${flag(c.iso2)} ${esc(c.name)}</h3><div class="sub">${c.region} Africa · ${afLabelShort(c)||c.type}</div></div>`, tabs, body, tab);
+};
+/* Written profile fields reach bureaux only once reviewed (IP change W6). The database runs the quote check. */
+const PROF_TEXT = ["bureau_detail","venue_detail","visa_detail","fcdo_summary"];
+function profTextHtml(id, p){
+  const q = Math.max(...PROF_TEXT.map(k=>longestQuote(p[k])));
+  return p.text_status==="reviewed"
+    ? `<span class="chip ok">Reviewed</span> <span style="font-size:12.5px;color:var(--muted)">by ${esc(p.reviewed_by||"–")}${p.reviewed_at?" on "+fmtD(p.reviewed_at.slice(0,10)):""}. Bureaux see the written fields.</span> <button class="btn sm ghost" onclick="profText(${id},'draft')">Return to draft</button>`
+    : `<span class="chip watchlist">Draft</span> <span style="font-size:12.5px;color:var(--muted)">Bureaux do not see the written fields (bureau, venue, visa and advisory notes) until they are reviewed.${q>14?` <b style="color:var(--red)">A quote runs to ${q} words; shorten it to 14 or fewer first.</b>`:""}</span> <button class="btn sm ghost" onclick="profText(${id},'reviewed')">Mark text reviewed</button>`;
+}
+window.profText = async (id, status) => {
+  const {error} = await sb.rpc("profile_text_review", {p_country_id:id, p_status:status});
+  if(error) return toast(error.message);
+  await reload(true); openDest(id, "Profile"); toast(status==="reviewed" ? "Profile text marked reviewed. Bureaux now see it." : "Profile text returned to draft.");
 };
 function frameworkPanel(id, p){
   const head = p ? `<dl class="kv" style="margin-bottom:14px">
@@ -2068,6 +2134,7 @@ function rSubmissions(){
       ${s.host_needs?`<dt>Needs from host</dt><dd>${esc(s.host_needs)}</dd>`:""}
       ${s.past_hosts?`<dt>Last hosts</dt><dd>${esc(s.past_hosts)}</dd>`:""}
       <dt>Submitter</dt><dd>${esc(s.submitter_name)} · <span style="user-select:all">${esc(s.submitter_email)}</span></dd>
+      <dt>Licence</dt><dd>${s.licence_version?`Version ${s.licence_version} accepted ${new Date(s.licence_accepted_at).toLocaleString("en-GB",{day:"numeric",month:"short",year:"numeric",hour:"2-digit",minute:"2-digit"})}`:"Not recorded (sent before the licence was added)"}</dd>
       ${s.notes?`<dt>Notes</dt><dd>${esc(s.notes)}</dd>`:""}
       ${s.review_note?`<dt>Review note</dt><dd>${esc(s.review_note)}</dd>`:""}
     </dl>
@@ -2083,7 +2150,9 @@ window.confirmSub = async id => {
     host_selection:"invitation", openness_2027_29: /^yes/i.test(s.host_open)?"open":"fixed", source_tier:4, confidence:"verified", verified_on:TODAY(),
     verification_status:"verified", series_key:"sub-"+s.id, rotation_pattern:`Host open: ${s.host_open}. Decided ${s.decision_when} by ${s.decision_who}.`,
     host_requirements:[s.venue_needs, s.room_nights?`${s.room_nights} room-nights`:null, s.host_needs?`Needs from host: ${s.host_needs}`:null].filter(Boolean).join(" · ")||null,
-    next_available_edition:s.preferred_quarter||null, notes:`Submitted via the public form by ${s.submitter_name} (${s.submitter_email}). ${note}`, added_by:"submission-"+s.id};
+    next_available_edition:s.preferred_quarter||null,
+    source_url:location.origin+"/pipeline#submission-"+s.id, source_name:"Organiser submission ("+s.organisation+")",
+    notes:`Submitted via the public form by ${s.submitter_name} (${s.submitter_email}). ${note}`, added_by:"submission-"+s.id};
   const r = await sb.from("events").insert(ev).select("id").single();
   if(r.error) return toast(r.error.message);
   if(s.sector_id) await sb.from("event_sectors").insert({event_id:r.data.id, econ_sector_id:s.sector_id, is_primary:true});
@@ -2396,7 +2465,7 @@ function whyHtml(x){
   if(x.sectors?.length) return `<div class="why"><b>Fits your priority sector${x.sectors.length>1?"s":""}</b> ${x.sectors.map(esc).join(", ")}${x.policies?.length?` <span style="color:var(--muted)">(${x.policies.map(esc).join(", ")})</span>`:""}</div>`;
   return "";
 }
-const checkedLine = x => `<div style="font-size:11.5px;color:var(--muted)">${x.verified_on?"Last checked against its source "+fmtD(x.verified_on):"Not yet checked against a primary source"}${x.source_tier?" · "+TIER_L[x.source_tier]:""}</div>`;
+const checkedLine = x => recordSrc(x.source_name, x.source_url, x.verified_on, x.source_tier);
 function bidCard(b){
   return `<div class="evCard">
     <div class="chips"><span class="chip ${b.status}">${b.status==="open"?"open call":"watchlist"}</span>${b.submission_deadline?dlChip(b.submission_deadline):""}${confChip(b)}${b.sectors.map(s=>`<span class="chip sec">${esc(s)}</span>`).join("")}</div>
@@ -2418,15 +2487,14 @@ function bidCard(b){
 }
 function evCardB(e){
   const op = OPEN_L[e.openness_2027_29];
-  const pf = P().profile ? profileFit({typical_attendance:e.attendance, openness_2027_29:e.openness_2027_29}, P().profile) : null;
-  const score = pf ? pf.score : (e.host_fit!=null ? Number(e.host_fit) : null);
+  const score = e.host_fit!=null ? Number(e.host_fit) : null;
   return `<div class="evCard">
     <div class="chips"><span class="chip ${SCOPE_CLS[e.scope]||"sector"}">${esc(e.scope||"")}</span>${e.edition_year?`<span class="chip sector">${e.edition_year}</span>`:""}${op?`<span class="chip ${op[1]}">${op[0]}</span>`:""}${confChip(e)}${e.sectors.map(s=>`<span class="chip sec">${esc(s)}</span>`).join("")}</div>
     ${checkedLine(e)}
     <h4>${esc(e.name)}</h4>
     <div class="org">${esc(e.organiser||"")}${e.attendance?` · ~${Number(e.attendance).toLocaleString()} delegates`:""}</div>
     ${whyHtml(e)}
-    ${score!=null?`<div class="fitRow"><span class="nm" style="width:auto">Host-fit score for ${esc(P().country.name)}</span><span class="bar"><i style="width:${(score/5)*100}%"></i></span><span class="sc">${score.toFixed(1)}</span></div>${pf?fitInline(pf):""}`:""}
+    ${score!=null?`<div class="fitRow"><span class="nm" style="width:auto">Host-fit score for ${esc(P().country.name)}</span><span class="bar"><i style="width:${(score/5)*100}%"></i></span><span class="sc">${score.toFixed(1)}</span></div>${e.host_fit_band?`<div class="fitInline">${esc(e.host_fit_band)}</div>`:""}`:""}
     ${e.host_selection?`<div style="font-size:12.5px;color:var(--muted)"><b>Host chosen by:</b> ${esc(HS_L[e.host_selection]||e.host_selection)}${e.decision_body?`, ${esc(e.decision_body)}`:""}${e.lead_time?` · <b>lead time</b> ${esc(e.lead_time)}`:""}</div>`:""}
     ${e.rotation?`<div style="font-size:12.5px;color:var(--muted)"><b>Rotation:</b> ${esc(e.rotation)}</div>`:""}
     ${e.host_requirements?`<div style="font-size:12.5px;color:var(--muted)"><b>Host needs:</b> ${esc(e.host_requirements)}</div>`:""}
@@ -2445,6 +2513,7 @@ function bHome(){
   $("#mainEl").innerHTML = `
   <div class="pageHead"><h2>${flag(c.iso2)} ${esc(c.name)}: bids aligned to your national priorities</h2><div class="meta">${esc(p.org?.org_name||"")} · updated ${new Date().toLocaleDateString("en-GB",{day:"numeric",month:"long",year:"numeric"})}</div></div>
   <p class="lede">These international and regional congresses and calls for bids match the priority sectors in ${plan?esc(plan.title):"your national development plan"}. Each one shows why it fits, so you can take the case to ministries and industry partners.</p>
+  ${dataNote()}
   <div class="kpis">
     <div class="kpi"><div class="n">${open.length}</div><div class="l">Open calls for bids aligned to ${esc(c.name)}</div></div>
     <div class="kpi"><div class="n">${p.bids.length-open.length}</div><div class="l">On watch (call expected)</div></div>
@@ -2465,6 +2534,7 @@ function bEvents(){
   $("#mainEl").innerHTML = `
   <div class="pageHead"><h2>Strategic rotating events</h2><div class="meta">${p.events.length} events whose sectors match ${esc(p.country.name)}'s priorities</div></div>
   <p class="lede">These events rotate around the continent or the world. Most open their host selection one to three years ahead, so position early.</p>
+  ${dataNote()}
   ${lfBar("bevents",[{q:true, ph:"Event or organiser"},
     {k:"sector", label:"Sector", any:"All your sectors", opts:[...new Set(E.flatMap(e=>e.sectors||[]))].sort().map(n=>[n,n])},
     {k:"scope", label:"Scope", any:"All scopes", opts:uniq(E,e=>e.scope).map(k=>[k,k[0].toUpperCase()+k.slice(1)])},
@@ -2638,9 +2708,9 @@ window.openWin = id => {
       <div class="field"><label>Also in the running (comma separated)</label><input id="bw_comp" value="${esc((w.competing_destinations||[]).join(", "))}"></div>
       <div class="field"><label>Decision body</label><input id="bw_dbody" value="${esc(w.decision_body||"")}"></div>
     </div>
-    <div class="field"><label>Win factors (one to three sentences; quote under 15 words and link the source)</label><textarea id="bw_wf">${esc(w.win_factors||"")}</textarea></div>
+    <div class="field"><label>Win factors (one to three sentences; quote at most 14 words and link the source)</label><textarea id="bw_wf">${esc(w.win_factors||"")}</textarea><div class="hint" id="bw_wfq"></div></div>
     <div class="frow">
-      <div class="field"><label>Win-factors status</label><select id="bw_wfs">${opt("draft","Draft",w.win_factors_status)}${opt("reviewed","Reviewed",w.win_factors_status)}</select></div>
+      <div class="field"><label>Win-factors status</label><select id="bw_wfs">${opt("draft","Draft",w.win_factors_status)}${opt("reviewed","Reviewed",w.win_factors_status)}</select>${w.reviewed_at?`<div class="hint">Reviewed by ${esc(w.reviewed_by||"–")} on ${fmtD(w.reviewed_at.slice(0,10))}</div>`:""}</div>
       <div class="field"><label>Source URL</label><input id="bw_src" value="${esc(w.source_url||"")}"></div>
       <div class="field"><label>Source tier</label><select id="bw_tier"><option value="">–</option>${[1,2,3,4].map(t=>opt(t,t+" · "+TIER_L[t],w.source_tier)).join("")}</select></div>
       <div class="field"><label>Confidence</label><select id="bw_conf">${Object.entries(CONF_L).map(([k,l])=>opt(k,l,w.confidence)).join("")}</select></div>
@@ -2657,6 +2727,8 @@ window.openWin = id => {
       <a class="btn ghost" href="${esc(w.source_url||"#")}" target="_blank" rel="noopener" ${w.source_url?"":"style='display:none'"}>Open source ↗</a>
     </div>
   </div>`);
+  const wfq = ()=>{ const n=longestQuote($("#bw_wf").value); $("#bw_wfq").innerHTML = n>14 ? `<span style="color:var(--red);font-weight:600">The longest quote is ${n} words. Cut it to 14 or fewer before marking it reviewed.</span>` : n ? `Longest quote ${n} words (limit 14).` : "No quoted text."; };
+  wfq(); $("#bw_wf").addEventListener("input", wfq);
   $("#bw_cid").addEventListener("change",e=>{ const c=DB.cById[+e.target.value]; if(c){ $("#bw_cname").value=c.name; $("#bw_iso").value=c.iso2; $("#bw_region").value=c.region; } });
 };
 window.saveWin = async (id, markChecked) => {
@@ -2669,6 +2741,7 @@ window.saveWin = async (id, markChecked) => {
     win_factors: nz(val("bw_wf")), win_factors_status: val("bw_wfs"), source_url: nz(val("bw_src")), source_tier: tier,
     confidence: val("bw_conf"), conflict_note: nz(val("bw_note")), edition_note: nz(val("bw_enote"))
   };
+  if(p.win_factors_status==="reviewed" && longestQuote(p.win_factors)>14) return toast("The win factors quote more than 14 words in a row. Shorten the quote before marking them reviewed.");
   if(markChecked){
     if(!p.source_url || !tier || tier>2) return toast("Marking checked needs a Tier 1 or Tier 2 source URL.");
     p.confidence = "verified"; p.verified_on = TODAY();
@@ -2734,7 +2807,7 @@ function pSubCard(s){
   const when = new Date(s.submitted_at).toLocaleDateString("en-GB",{day:"numeric",month:"short",year:"numeric"});
   return `<div class="card">
     <div class="cardHead"><h3>${flag(s.iso2)} ${esc(s.country)} <span style="font-weight:400;color:var(--muted)">· ${esc(PTYPE_L[s.submitter_type]||s.submitter_type)}</span></h3><div class="chips">${pChip(PSTAT_L, s.status)}<span class="chip terr">${esc(s.profile_depth)} profile</span></div></div>
-    <div style="font-size:13px;margin-bottom:6px"><b>${esc(u.full_name)}</b>${u.role?", "+esc(u.role):""} · ${esc(u.organisation)} · <span style="user-select:all">${esc(u.work_email)}</span> · submitted ${esc(when)}</div>
+    <div style="font-size:13px;margin-bottom:6px"><b>${esc(u.full_name)}</b>${u.role?", "+esc(u.role):""} · ${esc(u.organisation)} · <span style="user-select:all">${esc(u.work_email)}</span> · submitted ${esc(when)} · ${s.licence_version?`licence version ${s.licence_version} accepted`:"no licence recorded"}</div>
     <div class="chips" style="margin-bottom:12px">${flags}</div>
     ${s.reviewer_note ? `<div class="why" style="margin-bottom:12px"><b>Review note</b> ${esc(s.reviewer_note)}</div>` : ""}
     <div class="tblWrap"><table class="data"><thead><tr><th>Data point</th><th>Proposed</th><th>Live now</th><th>Decision</th></tr></thead><tbody>

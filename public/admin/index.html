@@ -169,7 +169,7 @@ function showPassword(title, out){
 }
 
 let ME = null, VIEW = "overview", LOOKUPS = null;
-const TABS = [["overview","Overview"],["signups","Signups"],["accounts","Accounts"],["reports","Reports"],["activity","Activity"],["logs","Logs"],["audit","Audit log"],["limits","Rate limits"],["team","Team"]];
+const TABS = [["overview","Overview"],["signups","Signups"],["accounts","Accounts"],["reports","Reports"],["activity","Activity"],["logs","Logs"],["audit","Audit log"],["limits","Rate limits"],["legal","Legal"],["team","Team"]];
 const isSuper = ()=> ME && ME.level==="super";
 
 /* ---------- sign-in ---------- */
@@ -312,7 +312,7 @@ $("#navTabs").addEventListener("click",e=>{ const b=e.target.closest("button"); 
   document.querySelectorAll("#navTabs button").forEach(x=>x.classList.toggle("active",x===b)); render(); });
 const head = (title, sub, right="") => `<div class="pageHead"><div><h1>${esc(title)}</h1><p>${esc(sub)}</p></div><div class="filters">${right}</div></div>`;
 function render(){
-  ({overview:rOverview, signups:rSignups, accounts:rAccounts, reports:rReports, activity:rActivity, logs:rLogs, audit:rAudit, limits:rLimits, team:rTeam}[VIEW])()
+  ({overview:rOverview, signups:rSignups, accounts:rAccounts, reports:rReports, activity:rActivity, logs:rLogs, audit:rAudit, limits:rLimits, legal:rLegal, team:rTeam}[VIEW])()
     .then(()=>{ if(VIEW==="signups" || VIEW==="reports") refreshBadges(); }).catch(()=>{});
 }
 window.render = render;
@@ -420,16 +420,16 @@ window.usActive = async (id, active) => { const u = US.find(x=>x.user_id===id); 
 
 /* ---------- reports ---------- */
 let RP_STATUS = "active", RP_KIND = "", RP = [];
-const KINDS = {data_issue:"Data issue", support:"Support", bug:"Bug", abuse:"Abuse"};
+const KINDS = {data_issue:"Data issue", support:"Support", bug:"Bug", abuse:"Abuse", rights_request:"Correction or removal"};
 async function rReports(){
   RP = await rpc("admin_reports", {p_filter:{status:RP_STATUS, kind:RP_KIND}});
   const st = [["active","Open and in progress"],["open","Open"],["in_progress","In progress"],["resolved","Resolved"],["dismissed","Dismissed"],["all","All"]];
-  $("#mainEl").innerHTML = head("Reports", "Data flags, support requests, bug reports and abuse reports filed by signed-in users.",
+  $("#mainEl").innerHTML = head("Reports", "Data flags, support requests, bug and abuse reports filed by signed-in users, and correction or removal requests from the public form at /legal/rights.",
     `<label class="sub" for="rpS">Status</label><select id="rpS" onchange="RP_STATUS=this.value;render()">${st.map(([v,l])=>`<option value="${v}" ${v===RP_STATUS?"selected":""}>${l}</option>`).join("")}</select>
      <label class="sub" for="rpK">Type</label><select id="rpK" onchange="RP_KIND=this.value;render()"><option value="">All types</option>${Object.entries(KINDS).map(([v,l])=>`<option value="${v}" ${v===RP_KIND?"selected":""}>${l}</option>`).join("")}</select>`)
   + `<div class="card">${table(["Filed","Type","Report","From","Status",""], RP.map(r=>`<tr>
       <td>${esc(day(r.created_at))}<div class="sub">${esc(ago(r.created_at))}</div></td>
-      <td>${chip(KINDS[r.kind], r.kind==="abuse"?"bad":r.kind==="data_issue"?"info":"")}${r.priority!=="normal"?" "+chip(r.priority+" priority", r.priority==="high"?"bad":""):""}</td>
+      <td>${chip(KINDS[r.kind], r.kind==="abuse"?"bad":r.kind==="rights_request"?"warnc":r.kind==="data_issue"?"info":"")}${r.priority!=="normal"?" "+chip(r.priority+" priority", r.priority==="high"?"bad":""):""}</td>
       <td class="diff"><b>${esc(r.title)}</b>${r.subject_label||r.subject_id?`<div class="sub">About ${esc(r.subject_label||(words(r.subject_type)+" "+r.subject_id))}</div>`:""}<div>${esc(r.body||"")}</div>${r.resolution_note?`<div class="sub">Resolution: ${esc(r.resolution_note)}</div>`:""}</td>
       <td>${esc(r.reporter_email||"")}<div class="sub">${esc(r.reporter_country||"")}</div></td>
       <td>${chip(r.status, r.status==="resolved"?"good":r.status==="dismissed"?"":"warnc")}${r.assigned_to?`<div class="sub">${esc(r.assigned_to)}</div>`:""}</td>
@@ -490,7 +490,7 @@ function diffText(a){
 }
 async function rAudit(){
   const rows = await rpc("admin_audit", {p_filter:AU});
-  const ents = [["","Everything"],["user_access","Accounts"],["signup_requests","Signups"],["user_reports","Reports"],["allowlist","Super admins"],["admin_staff","Staff"],["rate_limit_rules","Rate limit rules"],["admin_settings","Settings"]];
+  const ents = [["","Everything"],["user_access","Accounts"],["signup_requests","Signups"],["user_reports","Reports"],["allowlist","Super admins"],["admin_staff","Staff"],["rate_limit_rules","Rate limits and blocks"],["admin_settings","Settings"],["terms_acceptances","Terms acceptances"],["legal_documents","Legal text"]];
   $("#mainEl").innerHTML = head("Audit log", "Who changed what and when. Entries cannot be edited or deleted.",
     `<select aria-label="Record type" onchange="AU.entity=this.value;render()">${ents.map(([v,l])=>`<option value="${v}" ${v===AU.entity?"selected":""}>${l}</option>`).join("")}</select>
      <select aria-label="Period" onchange="AU.days=Number(this.value);render()">${[[7,"Last 7 days"],[30,"Last 30 days"],[365,"Last year"],[3650,"All time"]].map(([v,l])=>`<option value="${v}" ${v===AU.days?"selected":""}>${l}</option>`).join("")}</select>
@@ -499,6 +499,43 @@ async function rAudit(){
       <td style="white-space:nowrap">${esc(when(a.at))}</td><td>${esc(a.actor)}</td><td class="mono">${esc(a.action)}</td>
       <td class="mono">${esc((a.entity_id||"").length>20?(a.entity_id||"").slice(0,8)+"…":a.entity_id||"")}</td><td class="diff">${diffText(a)}</td></tr>`), "No audit entries in this period.")}</div>`;
 }
+
+/* ---------- legal (IP changes W1, W2, W8) ---------- */
+const DOC_L = {terms_of_access:"Terms of Access", submission_licence:"Submission licence", data_notice:"Data notice"};
+let LG = null;
+async function rLegal(){
+  const [ta, docs] = await Promise.all([rpc("admin_terms_acceptances"), rpc("admin_legal_documents")]);
+  LG = docs; const cur = ta.current_version;
+  $("#mainEl").innerHTML = head("Legal", "Who has accepted which version of the Terms of Access, and every published version of the legal text. Bureau logins see nothing until they accept the current terms.",
+    isSuper() ? `<button class="btn sm" onclick="lgPublish()">Publish a new version</button>` : "")
+  + `<div class="card"><h3>Terms of Access acceptance (current version ${cur ?? "none"})</h3>${table(["Organisation","Login","Country","Accepted","Accepted current version"], ta.accounts.map(a=>`<tr>
+      <td><b>${esc(a.org_name||"–")}</b></td><td>${esc(a.email)}${a.active?"":" "+chip("inactive","")}</td><td>${esc(a.country||"")}</td>
+      <td>${a.accepted_version ? chip("version "+a.accepted_version, a.accepted_version===cur?"good":"warnc") : chip("not accepted","bad")}</td>
+      <td>${a.accepted_at ? esc(when(a.accepted_at)) : (a.accepted_version ? "Asked again at next sign-in" : "–")}</td></tr>`), "No bureau logins yet.")}</div>
+  <div class="card"><h3>Acceptance history</h3>${table(["When","Login","Organisation","Version"], ta.history.map(h=>`<tr><td style="white-space:nowrap">${esc(when(h.accepted_at))}</td><td>${esc(h.email||"")}</td><td>${esc(h.org_name||"")}</td><td>${esc(h.version)}</td></tr>`), "Nobody has accepted the terms yet.")}</div>
+  <div class="card"><h3>Published legal text</h3>${table(["Document","Version","Review","Published","By",""], docs.map((d,i)=>`<tr>
+      <td><b>${esc(DOC_L[d.doc_type]||d.doc_type)}</b><div class="sub">${esc(d.title)}</div></td><td>${esc(d.version)}</td>
+      <td>${d.review_status==="approved"?chip("approved","good"):chip("draft for legal review","warnc")}</td><td>${esc(day(d.published_at))}</td><td>${esc(d.created_by||"")}</td>
+      <td class="acts"><button class="btn ghost sm" onclick="lgView(${i})">Read</button> <a class="btn ghost sm" href="/legal?doc=${esc(d.doc_type)}" target="_blank" rel="noopener">Public page</a></td></tr>`))}
+    <p class="note">The text uses {owner}, filled in from legal.config.json. A new Terms of Access version asks every bureau to accept again at their next sign-in.</p></div>`;
+}
+window.lgView = i => { const d = LG[i];
+  showModal(`${DOC_L[d.doc_type]||d.doc_type}, version ${d.version}`, `<pre style="white-space:pre-wrap;font-family:inherit;font-size:13px">${esc(d.body)}</pre>${d.accept_label?`<p class="note">Checkbox: ${esc(d.accept_label)}</p>`:""}`); };
+window.lgPublish = () => {
+  const latest = t => LG.find(d=>d.doc_type===t) || {};
+  showModal("Publish a new version", `<div class="field"><label for="lgT">Document</label><select id="lgT">${Object.entries(DOC_L).map(([k,l])=>`<option value="${k}">${esc(l)}</option>`).join("")}</select></div>
+    <div class="field"><label for="lgN">Title</label><input id="lgN"></div>
+    <div class="field"><label for="lgB">Text (blank lines separate paragraphs; lines starting "1." form a list; {owner} is replaced)</label><textarea id="lgB" style="min-height:220px"></textarea></div>
+    <div class="field"><label for="lgA">Checkbox label (licence and terms only)</label><input id="lgA"></div>
+    <div class="field"><label for="lgR">Review</label><select id="lgR"><option value="draft_for_review">Draft for legal review</option><option value="approved">Approved by the IP practitioner</option></select></div>
+    <button class="btn primary" id="lgGo">Publish</button>`);
+  const fill = ()=>{ const d = latest($("#lgT").value); $("#lgN").value = d.title||""; $("#lgB").value = d.body||""; $("#lgA").value = d.accept_label||""; };
+  fill(); $("#lgT").onchange = fill;
+  $("#lgGo").onclick = async ()=>{
+    if(!confirm("Publish this as a new version? It goes live at once"+($("#lgT").value==="terms_of_access"?" and every bureau must accept it again.":"."))) return;
+    const r = await rpc("admin_legal_publish", {p_type:$("#lgT").value, p_title:$("#lgN").value, p_body:$("#lgB").value, p_accept_label:$("#lgA").value||null, p_review_status:$("#lgR").value});
+    closeModal(); toast("Version "+r.version+" published."); render(); };
+};
 
 /* ---------- rate limits ---------- */
 const span = s => s%86400===0 ? (s/86400)+(s===86400?" day":" days") : s%3600===0 ? (s/3600)+(s===3600?" hour":" hours") : s%60===0 ? (s/60)+" minutes" : s+" seconds";

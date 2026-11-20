@@ -11,6 +11,8 @@
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/pipeline/theme.css">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script src="/legal/config.js"></script>
+<script src="/legal/legal.js"></script>
 <style>
 .wrap{max-width:1000px}
 #view>h1{font-size:clamp(28px,4vw,40px);line-height:1.12;font-weight:800;letter-spacing:-.02em;margin-top:14px;max-width:760px}
@@ -48,7 +50,7 @@ table.status th{font-size:10.5px;font-weight:600;text-transform:uppercase;letter
   <p class="overline">Destination partners</p>
   <div id="view"></div>
 </div></main>
-<footer class="siteFoot"><div class="in"><span>© 2026 Africa MICE Dashboard</span><span>A product of Farirai Nandipa MICE Consultancy</span></div></footer>
+<footer class="siteFoot legalFoot"><div class="in" data-legal-footer></div></footer>
 <script>
 const SUPABASE_URL = "https://upzkvszgoqhoefkiwoep.supabase.co";
 const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVwemt2c3pnb3Fob2Vma2l3b2VwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIxMzg1MjQsImV4cCI6MjA5NzcxNDUyNH0.4RB-5FCWW7JXvGBKs0PlzkYcUeG5kTVxTVdoXUNp8ao";
@@ -125,8 +127,9 @@ function dataPoint(f){
 
 async function showForm(){
   view.innerHTML = header("Destination partner submission", "Loading the form.");
-  const {data: opts, error} = await sb.rpc("partner_form_options");
-  if(error || !opts){ view.innerHTML = header("Destination partner submission", "") + `<div class="err">The form could not load. Email nandie@farirainandipa.co.zw and we will take your data by hand.</div>`; return; }
+  const [{data: opts, error}, licence] = await Promise.all([sb.rpc("partner_form_options"),
+    Legal.fetchDoc(sb, "submission_licence").catch(() => null)]);
+  if(error || !opts || !licence){ view.innerHTML = header("Destination partner submission", "") + `<div class="err">The form could not load. Email nandie@farirainandipa.co.zw and we will take your data by hand.</div>`; return; }
   const typeOptions = TYPES.map(([k,l,on]) => `<option value="${k}"${on?"":" disabled"}>${esc(l)}${on?"":" (coming soon)"}</option>`).join("");
   view.innerHTML = header("Destination partner submission",
       "For convention bureaux and other in-country partners who hold first-hand data about a destination. Every data point needs a date it was true on and a source link or document. Nothing you send goes live until our team has reviewed it, and we may email you to confirm a detail.") +
@@ -145,7 +148,9 @@ async function showForm(){
       <fieldset><legend>Data points <small id="typeHint">Fill in the ones you can speak to. Leave the rest blank.</small></legend>
         <div id="points"></div>
       </fieldset>
-      <button class="btn" id="go" type="submit">Submit for review</button>
+      <div class="licenceBox"><div class="legalText">${Legal.html(licence.body)}</div>
+        <label class="consent"><input type="checkbox" id="licence_ok"> <span>${esc(licence.accept_label)}</span></label></div>
+      <button class="btn" id="go" type="submit" style="margin-top:18px">Submit for review</button>
       <p class="note">We send a confirmation link to your work email; the submission enters the queue once you click it. Documents go to a private store that only the review team can open.</p>
       <div id="out"></div>
     </form>`;
@@ -183,8 +188,9 @@ async function showForm(){
     }
     if(problems.length){ out.innerHTML = `<div class="err">${problems.map(esc).join("<br>")}</div>`; return; }
     if(!fields.length){ out.innerHTML = `<div class="err">Fill in at least one data point.</div>`; return; }
+    if(!document.getElementById("licence_ok").checked){ out.innerHTML = `<div class="err">Please tick the box to confirm you have the right to share this information and accept the submission licence.</div>`; return; }
     const payload = {full_name: val("full_name"), organisation: val("organisation"), role: val("role"), work_email: val("work_email"),
-      submitter_type: val("submitter_type"), country_id: Number(val("country_id")), website: val("website") || "", fields};
+      submitter_type: val("submitter_type"), country_id: Number(val("country_id")), website: val("website") || "", fields, licence_version: licence.version};
     const btn = document.getElementById("go"); btn.disabled = true;
     const {data, error} = await sb.rpc("profile_submit", {payload});
     if(error || !data || !data.ok){ btn.disabled = false; out.innerHTML = `<div class="err">We could not save that. ${esc(error?.message || "")} Email nandie@farirainandipa.co.zw and we will log it for you.</div>`; return; }

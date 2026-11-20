@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Request a correction or removal · Africa MICE Dashboard</title>
+<meta name="description" content="Ask for a record on the Africa MICE Dashboard to be corrected or removed.">
+<link rel="icon" type="image/svg+xml" href="/favicon.svg?v=3">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/pipeline/theme.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script src="/legal/config.js"></script>
+<script src="/legal/legal.js"></script>
+<style>
+.doc{max-width:760px}
+.doc h1{font-size:30px;font-weight:800;letter-spacing:-.02em;margin:10px 0 6px}
+.doc .meta{font-size:12.5px;color:var(--faint);margin-bottom:24px}
+.doc .legalText{font-size:15px}
+.docNav{display:flex;flex-wrap:wrap;gap:8px 18px;margin-top:28px;padding-top:18px;border-top:1px solid var(--line);font-size:13px}
+.hp{position:absolute;left:-9999px}
+</style>
+</head>
+<body>
+<header class="siteBar"><div class="in">
+  <a class="wordmark" href="/" aria-label="Africa MICE Dashboard home"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="0.5" y="0.5" width="23" height="23" rx="6" fill="#121A2B" stroke="rgba(255,255,255,0.12)"/><g fill="#19C3B1"><circle cx="7" cy="7" r="1.6"/><circle cx="12" cy="7" r="1.6" opacity=".4"/><circle cx="17" cy="7" r="1.6" opacity=".4"/><circle cx="7" cy="12" r="1.6" opacity=".4"/><circle cx="12" cy="12" r="1.6"/><circle cx="17" cy="12" r="1.6" opacity=".4"/><circle cx="12" cy="17" r="1.6" opacity=".4"/><circle cx="17" cy="17" r="1.6"/></g></svg><b>Africa MICE Dashboard</b></a>
+  <div class="acts"><a class="txt" href="/">Home</a><a class="btn ghost" href="/pipeline">Sign in</a></div>
+</div></header>
+<main class="page"><div class="wrap"><div class="doc">
+  <p class="overline">Corrections and removals</p>
+  <h1>Request a correction or removal</h1>
+  <p class="sub">If a record on the Africa MICE Dashboard is wrong, or shows content you own and have not agreed to share, tell us here. Our team reviews every request and replies by email.</p>
+  <div class="panel" style="margin-top:24px">
+  <form id="f" novalidate>
+    <div class="frow">
+      <div class="field"><label for="name">Your name</label><input id="name" autocomplete="name" maxlength="150" required></div>
+      <div class="field"><label for="organisation">Organisation</label><input id="organisation" autocomplete="organization" maxlength="200"></div>
+      <div class="field"><label for="email">Email</label><input id="email" type="email" autocomplete="email" maxlength="254" required></div>
+      <div class="field"><label for="phone">Phone (optional)</label><input id="phone" autocomplete="tel" maxlength="40"></div>
+    </div>
+    <div class="field"><label for="request_type">What do you need</label><select id="request_type"><option value="correction">A correction to a record</option><option value="removal">Removal of content I own or represent</option></select></div>
+    <div class="field"><label for="record">Which record</label><input id="record" maxlength="300" placeholder="Event or bid name, or the page link" required></div>
+    <div class="field"><label for="claim">What is wrong, or what you own</label><textarea id="claim" maxlength="3500" required placeholder="Say what should change, or which content is yours and how you hold the rights to it."></textarea></div>
+    <div class="hp" aria-hidden="true"><label for="website">Website</label><input id="website" tabindex="-1" autocomplete="off"></div>
+    <button class="btn" id="go" type="submit">Send request</button>
+    <div id="out"></div>
+  </form>
+  </div>
+</div></div></main>
+<footer class="siteFoot legalFoot"><div class="in" data-legal-footer></div></footer>
+<script>
+const SUPABASE_URL = "https://upzkvszgoqhoefkiwoep.supabase.co";
+const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVwemt2c3pnb3Fob2Vma2l3b2VwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIxMzg1MjQsImV4cCI6MjA5NzcxNDUyNH0.4RB-5FCWW7JXvGBKs0PlzkYcUeG5kTVxTVdoXUNp8ao";
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+const $ = id => document.getElementById(id);
+const q = new URLSearchParams(location.search);
+if(q.get("record")) $("record").value = q.get("record").slice(0,300);
+$("f").addEventListener("submit", async e => {
+  e.preventDefault();
+  const v = id => $(id).value.trim(), out = $("out"); out.innerHTML = "";
+  const missing = ["name","email","record","claim"].filter(id => !v(id));
+  if(missing.length){ out.innerHTML = `<div class="err">Please complete ${missing.map(id=>document.querySelector('label[for="'+id+'"]').textContent.toLowerCase()).join(", ")}.</div>`; return; }
+  const btn = $("go"); btn.disabled = true;
+  const {data, error} = await sb.rpc("rights_request_submit", {payload:{name:v("name"), organisation:v("organisation"), email:v("email"), phone:v("phone"),
+    request_type:v("request_type"), record:v("record"), claim:v("claim"), website:v("website"), page_url:q.get("from")||document.referrer||""}});
+  btn.disabled = false;
+  if(error || !data?.ok){
+    const why = data?.error === "rate_limited" ? "We have received several requests from your network. Try again in an hour."
+      : data?.error === "invalid" ? "Check the email address and that every required field is filled in." : "The request could not be sent.";
+    out.innerHTML = `<div class="err">${why} You can also email nandie@farirainandipa.co.zw.</div>`; return;
+  }
+  e.target.reset();
+  out.innerHTML = `<div class="ok"><b>Request received.</b> Our team will review it and reply by email. Where a record is disputed we may flag or hide it while we check.</div>`;
+});
+</script>
+</body>
+</html>
