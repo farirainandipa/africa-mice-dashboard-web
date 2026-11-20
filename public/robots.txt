@@ -1,0 +1,6 @@
+# The landing page and legal pages may be indexed. The signed-in dashboard,
+# its public forms and the admin console may not (they also send X-Robots-Tag: noindex).
+User-agent: *
+Disallow: /pipeline
+Disallow: /admin
+Allow: /

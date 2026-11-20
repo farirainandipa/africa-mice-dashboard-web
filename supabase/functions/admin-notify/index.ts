@@ -1,4 +1,5 @@
-// Emails the agency team when a new access request or problem report arrives.
+// Emails the agency team when a new access request, problem report or public
+// correction and removal request (kind rights_request) arrives.
 // Called by the admin_notify_queue_event() trigger (migration
 // admin_notifications) through pg_net with only { kind, id }. The function
 // reads the row itself with the service role, so the request carries no
@@ -16,6 +17,7 @@ const REPORT_KINDS: Record<string, string> = {
   support: "Help using the dashboard",
   bug: "Something is not working",
   abuse: "Misuse or a security concern",
+  rights_request: "Correction or removal request from a rights holder",
 };
 
 const json = (b: unknown, s = 200) =>
@@ -84,9 +86,11 @@ Deno.serve(async (req) => {
     if (!r) return json({ ok: false, error: "Report not found" }, 404);
     const kindLabel = REPORT_KINDS[r.kind] ?? r.kind;
     replyTo = r.reporter_email || undefined;
-    subject = `${r.kind === "abuse" ? "Security report" : "New report"}: ${r.title}`;
+    subject = r.kind === "rights_request" ? r.title : `${r.kind === "abuse" ? "Security report" : "New report"}: ${r.title}`;
     mail = render(
-      "A signed-in user has filed a report from the dashboard.",
+      r.kind === "rights_request"
+        ? "Someone has asked for a record to be corrected or removed, through the public request form."
+        : "A signed-in user has filed a report from the dashboard.",
       [["Type", kindLabel], ["Summary", r.title], ["About", r.subject_label], ["Details", r.body],
         ["From", r.reporter_email], ["Page", r.page_url]],
       "",

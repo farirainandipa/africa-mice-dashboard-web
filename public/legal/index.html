@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Legal · Africa MICE Dashboard</title>
+<meta name="description" content="Terms of Access, submission licence and data notice for the Africa MICE Dashboard.">
+<link rel="icon" type="image/svg+xml" href="/favicon.svg?v=3">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/pipeline/theme.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script src="/legal/config.js"></script>
+<script src="/legal/legal.js"></script>
+<style>
+.doc{max-width:760px}
+.doc h1{font-size:30px;font-weight:800;letter-spacing:-.02em;margin:10px 0 6px}
+.doc .meta{font-size:12.5px;color:var(--faint);margin-bottom:24px}
+.doc .legalText{font-size:15px}
+.docNav{display:flex;flex-wrap:wrap;gap:8px 18px;margin-top:28px;padding-top:18px;border-top:1px solid var(--line);font-size:13px}
+.hp{position:absolute;left:-9999px}
+</style>
+</head>
+<body>
+<header class="siteBar"><div class="in">
+  <a class="wordmark" href="/" aria-label="Africa MICE Dashboard home"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="0.5" y="0.5" width="23" height="23" rx="6" fill="#121A2B" stroke="rgba(255,255,255,0.12)"/><g fill="#19C3B1"><circle cx="7" cy="7" r="1.6"/><circle cx="12" cy="7" r="1.6" opacity=".4"/><circle cx="17" cy="7" r="1.6" opacity=".4"/><circle cx="7" cy="12" r="1.6" opacity=".4"/><circle cx="12" cy="12" r="1.6"/><circle cx="17" cy="12" r="1.6" opacity=".4"/><circle cx="12" cy="17" r="1.6" opacity=".4"/><circle cx="17" cy="17" r="1.6"/></g></svg><b>Africa MICE Dashboard</b></a>
+  <div class="acts"><a class="txt" href="/">Home</a><a class="btn ghost" href="/pipeline">Sign in</a></div>
+</div></header>
+<main class="page"><div class="wrap"><div class="doc" id="doc"><p class="sub">Loading.</p></div></div></main>
+<footer class="siteFoot legalFoot"><div class="in" data-legal-footer></div></footer>
+<script>
+const SUPABASE_URL = "https://upzkvszgoqhoefkiwoep.supabase.co";
+const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVwemt2c3pnb3Fob2Vma2l3b2VwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIxMzg1MjQsImV4cCI6MjA5NzcxNDUyNH0.4RB-5FCWW7JXvGBKs0PlzkYcUeG5kTVxTVdoXUNp8ao";
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+const DOCS = {terms_of_access:"Terms of Access", submission_licence:"Submission licence", data_notice:"About this data"};
+const type = new URLSearchParams(location.search).get("doc") || "terms_of_access";
+const el = document.getElementById("doc");
+const nav = () => `<nav class="docNav" aria-label="Legal documents">${Object.entries(DOCS).map(([k,l])=>k===type?`<b>${Legal.esc(l)}</b>`:`<a href="/legal?doc=${k}">${Legal.esc(l)}</a>`).join("")}<a href="/legal/third-party-notices.html">Third-party notices</a><a href="/legal/rights">Corrections and removals</a></nav>`;
+if(!DOCS[type]){ el.innerHTML = `<h1>Not found</h1><p>There is no legal document by that name.</p>` + nav(); }
+else Legal.fetchDoc(sb, type).then(d => {
+  document.title = `${d.title} · Africa MICE Dashboard`;
+  const when = d.published_at ? new Date(d.published_at).toLocaleDateString("en-GB",{day:"numeric",month:"long",year:"numeric"}) : "";
+  el.innerHTML = `<p class="overline">Legal</p><h1>${Legal.esc(d.title)}</h1><div class="meta">Version ${d.version}${when?`, published ${when}`:""}</div><div class="legalText">${Legal.html(d.body)}</div>` + nav();
+}).catch(() => { el.innerHTML = `<h1>${Legal.esc(DOCS[type])}</h1><div class="err">This document could not load. Try again shortly.</div>` + nav(); });
+</script>
+</body>
+</html>

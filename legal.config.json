@@ -1,0 +1,16 @@
+{
+  "_comment": "Single source for the owner entity and the footer and takedown wording on every page. The landing page imports it at build time; the static pages load it as /legal/config.js (emitted by vite.config.ts). Legal text with versions (licence, terms, data notice) lives in public.legal_documents and uses the {owner} token from here.",
+  "owner": "Farirai Nandipa Events (Pvt) Ltd",
+  "product": "Africa MICE Dashboard",
+  "copyrightYear": 2026,
+  "footerNotice": "© {year} {owner}. {product}™ is a trade mark of {owner}. Event and association names belong to their owners and are used for identification only.",
+  "rightsPrompt": "See something wrong, or own content shown here?",
+  "rightsLinkText": "Request a correction or removal.",
+  "links": {
+    "terms": { "label": "Terms of Access", "href": "/legal?doc=terms_of_access" },
+    "dataNotice": { "label": "About this data", "href": "/legal?doc=data_notice" },
+    "licence": { "label": "Submission licence", "href": "/legal?doc=submission_licence" },
+    "notices": { "label": "Third-party notices", "href": "/legal/third-party-notices.html" },
+    "rights": { "label": "Corrections and removals", "href": "/legal/rights" }
+  }
+}

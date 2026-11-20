@@ -31,6 +31,18 @@
   to = "/pipeline/submit.html"
   status = 200
 
+# Legal pages (public): /legal?doc=... shows a published legal_documents version,
+# /legal/rights is the correction and removal request form.
+[[redirects]]
+  from = "/legal"
+  to = "/legal/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/legal/rights"
+  to = "/legal/rights.html"
+  status = 200
+
 [[redirects]]
   from = "/*"
   to = "/index.html"

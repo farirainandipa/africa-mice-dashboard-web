@@ -11,6 +11,8 @@
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/pipeline/theme.css">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script src="/legal/config.js"></script>
+<script src="/legal/legal.js"></script>
 <style>
 .split{display:grid;gap:40px}
 @media(min-width:980px){.split{grid-template-columns:minmax(0,5fr) minmax(0,8fr);gap:64px}.aside{position:sticky;top:104px;align-self:start}}
@@ -86,6 +88,8 @@ fieldset.key legend+*{clear:both}
       <div class="field"><label for="notes">Anything else</label><textarea id="notes"></textarea></div>
     </fieldset>
     <div class="formEnd">
+      <div class="licenceBox" id="licenceBox"><div class="legalText" id="licenceText">Loading the submission licence.</div>
+        <label class="consent"><input type="checkbox" id="licence_ok" disabled> <span id="licenceLabel"></span></label></div>
       <button class="btn" id="go" type="submit">Submit for review</button>
       <p class="note">We reply within five working days. Your details are shared only with the convention bureaux that match your event, and only after we have spoken to you.</p>
     </div>
@@ -94,7 +98,7 @@ fieldset.key legend+*{clear:both}
   </div>
 </div>
 </div></main>
-<footer class="siteFoot"><div class="in"><span>© 2026 Africa MICE Dashboard</span><span>A product of Farirai Nandipa MICE Consultancy</span></div></footer>
+<footer class="siteFoot legalFoot"><div class="in" data-legal-footer></div></footer>
 <script>
 const SUPABASE_URL = "https://upzkvszgoqhoefkiwoep.supabase.co";
 const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVwemt2c3pnb3Fob2Vma2l3b2VwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIxMzg1MjQsImV4cCI6MjA5NzcxNDUyNH0.4RB-5FCWW7JXvGBKs0PlzkYcUeG5kTVxTVdoXUNp8ao";
@@ -108,6 +112,16 @@ fillSectors(FALLBACK_SECTORS);
 sb.from("econ_sectors").select("id,name,sort").order("sort").then(({data,error}) => {
   if(!error && data && data.length) fillSectors(data.map(s=>[s.id, s.name]));
 });
+/* W1: the submission licence comes from legal_documents; the accepted version is stored with the submission. */
+let LICENCE = null;
+Legal.fetchDoc(sb, "submission_licence").then(d => {
+  LICENCE = d;
+  document.getElementById("licenceText").innerHTML = Legal.html(d.body);
+  document.getElementById("licenceLabel").textContent = d.accept_label;
+  document.getElementById("licence_ok").disabled = false;
+}).catch(() => {
+  document.getElementById("licenceText").innerHTML = `<div class="err">The submission licence could not load, so the form cannot be sent. Reload the page, or email nandie@farirainandipa.co.zw.</div>`;
+});
 const v = id => { const el=document.getElementById(id); const x=el.value.trim(); return x===""?null:x; };
 const n = id => { const x=v(id); return x==null?null:Number(x); };
 document.getElementById("f").addEventListener("submit", async e => {
@@ -116,11 +130,12 @@ document.getElementById("f").addEventListener("submit", async e => {
   const req = ["host_open","decision_when","decision_who","event_name","organisation","expected_delegates","submitter_name","submitter_email"];
   const missing = req.filter(id=>!v(id));
   if(missing.length){ out.innerHTML = `<div class="err">Please complete: ${missing.map(id=>document.querySelector('label[for="'+id+'"]').textContent).join(", ")}.</div>`; return; }
+  if(!LICENCE || !document.getElementById("licence_ok").checked){ out.innerHTML = `<div class="err">Please tick the box to confirm you have the right to share this information and accept the submission licence.</div>`; return; }
   if(n("expected_delegates")<50){ out.innerHTML = `<div class="err">The pipeline tracks meetings of 50 delegates and up.</div>`; return; }
   const rec = {host_open:v("host_open"), decision_when:v("decision_when"), decision_who:v("decision_who"), event_name:v("event_name"), organisation:v("organisation"),
     org_type:v("org_type"), sector_id:n("sector_id"), expected_delegates:n("expected_delegates"), international_share:n("international_share"), preferred_quarter:v("preferred_quarter"),
     duration_days:n("duration_days"), room_nights:n("room_nights"), venue_needs:v("venue_needs"), host_needs:v("host_needs"), past_hosts:v("past_hosts"),
-    submitter_name:v("submitter_name"), submitter_email:v("submitter_email"), notes:v("notes")};
+    submitter_name:v("submitter_name"), submitter_email:v("submitter_email"), notes:v("notes"), licence_version:LICENCE.version};
   const btn = document.getElementById("go"); btn.disabled = true;
   const {error} = await sb.from("submissions").insert(rec);
   btn.disabled = false;

@@ -27,7 +27,8 @@ Netlify.
 ```bash
 npm install
 npm run dev       # landing + pipeline at http://localhost:5173 (pipeline: /pipeline/index.html)
-npm run build     # tsc -b && vite build -> dist/ (public/pipeline is copied as-is)
+npm run build     # tsc -b && vite build && licence check -> dist/ (public/pipeline is copied as-is)
+npm run licences  # licence check only (scripts/licences.mjs)
 npm run preview   # serve the production build
 ```
 
@@ -48,6 +49,11 @@ public/
   pipeline/partner.html public destination-partner submission form
   pipeline/theme.css    shared tokens and primitives for all pipeline pages
   admin/index.html      system admin console at /admin (agency team only)
+  legal/                /legal (published legal text), /legal/rights (correction and
+                        removal form), legal.js (shared footer and text helpers)
+  robots.txt            disallows /pipeline and /admin
+legal.config.json       owner entity, footer notice and legal links (one source)
+scripts/licences.mjs    licence allow-list check; writes legal/third-party-notices.html
 netlify.toml            build, /pipeline rewrite, security headers
 supabase/README.md      where the database schema and migrations live
 supabase/migrations/    pipeline migrations from the move onwards
@@ -152,6 +158,30 @@ supabase/migrations/    pipeline migrations from the move onwards
   entries. Bureau reads through `bureau_portal()` and `bureau_matches()` count
   against the `portal_read` rule (120 an hour per login) and return
   `{error: 'rate_limited'}` over it; admin previews are not counted.
+- **IP controls** (migrations `20261120041353_ip_legal_documents_terms` to
+  `20261120042555_ip_partner_queue_licence`, from the IP website changes note).
+  Versioned legal text (submission licence, Terms of Access, data notice) lives in
+  `legal_documents` (no policies; read through the public `legal_document(type)`,
+  published by super admins through `admin_legal_publish` or the console's Legal
+  screen). Bodies use `{owner}`, filled from `legal.config.json`, which the
+  landing footer imports and the static pages load as `/legal/config.js`
+  (emitted by `vite.config.ts`). Both public forms need the licence ticked: a
+  trigger rejects a `submissions` or `profile_submissions` row without the current
+  `licence_version` and stamps `licence_accepted_at`. Bureaux must accept the
+  current Terms of Access (`terms_accept`, rows in `terms_acceptances`):
+  `bureau_country_id()` and `my_tier()` return null until they do, and a new
+  version asks again. Host-fit and bid-readiness points live in the admin-only
+  `host_fit_params` table and are computed by `host_fit()` /
+  `destination_readiness()`; bureaux get the score and band through
+  `portal_data()`, admins the breakdown through `admin_fit_scores()`. Never put
+  scoring weights back in the browser. `bid_opportunities` and `events` need a
+  source link (trigger `record_source_guard`, which fills `source_name` from the
+  link's host); records show "Source: name, link. Last checked date". Win factors
+  and destination profile text cannot be marked reviewed with a quote over 14
+  words (`longest_quote_words`), store `reviewed_by` / `reviewed_at`, and bureaux
+  see profile text only when `text_status` is reviewed. A blocked rate limit is
+  also written to the audit log. Public correction and removal requests go
+  through `rights_request_submit` into `user_reports` as `rights_request`.
 - **Left as they are, on purpose.** Super admins are added and removed only by
   editing `public.allowlist` in the database; the console has no screen for
   it. The `data_export` rule does nothing until an export feature calls
@@ -161,7 +191,7 @@ supabase/migrations/    pipeline migrations from the move onwards
   `submissions` (status forced to `review`), insert into `contact_submissions`,
   and call the public-form RPCs `partner_form_options`,
   `profile_submit`, `profile_verify`, `profile_status`,
-  `submission_upload_allowed`, `request_access`. Every other function has EXECUTE revoked from
+  `submission_upload_allowed`, `request_access`, `legal_document`, `rights_request_submit`. Every other function has EXECUTE revoked from
   `anon` (migration 023). New SECURITY DEFINER functions must
   `revoke execute ... from public, anon` unless they are meant for public forms,
   and must set `search_path`.
@@ -196,6 +226,10 @@ supabase/migrations/    pipeline migrations from the move onwards
   Callers are checked with `admin_level()`, rate limited and written to the
   audit log. Deploy from the repo copy; it is the only source.
 - `bids`: serves the separate Bid Workspace app from `site_assets`.
+- `icca-bid-wins` (source in `supabase/functions/icca-bid-wins/`): weekly ICCA
+  Bid Wins import. Reads robots.txt first and stops if the feed is disallowed,
+  waits at least three seconds between requests, keeps facts, links and at most
+  14 words per post, and logs the robots check in `history_sync_log.result`.
 - `admin-notify` (source in `supabase/functions/admin-notify/`): emails every
   super admin and active staff member when a new access request or problem
   report arrives. The `admin_notify_queue_event()` triggers on
@@ -210,7 +244,8 @@ supabase/migrations/    pipeline migrations from the move onwards
 
 - `netlify.toml`: build `npm run build`, publish `dist`, Node 22.
 - `/pipeline`, `/pipeline/partner` and `/pipeline/submit` are rewritten to
-  their `.html` files, and `/admin` to `admin/index.html`, **before** the
+  their `.html` files, `/admin` to `admin/index.html`, and `/legal` and
+  `/legal/rights` to their files in `public/legal/`, **before** the
   SPA catch-all. Keep that order.
 - This repo is the only source of the pipeline pages. farirainandipa-web no
   longer carries a copy (removed in its PR #18), so edit them here.

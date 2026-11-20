@@ -35,7 +35,6 @@ export const BRAND = {
   description:
     'Bid intelligence for African destinations, with the international and regional events open to bid in one place.',
   parentCompany: 'A product of Farirai Nandipa MICE Consultancy',
-  copyrightYear: 2026,
 };
 
 /** Primary navigation. The `href` values must match section ids below. */
@@ -168,10 +167,14 @@ export const ACCESS = {
   fallbackNote: 'We could not send the form, so your email app should now open with your request ready to send.',
 };
 
+/**
+ * Footer links. The copyright and trade mark notice, the Terms of Access and
+ * third-party notices links and the correction route come from legal.config.json
+ * (see src/legal.ts), which the dashboard footers read too.
+ */
 export const FOOTER = {
   legalLinks: [
     { label: 'Privacy', href: '#' },
-    { label: 'Terms', href: '#' },
     { label: 'System admin', href: ADMIN_URL },
   ],
 };
