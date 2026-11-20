@@ -227,6 +227,88 @@ footer.ft{color:var(--faint);font-size:12px;padding:22px 28px;border-top:1px sol
 .loadWrap{display:flex;align-items:center;justify-content:center;min-height:50vh;color:var(--muted);gap:10px}
 .spin{width:18px;height:18px;border:2.5px solid var(--line2);border-top-color:var(--accent);border-radius:50%;animation:sp .8s linear infinite}
 @keyframes sp{to{transform:rotate(360deg)}}
+/* ---------- compact bid list (pinned heading, strip, filters, cards) ---------- */
+.light :focus-visible{outline-color:var(--accent2)}
+.ctxBar{position:sticky;top:var(--hdrH,0px);z-index:35;background:var(--panel);border-bottom:1px solid var(--line);box-shadow:0 1px 2px rgba(11,18,32,.05)}
+.ctxBar .in{max-width:1240px;margin:0 auto;padding:9px 28px;display:flex;flex-wrap:wrap;align-items:baseline;gap:2px 12px}
+.ctxBar .vl{font-size:10.5px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;color:var(--muted)}
+.ctxBar h1{font-size:19px;font-weight:800;letter-spacing:-.02em;line-height:1.25}
+.ctxBar .sep{color:var(--muted)}
+.ctxBar .sec{font-size:15px;font-weight:700}
+.ctxBar .cnt{margin-left:auto;font-size:12.5px;color:var(--muted)}
+main.compact{padding-top:14px}
+.snap{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:8px 16px;min-height:60px;display:flex;flex-wrap:wrap;align-items:center;gap:4px 22px;margin-bottom:10px}
+.snap .f{display:flex;flex-direction:column;min-width:0}
+.snap .l{font-size:10.5px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);white-space:nowrap}
+.snap .v{font-size:13.5px;font-weight:700;white-space:nowrap;max-width:230px;overflow:hidden;text-overflow:ellipsis}
+.snap .v.n{font-size:17px;font-weight:800;letter-spacing:-.02em}
+.snap .v.na{font-weight:500;font-size:12.5px;color:var(--muted)}
+.snap .more{margin-left:auto;background:none;border:0;color:var(--accent2);font-size:13px;font-weight:600;padding:10px 0}
+.snap .more:hover{text-decoration:underline}
+.fbar{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:6px 10px;display:flex;flex-wrap:wrap;align-items:flex-end;gap:8px;margin-bottom:10px}
+.fbar label{display:flex;flex-direction:column;gap:1px;flex:1 1 104px;min-width:0}
+.fbar label.q{flex:2 1 180px}
+.fbar label.pl{flex:1.4 1 150px}
+.fbar label>span{font-size:10.5px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);white-space:nowrap}
+.fbar input,.fbar select{height:34px;padding:0 8px;font-size:13px;width:100%;border-color:var(--line2)}
+.fbar .clr{height:34px;padding:0 14px;font-size:13px}
+.blNote{font-size:12.5px;color:var(--amber);margin:-2px 0 10px}
+.bidPanel{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden}
+.bidPanel .ph{padding:8px 16px;border-bottom:1px solid var(--line);display:flex;flex-wrap:wrap;align-items:baseline;gap:2px 12px}
+.bidPanel .ph h2{font-size:15px;font-weight:700}
+.bidPanel .ph span{font-size:12.5px;color:var(--muted)}
+.bidScroll{max-height:560px;overflow-y:auto;overscroll-behavior:contain;padding:10px;display:grid;grid-template-columns:repeat(auto-fill,minmax(min(280px,100%),1fr));gap:10px;align-items:start}
+.bEmpty{grid-column:1/-1;text-align:center;color:var(--muted);padding:28px 12px}
+.bc{border:1px solid var(--line);border-radius:10px;background:var(--panel);min-width:0}
+.bc.open{grid-column:1/-1;border-color:rgba(25,195,177,.6)}
+.bc>button.face{display:flex;flex-direction:column;gap:5px;width:100%;padding:11px 14px;border:0;border-radius:10px;background:transparent;text-align:left;color:var(--ink)}
+.bc>button.face:hover{background:var(--hover)}
+.bc.open>button.face{border-radius:10px 10px 0 0}
+.bc .hd{display:flex;align-items:flex-start;gap:8px}
+.bc .tt{display:flex;flex-direction:column;min-width:0;flex:1}
+.bc .t{font-size:14px;font-weight:700;line-height:1.3;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.bc.open .t{display:block}
+.bc .o{font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bc .chev{flex-shrink:0;margin-top:2px;color:var(--muted);transition:transform .2s}
+.bc.open .chev,.dsec.open .chev{transform:rotate(180deg)}
+.bc .m{display:flex;flex-wrap:wrap;gap:1px 8px;font-size:11.5px;color:var(--muted)}
+.bc .m b{color:var(--ink);font-weight:700}
+.bc .cr{display:flex;align-items:center;gap:8px;margin-top:auto;min-width:0}
+.bc .chs{display:flex;align-items:center;gap:5px;flex:1;min-width:0;overflow:hidden}
+.bc .chs .chip{flex-shrink:0}
+.bc .chs .chip.sector{flex-shrink:1;min-width:0;overflow:hidden;text-overflow:ellipsis}
+.bc .fit{flex-shrink:0;display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:700}
+.bc .fit.na{font-weight:500;color:var(--muted)}
+.bc .fit i{width:48px;height:6px;border-radius:5px;background:var(--track);display:flex;overflow:hidden}
+.bc .fit i b{display:block;background:var(--accent);border-radius:5px}
+.bc .det{border-top:1px solid var(--line);padding:14px;display:flex;flex-wrap:wrap;gap:14px 28px;background:var(--panel2);border-radius:0 0 10px 10px;font-size:13px}
+.bc .det .col{flex:1 1 240px;min-width:0;display:flex;flex-direction:column;gap:2px}
+.bc .det .l{font-size:10.5px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-top:10px}
+.bc .det .l:first-child{margin-top:0}
+.bc .det .dv.na{color:var(--muted)}
+.bc .det .why{margin-top:6px}
+.bc .det .fitRow .nm{width:120px!important}
+.bc .det .acts{flex:1 1 100%;display:flex;flex-wrap:wrap;gap:8px}
+.secs{display:flex;flex-direction:column;gap:8px;margin-top:14px}
+.secHint{font-size:12.5px;color:var(--muted);padding:4px 2px}
+.dsec{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);scroll-margin-top:calc(var(--stickH,0px) + 12px)}
+.dsec>button{display:flex;flex-wrap:wrap;align-items:center;gap:2px 12px;width:100%;min-height:48px;padding:8px 16px;border:0;border-radius:var(--radius);background:transparent;text-align:left;color:var(--ink)}
+.dsec>button:hover{background:var(--hover)}
+.dsec>button b{font-size:15px;font-weight:700}
+.dsec>button span{flex:1 1 240px;min-width:0;font-size:12.5px;color:var(--muted)}
+.dsec>button .chev{color:var(--muted);transition:transform .2s}
+.dsec .body{border-top:1px solid var(--line);padding:16px}
+.dsec .body .card{margin-bottom:12px}
+@media(max-width:720px){
+  .ctxBar .in{padding:8px 16px}
+  .ctxBar h1{font-size:17px}
+  .ctxBar .cnt{margin-left:0;flex-basis:100%}
+  .bidScroll{max-height:none!important;overflow:visible}
+  .fbar label{flex-basis:140px}
+  .fbar input,.fbar select,.fbar .clr{height:44px}
+  .fbar .clr{flex:1 1 100%}
+  .snap .more{margin-left:0}
+}
 @media(max-width:900px){
   header.top{padding:0 16px;column-gap:10px}
   nav.tabs{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;margin:0 -16px;padding:0 6px}
@@ -282,6 +364,7 @@ footer.ft{color:var(--faint);font-size:12px;padding:22px 28px;border-top:1px sol
     </div>
   </header>
   <div id="previewBar" class="previewBar light hidden"></div>
+  <div id="ctxBar" class="ctxBar light hidden"><div class="in"><span class="vl" id="ctxView"></span><h1 id="ctxPlace"></h1><span class="sep" id="ctxSep" aria-hidden="true">/</span><span class="sec" id="ctxSec"></span><span class="cnt" id="ctxCnt" aria-live="polite"></span></div></div>
   <main id="mainEl" class="light"><div class="loadWrap"><div class="spin"></div>Loading pipeline…</div></main>
   <footer class="ft light" id="footEl">Prepared by Farirai Nandipa MICE Agency · Confidential · Each record shows its own confidence and the date it was last checked against its source</footer>
 </div>
@@ -695,7 +778,9 @@ $("#navTabs").addEventListener("click",e=>{
 function render(){
   const R = {overview:rOverview, pipeline:rPipeline, matching:rMatching, b_match:bMatch, events:rEvents, history:rHistory, destinations:rDest, policies:rPolicies, submissions:rSubmissions, partner:rPartner, access:rAccess,
              b_home:bHome, b_bids:bBids, b_events:bEvents, b_policy:bPolicy, b_visa:bVisa};
+  BL_CUR = null; CTX_SEC_LABEL = null; $("#mainEl").classList.remove("compact");
   (R[VIEW]||rOverview)();
+  ctxRender();
   window.scrollTo(0,0);
 }
 
@@ -730,6 +815,7 @@ async function loadData(){
   DB.profById = Object.fromEntries((dp||[]).map(x=>[x.country_id,x]));
   DB.sById = Object.fromEntries(s.map(x=>[x.id,x]));
   DB.pById = Object.fromEntries(pf.map(x=>[x.id,x]));
+  MS = null; /* fit scores are rescored by triggers after edits */
   render();
 }
 async function reload(keepModal){ await loadData(); if(!keepModal) closeModal(); }
@@ -805,37 +891,412 @@ function rOverview(){
    PIPELINE
    ===================================================================== */
 function sectorOptions(sel, allLabel){ return `<option value="all">${allLabel||"All sectors"}</option>`+DB.sectors.map(s=>`<option value="${s.id}" ${String(sel)===String(s.id)?"selected":""}>${esc(s.name)}</option>`).join(""); }
+/* =====================================================================
+   COMPACT BID LIST
+   Shared by the agency Bid Pipeline tab and the bureau "Bids for" tab
+   (layout brief approved 20 November 2026). A pinned context heading, a
+   slim snapshot strip, one filter bar, compact cards that expand in place,
+   a list that scrolls inside its own panel, and the other destination
+   sections collapsed to headings. Filters persist for the browser session.
+   ===================================================================== */
+const SOON_DAYS = 90;
+const BL_KEY = "amd.bidFilters.v1";
+const BL_BLANK = {q:"", place:"", sector:"", within:"", year:"", status:"", minFit:"", verif:"", openBid:null, openSec:null};
+const BL_STATUS_L = {open:"Open", soon:"Closing soon", watchlist:"Watchlist", closed:"Closed"};
+const CHEV = `<svg class="chev" aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>`;
+let BL = (()=>{
+  try{ const s = JSON.parse(sessionStorage.getItem(BL_KEY)||"null");
+    if(s && s.agency && s.country) return {agency:{...BL_BLANK, ...s.agency}, country:{...BL_BLANK, ...s.country}}; }catch(_){}
+  return {agency:{...BL_BLANK}, country:{...BL_BLANK}};
+})();
+const blSave = () => { try{ sessionStorage.setItem(BL_KEY, JSON.stringify(BL)); }catch(_){} };
+let BL_CUR = null;      // the list on screen: {surface, view, scope, items, shown}
+let MS = null;          // admin: match scores by opportunity id
+let CTX_SEC_LABEL = null;
+let BL_HIST_FAIL = false; // bid history is optional context on the pipeline tab
+
+/* Years named in a free-text host year ("2028 or 2029", "2027-2030"). */
+function yearsOf(t){
+  const out = new Set(); let s = String(t||"");
+  s = s.replace(/(20\d\d)\s*[-–]\s*(20\d\d)/g, (m,a,b)=>{ for(let y=+a; y<=+b && y<=+a+10; y++) out.add(y); return " "; });
+  (s.match(/20\d\d/g)||[]).forEach(y=>out.add(+y));
+  return [...out].sort();
+}
+const yearsTxt = ys => !ys.length ? "Not stated" : ys.length>2 ? `${ys[0]}–${ys[ys.length-1]}` : ys.join(", ");
+
+/* PostgREST returns at most 1,000 rows a call, so page through. */
+async function selectAll(build){
+  const out = [];
+  for(let from=0;; from+=1000){
+    const {data,error} = await build().range(from, from+999);
+    if(error) throw new Error(error.message);
+    out.push(...data); if(data.length<1000) return out;
+  }
+}
+async function loadMS(){
+  const rows = await selectAll(()=>sb.from("match_scores").select("opportunity_id,country_id,score,reasons,gaps,confidence").order("opportunity_id").order("country_id"));
+  const byOpp = {}; rows.forEach(r=>{ r.score = Number(r.score); (byOpp[r.opportunity_id] ||= []).push(r); });
+  MS = {byOpp};
+}
+
+/* ---------- scope and items ---------- */
+function agencyScope(place){
+  if(String(place).startsWith("c:")){ const c = DB.cById[+place.slice(2)];
+    if(c) return {kind:"country", c, ids:new Set([c.id]), name:c.name}; }
+  if(String(place).startsWith("r:")){ const r = place.slice(2), cs = DB.countries.filter(c=>c.region===r);
+    if(cs.length) return {kind:"region", region:r, ids:new Set(cs.map(c=>c.id)), name:`${r} Africa`}; }
+  return {kind:"all", ids:new Set(DB.countries.filter(c=>c.priority).map(c=>c.id)), name:"All priority destinations"};
+}
+function agencyItems(sc){
+  let opps = DB.opps;
+  if(sc.kind!=="all") opps = opps.filter(o=>(MS.byOpp[o.id]||[]).some(r=>sc.ids.has(r.country_id)));
+  return opps.map(o=>{
+    const st = effStatus(o), n = daysLeft(o.submission_deadline);
+    const scores = (MS.byOpp[o.id]||[]).filter(r=>sc.ids.has(r.country_id)).sort((a,b)=>b.score-a.score);
+    const best = scores[0]||null, ys = yearsOf(o.host_year);
+    return {id:o.id, title:o.title, org:o.issuing_body, deadline:o.submission_deadline, days:n, years:ys,
+      delegates:delegatesTxt(o), sectors:itemSectors("opportunity",o.id).map(x=>secName(x.econ_sector_id)),
+      status:st, soon:st==="open" && n!=null && n>=0 && n<=SOON_DAYS, verified:o.confidence==="verified",
+      fit:best?Math.round(best.score):null, fitWho:best && sc.kind!=="country" ? DB.cById[best.country_id]?.name : null,
+      best, scores, o};
+  });
+}
+function countryItems(){
+  const mm = Object.fromEntries((MATCHES && !MATCHES.error ? MATCHES.matches||[] : []).map(m=>[m.id,m]));
+  return P().bids.map((b,i)=>{
+    const m = mm[b.id], n = daysLeft(b.submission_deadline);
+    return {id:b.id, title:b.title, org:b.issuing_body, deadline:b.submission_deadline, days:n, years:yearsOf(b.host_year),
+      delegates:m?delegatesTxt(m):"–", sectors:b.sectors||[], status:b.status,
+      soon:b.status==="open" && n!=null && n>=0 && n<=SOON_DAYS, verified:b.confidence==="verified",
+      fit:m?Math.round(Number(m.score)):null, m, b, order:i};
+  });
+}
+
+/* ---------- filtering ---------- */
+function blFilter(items, f){
+  const q = f.q.trim().toLowerCase();
+  return items.filter(x=>{
+    if(q && !((x.title||"")+" "+(x.org||"")).toLowerCase().includes(q)) return false;
+    if(f.sector && !x.sectors.includes(f.sector)) return false;
+    if(f.within){
+      if(f.within==="none"){ if(x.deadline) return false; }
+      else if(x.days==null || x.days<0 || x.days>Math.round(+f.within*30.44)) return false;
+    }
+    if(f.year){
+      if(f.year==="none"){ if(x.years.length) return false; }
+      else if(!x.years.includes(+f.year)) return false;
+    }
+    if(f.status){
+      if(f.status==="soon"){ if(!x.soon) return false; }
+      else if(x.status!==f.status) return false;
+    }
+    if(f.minFit){
+      if(f.minFit==="none"){ if(x.fit!=null) return false; }
+      else if(x.fit==null || x.fit<+f.minFit) return false;
+    }
+    if(f.verif==="yes" && !x.verified) return false;
+    if(f.verif==="no" && x.verified) return false;
+    return true;
+  });
+}
+function blSort(rows, C){
+  const sRank = {open:0, watchlist:1, closed:2}, dl = x => x.deadline||"9999";
+  if(C.surface==="country") return rows.sort((a,b)=>((b.fit??-1)-(a.fit??-1)) || (a.order-b.order));
+  if(C.scope.kind==="country") return rows.sort((a,b)=>((sRank[a.status]??3)-(sRank[b.status]??3)) || ((b.fit??-1)-(a.fit??-1)) || dl(a).localeCompare(dl(b)));
+  return rows.sort((a,b)=>((sRank[a.status]??3)-(sRank[b.status]??3)) || dl(a).localeCompare(dl(b)));
+}
+/* Option lists come from the records in scope. A stored value that no longer
+   exists in the scope is dropped so the list is never silently empty. */
+function blOptions(items, f){
+  const secSet = new Set(items.flatMap(x=>x.sectors));
+  const sectors = (DB.sectors?.length ? DB.sectors.map(s=>s.name).filter(n=>secSet.has(n)) : []);
+  [...secSet].sort().forEach(n=>{ if(!sectors.includes(n)) sectors.push(n); });
+  const ys = [...new Set(items.flatMap(x=>x.years))].sort();
+  const years = ys.map(y=>[String(y),String(y)]); if(items.some(x=>!x.years.length)) years.push(["none","Not stated"]);
+  const status = ["open","soon","watchlist","closed"].filter(k=>items.some(x=>k==="soon"?x.soon:x.status===k)).map(k=>[k, k==="soon"?`Closing soon (${SOON_DAYS} days)`:BL_STATUS_L[k]]);
+  const o = {sectors:sectors.map(n=>[n,n]), years, status};
+  if(f.sector && !secSet.has(f.sector)) f.sector = "";
+  if(f.year && !years.some(([v])=>v===f.year)) f.year = "";
+  if(f.status && !status.some(([v])=>v===f.status)) f.status = "";
+  return o;
+}
+
+/* ---------- render ---------- */
+function blRender(surface){
+  const f = BL[surface];
+  const sc = surface==="agency" ? agencyScope(f.place) : {kind:"country", c:P().country, name:P().country.name};
+  if(surface==="agency" && sc.kind==="all") f.place = "";
+  const items = surface==="agency" ? agencyItems(sc) : countryItems();
+  BL_CUR = {surface, view:VIEW, scope:sc, items, shown:items.length};
+  const opts = blOptions(items, f);
+  const main = $("#mainEl"); main.classList.add("compact");
+  const title = surface==="agency" ? (sc.kind==="all" ? "All tracked bids" : `Bids scored for ${esc(sc.name)}`) : `Calls for bids for ${esc(sc.name)}`;
+  const note = surface==="country" && MATCHES?.error ? `<p class="blNote">Fit scores could not be loaded just now. ${esc(portalErr(MATCHES.error))}</p>` : "";
+  main.innerHTML = snapHtml(surface, sc, items) + fbarHtml(surface, f, opts) + note + `
+  <section class="bidPanel" aria-labelledby="bpH">
+    <div class="ph"><h2 id="bpH">${title}</h2><span>Select a card to see the full record.</span></div>
+    <div class="bidScroll" id="bidScroll"></div>
+  </section>
+  <div class="secs" id="blSecs">${secsHtml()}</div>`;
+  blSave(); blList(); blSize();
+}
+function blList(){
+  const C = BL_CUR, f = BL[C.surface], el = $("#bidScroll"); if(!el) return;
+  const rows = blSort(blFilter(C.items, f), C);
+  el.innerHTML = rows.map(x=>blCard(x, C.surface, f.openBid===x.id)).join("")
+    || `<p class="bEmpty">No bids match these filters. Clear a filter to see more.</p>`;
+  C.shown = rows.length; ctxRender();
+}
+function blSize(){
+  const s = $("#bidScroll"); if(!s) return;
+  if(innerWidth<=720){ s.style.maxHeight = ""; return; }
+  const top = s.getBoundingClientRect().top + scrollY;
+  s.style.maxHeight = Math.max(260, Math.round(innerHeight - top - 14)) + "px";
+}
+window.addEventListener("resize", ()=>{ if(BL_CUR && BL_CUR.view===VIEW) blSize(); });
+
+window.blSet = (k, v) => {
+  if(!BL_CUR) return; const s = BL_CUR.surface; BL[s][k] = v; blSave();
+  if(k==="place"){ BL[s].openBid = null; BL[s].openSec = null; CTX_SEC_LABEL = null; blRender(s); } else blList();
+};
+window.blClear = () => {
+  if(!BL_CUR) return; const s = BL_CUR.surface;
+  BL[s] = {...BL_BLANK, openSec:BL[s].openSec}; if(s==="agency") BL[s].openSec = null;
+  blSave(); blRender(s); $("#blQ")?.focus();
+};
+window.blToggle = id => {
+  const f = BL[BL_CUR.surface]; f.openBid = f.openBid===id ? null : id; blSave(); blList();
+  const card = document.getElementById("bc_"+id); if(!card) return;
+  card.querySelector("button.face").focus({preventScroll:true});
+  const sc = $("#bidScroll"), r = card.getBoundingClientRect(), p = sc.getBoundingClientRect();
+  if(r.top<p.top) sc.scrollTop -= p.top - r.top + 8;
+  else if(r.bottom>p.bottom) sc.scrollTop += Math.min(r.bottom - p.bottom + 8, r.top - p.top - 8);
+};
+
+/* ---------- snapshot strip ---------- */
+const NS = "Not yet supplied";
+function snapHtml(surface, sc, items){
+  const facts = [
+    ["Open bids", items.filter(x=>x.status==="open").length, "Open calls in this view"],
+    ["Closing soon", items.filter(x=>x.soon).length, `Open calls that close within ${SOON_DAYS} days`]
+  ];
+  let c = null, prof = null;
+  if(surface==="agency" && sc.kind==="country"){
+    c = sc.c; prof = DB.profById?.[c.id];
+    const won = HADM ? HADM.wins.filter(w=>w.host_country_id===c.id && (w.award_status==="awarded"||w.award_status==="held")).length : null;
+    facts.push(["Bids won", won, `Editions awarded to or held in ${c.name}, from the bid history`]);
+  } else if(surface==="country"){ c = P().country; prof = P().profile; }
+  if(c){
+    const plen = prof?.largest_plenary || (surface==="agency" ? headlineVenue(c)?.seats : null);
+    const hotels = surface==="agency" ? DB.venues.filter(v=>v.country_id===c.id && ["hotel_conference","resort"].includes(v.category) && v.rooms) : [];
+    const rooms = hotels.reduce((s,v)=>s+Number(v.rooms||0),0);
+    const visa = c.visa_africa ? VISA_AF_SHORT[c.visa_africa] : prof?.visa_ease ? `Visa ease ${prof.visa_ease} of 5` : null;
+    const air = prof && prof.intl_nonstops!=null ? (Number(prof.intl_nonstops)===0 ? "No intercontinental non-stops" : `${prof.intl_nonstops} intercontinental non-stop${Number(prof.intl_nonstops)===1?"":"s"}`) : null;
+    const sup = prof?.subvention_fund ? `Subvention: ${prof.subvention_fund}` : null;
+    facts.push(
+      ["Largest plenary", plen ? `${Number(plen).toLocaleString()} seats` : null, "Largest theatre-style plenary hall"],
+      ["Hotel rooms", rooms ? `${rooms.toLocaleString()} in ${hotels.length} listed hotel${hotels.length===1?"":"s"}` : null, "Rooms in the conference hotels and resorts on record"],
+      ["Visa", visa, c.visa_regime || "Visa access for African delegates"],
+      ["Air access", air, "Intercontinental non-stop routes, approximate band"],
+      ["Bid support", sup, prof?.bureau_exists ? `Convention bureau: ${prof.bureau_exists}` : "Subvention or bid support on offer"]);
+  }
+  return `<section class="snap" aria-label="Destination snapshot">
+    ${facts.map(([l,v,t])=>{ const n = typeof v==="number"; return `<div class="f" title="${esc(t)}"><span class="l">${l}</span><span class="v${n?" n":""}${v==null?" na":""}">${v==null?NS:esc(v)}</span></div>`; }).join("")}
+    ${c ? `<button type="button" class="more" onclick="blOpenSec('profile')">View full profile</button>` : ""}
+  </section>`;
+}
+
+/* ---------- filter bar ---------- */
+function fbarHtml(surface, f, o){
+  const sel = (k, label, list, anyL) => `<label><span>${label}</span><select onchange="blSet('${k}',this.value)"><option value="">${anyL}</option>${list.map(([v,l])=>`<option value="${esc(v)}" ${String(f[k])===String(v)?"selected":""}>${esc(l)}</option>`).join("")}</select></label>`;
+  let place = "";
+  if(surface==="agency"){
+    const scored = new Set(Object.values(MS.byOpp).flat().map(r=>r.country_id));
+    const pr = DB.countries.filter(c=>c.priority), rest = DB.countries.filter(c=>!c.priority && scored.has(c.id));
+    const regions = [...new Set(DB.countries.map(c=>c.region).filter(Boolean))].sort();
+    const opt = (v,l) => `<option value="${esc(v)}" ${f.place===v?"selected":""}>${esc(l)}</option>`;
+    place = `<label class="pl"><span>Country or region</span><select onchange="blSet('place',this.value)"><option value="">All priority destinations</option>
+      <optgroup label="Priority destinations">${pr.map(c=>opt("c:"+c.id, c.name)).join("")}</optgroup>
+      <optgroup label="Regions">${regions.map(r=>opt("r:"+r, r+" Africa")).join("")}</optgroup>
+      <optgroup label="Other countries">${rest.map(c=>opt("c:"+c.id, c.name)).join("")}</optgroup></select></label>`;
+  }
+  return `<section class="fbar" aria-label="Filters">
+    <label class="q"><span>Search</span><input type="search" id="blQ" placeholder="Event or organiser" value="${esc(f.q)}" oninput="blSet('q',this.value)"></label>
+    ${place}
+    ${sel("sector","Sector",o.sectors,"All sectors")}
+    ${sel("within","Deadline",[["1","Next month"],["3","Next 3 months"],["6","Next 6 months"],["12","Next 12 months"],["none","No deadline set"]],"Any time")}
+    ${sel("year","Event year",o.years,"Any year")}
+    ${sel("status","Status",o.status,"Any status")}
+    ${sel("minFit","Fit score",[["70","70 and above"],["50","50 and above"],["30","30 and above"],["none","Not scored"]],"Any fit")}
+    ${sel("verif","Verification",[["yes","Verified only"],["no","Unverified only"]],"All")}
+    <button type="button" class="btn ghost clr" onclick="blClear()">Clear all</button>
+  </section>`;
+}
+
+/* ---------- cards ---------- */
+function blCard(x, surface, open){
+  const st = x.soon ? `<span class="chip days">Closing soon</span>` : `<span class="chip ${x.status}">${BL_STATUS_L[x.status]||esc(x.status)}</span>`;
+  const sec = x.sectors.length ? `<span class="chip sector">${esc(x.sectors[0])}</span>${x.sectors.length>1?`<span class="chip sec" title="${esc(x.sectors.slice(1).join(", "))}">+${x.sectors.length-1}</span>`:""}` : "";
+  const tip = x.fit==null ? "No fit score yet" : x.fitWho ? `Best fit among these destinations: ${x.fitWho}` : "Fit score out of 100";
+  const fit = x.fit!=null ? `<span class="fit" title="${esc(tip)}">Fit ${x.fit}<i aria-hidden="true"><b style="width:${Math.max(0,Math.min(100,x.fit))}%"></b></i></span>` : `<span class="fit na">Not scored</span>`;
+  return `<article class="bc${open?" open":""}" id="bc_${x.id}">
+    <button type="button" class="face" aria-expanded="${open}" ${open?`aria-controls="bcd_${x.id}"`:""} onclick="blToggle(${x.id})">
+      <span class="hd"><span class="tt"><span class="t">${esc(x.title)}</span><span class="o">${esc(x.org||"Organiser not stated")}</span></span>${CHEV}</span>
+      <span class="m"><span>Deadline <b>${x.deadline?fmtD(x.deadline):"Not set"}</b></span><span>Event <b>${esc(yearsTxt(x.years))}</b></span><span>${x.delegates==="–"?"Delegates <b>not stated</b>":`<b>${esc(x.delegates)}</b> delegates`}</span></span>
+      <span class="cr"><span class="chs">${st}${x.verified?"":`<span class="chip no">Unverified</span>`}${sec}</span>${fit}</span>
+    </button>
+    ${open?`<div class="det" id="bcd_${x.id}">${surface==="agency"?agencyDetail(x):countryDetail(x)}</div>`:""}
+  </article>`;
+}
+const dItem = (label, lines) => `<span class="l">${label}</span>${(lines=lines.filter(Boolean)).length ? lines.map(t=>`<span class="dv">${t}</span>`).join("") : `<span class="dv na">${NS}</span>`}`;
+const srcLine = (url, name, x) => `${url?`<a href="${esc(url)}" target="_blank" rel="noopener">${esc(name || url.replace(/^https?:\/\//,"").split("/")[0])} ↗</a>`:"No source link recorded"}${x.verified_on?`, last checked ${fmtD(x.verified_on)}`:", not yet checked against its source"} ${confChip(x)}`;
+function timeline(deadline, hostYear, hs, extra){
+  const n = daysLeft(deadline);
+  return [deadline ? `Submissions close ${fmtD(deadline)}${n!=null&&n>=0?` (${n} day${n===1?"":"s"} left)`:n!=null?" (passed)":""}` : "No submission deadline set",
+    hostYear ? `Event year ${esc(hostYear)}` : "", hs ? `Host chosen by ${esc(HS_L[hs]||hs)}` : "", ...(extra||[])];
+}
+function agencyDetail(x){
+  const o = x.o, sc = BL_CUR.scope;
+  const ser = o.series_key && HADM ? HADM.sByKey[o.series_key] : null;
+  const hosts = o.series_key && HADM ? HADM.wins.filter(w=>w.series_key===o.series_key && w.award_status!=="cancelled" && w.host_country_name).sort((a,b)=>(b.edition_year||0)-(a.edition_year||0)).slice(0,3) : [];
+  const req = [o.delegates_min||o.delegates_max ? `${delegatesTxt(o)} delegates` : "", o.plenary_seats_min ? `Plenary of ${Number(o.plenary_seats_min).toLocaleString()} seats` : "",
+    o.host_type && o.host_type!=="any" ? `Host: ${esc(HOST_L[o.host_type]||o.host_type)}` : "", o.eligibility ? `Who can bid: ${esc(o.eligibility)}` : "", o.required_documents ? `Required: ${esc(o.required_documents)}` : ""];
+  let why;
+  if(sc.kind==="country") why = x.best ? [...(x.best.reasons||[]).slice(0,3).map(esc), ...(x.best.gaps||[]).slice(0,2).map(g=>`Gap: ${esc(g)}`)] : ["Not yet scored for this destination"];
+  else why = x.scores.slice(0,3).map(r=>{ const c=DB.cById[r.country_id]; return `${flag(c?.iso2)} ${esc(c?.name||"?")} <b>${Math.round(r.score)}</b>`; });
+  const links = DB.aligns.filter(a=>a.opportunity_id===o.id && a.status==="confirmed").map(a=>`Policy link: ${esc(DB.cById[a.country_id]?.name||"?")}`);
+  return `<div class="col">${dItem("Destination and event type",[esc(sc.kind==="country"?sc.c.name:sc.name), esc(o.event_type||"")])}${dItem("Rotation and past hosts",[esc(ser?.rotation_pattern||""), hosts.length?"Recent hosts: "+hosts.map(w=>esc(`${w.host_country_name}${w.edition_year?" "+w.edition_year:""}`)).join(", "):""])}</div>
+    <div class="col">${dItem("Key requirements",req)}${dItem("Decision timeline",timeline(o.submission_deadline,o.host_year,o.host_selection,[ser?.decision_body?`Decided by ${esc(ser.decision_body)}`:"", o.next_action?`Next action: ${esc(o.next_action)}`:""]))}</div>
+    <div class="col">${dItem(sc.kind==="country"?"Why it fits":"Strongest fits in this view",[...why, ...links])}${dItem("Source",[srcLine(o.primary_source_url, o.source_name, o)])}</div>
+    <div class="acts"><button type="button" class="btn sm primary" onclick="openOpp(${o.id})">Open full record</button>${o.primary_source_url?`<a class="btn sm ghost" href="${esc(o.primary_source_url)}" target="_blank" rel="noopener">Official call ↗</a>`:""}</div>`;
+}
+function countryDetail(x){
+  const b = x.b, m = x.m;
+  const req = [m && (m.delegates_min||m.delegates_max) ? `${delegatesTxt(m)} delegates` : "", m?.host_type && m.host_type!=="any" ? `Host: ${esc(HOST_L[m.host_type]||m.host_type)}` : "",
+    b.eligibility ? `Who can bid: ${esc(b.eligibility)}` : "", b.required_documents ? `Required: ${esc(b.required_documents)}` : ""];
+  const why = [...(m?.reasons||[]).slice(0,3).map(esc), ...(m?.gaps||[]).slice(0,2).map(g=>`Gap: ${esc(g)}`)];
+  return `<div class="col">${dItem("Destination and event type",[esc(P().country.name), esc(b.event_type||"")])}${dItem("Edition",[esc(b.edition_label||"")])}</div>
+    <div class="col">${dItem("Key requirements",req)}${dItem("Decision timeline",timeline(b.submission_deadline,b.host_year,b.host_selection,[m?.next_action?`Next action: ${esc(m.next_action)}`:""]))}</div>
+    <div class="col">${dItem("Why it fits",why)}${whyHtml(b)}${m?`<span class="l">Score breakdown</span>${subBars(m.sub_scores)}`:""}${dItem("Source",[srcLine(b.source_url, b.source_name, b)])}</div>
+    <div class="acts">${b.source_url?`<a class="btn sm ghost" href="${esc(b.source_url)}" target="_blank" rel="noopener">Official call ↗</a>`:""}<a class="btn sm primary" href="${interestLink(b.title)}">Express interest</a>${m?`<button type="button" class="btn sm ghost" onclick="MATCH_OPEN=${b.id};goTab('b_match')">Compare with other destinations</button>`:""}</div>`;
+}
+
+/* ---------- other destination sections, closed by default ---------- */
+function blSecDefs(){
+  const C = BL_CUR;
+  if(C.surface==="agency"){
+    if(C.scope.kind!=="country") return null;
+    const id = C.scope.c.id;
+    return [["profile","Destination profile","Positioning, framework, visa, venues, hotels and air access", ()=>destSectionBody(id)],
+      ["history","Bid history","Editions hosted here, with source and confidence", ()=>histSectionBody(id)],
+      ["policy","Policy and support","National frameworks and the key sectors used for matching", ()=>countryPolicyPanel(id)],
+      ["partners","Partner submissions","Profile data sent in by bureaux, venues, ministries and airlines", ()=>partnerSectionBody(id)]];
+  }
+  return [["profile","Destination profile","Positioning, transport and visa access for delegates", ()=>bureauProfileBody()],
+    ["policy","Policy and support","Your national frameworks and priority sectors", ()=>bPolicyBody()]];
+}
+function secsHtml(){
+  const d = blSecDefs();
+  if(!d) return `<p class="secHint">Choose a country in the filter bar to open its destination profile, bid history, policy and partner submissions.</p>`;
+  const f = BL[BL_CUR.surface];
+  return d.map(([k,t,h,body])=>{ const open = f.openSec===k;
+    return `<div class="dsec${open?" open":""}" id="sec_${k}" data-title="${esc(t)}">
+      <button type="button" aria-expanded="${open}" ${open?`aria-controls="secb_${k}"`:""} onclick="blSec('${k}')"><b>${t}</b><span>${h}</span>${CHEV}</button>
+      ${open?`<div class="body" id="secb_${k}">${body()}</div>`:""}</div>`; }).join("");
+}
+function blSecsRefresh(){ const el = $("#blSecs"); if(el && BL_CUR) el.innerHTML = secsHtml(); blSecSpy(); }
+window.blSec = k => {
+  const f = BL[BL_CUR.surface]; f.openSec = f.openSec===k ? null : k; blSave(); blSecsRefresh();
+  if(f.openSec) document.getElementById("sec_"+k)?.scrollIntoView({behavior:"smooth", block:"start"});
+};
+window.blOpenSec = k => { const f = BL[BL_CUR.surface]; if(f.openSec!==k) blSec(k); else document.getElementById("sec_"+k)?.scrollIntoView({behavior:"smooth", block:"start"}); };
+/* The pinned heading names the section the reader has scrolled to. */
+function blSecSpy(){
+  if(!BL_CUR || BL_CUR.view!==VIEW) return;
+  const lim = ($("#ctxBar").getBoundingClientRect().bottom||0) + 80;
+  let cur = null;
+  document.querySelectorAll(".dsec.open").forEach(s=>{ if(s.getBoundingClientRect().top < lim) cur = s.dataset.title; });
+  if(cur!==CTX_SEC_LABEL){ CTX_SEC_LABEL = cur; ctxRender(); }
+}
+let blSpyQueued = false;
+window.addEventListener("scroll", ()=>{ if(blSpyQueued) return; blSpyQueued = true; requestAnimationFrame(()=>{ blSpyQueued = false; blSecSpy(); }); }, {passive:true});
+
+function destSectionBody(id){
+  return destProfileKv(id) + `<div class="pActs" style="margin-top:14px">${["Profile","Framework","Visa","Venues","Hotels","Air access","Past events"].map(t=>`<button type="button" class="btn sm ghost" onclick="openDest(${id},'${t}')">${t==="Profile"?"Edit country data":t}</button>`).join("")}</div>`;
+}
+function histSectionBody(cid){
+  const c = DB.cById[cid];
+  const W = (HADM?.wins||[]).filter(w=>w.host_country_id===cid).sort((a,b)=>(b.edition_year||0)-(a.edition_year||0));
+  if(!HADM) return `<p class="empty">The bid history could not be loaded.</p>`;
+  return `<p class="coverage">${COVERAGE}</p>` + (W.length ? `<div class="tblWrap"><table class="data sm"><thead><tr><th>Year</th><th>Series</th><th>City</th><th>Status</th><th>Source</th><th>Confidence</th></tr></thead><tbody>
+    ${W.map(w=>`<tr class="rowlink" onclick="openWin(${w.id})"><td><b>${esc(w.edition_year||"–")}</b></td><td>${esc(HADM.sByKey[w.series_key]?.name||w.series_key)}<br><span style="font-size:11px;color:var(--muted)">${esc(w.edition_label||"")}</span></td>
+    <td>${esc(w.host_city||"–")}</td><td>${esc(AWARD_L[w.award_status]||w.award_status)}</td><td>${w.source_tier?esc(TIER_L[w.source_tier]):"–"}</td><td>${confChip({...w,status:w.award_status})}</td></tr>`).join("")}
+    </tbody></table></div>` : `<p class="empty">No editions recorded as hosted in ${esc(c?.name||"this country")} yet.</p>`);
+}
+function partnerSectionBody(cid){
+  if(!PADM){
+    loadPartner().then(blSecsRefresh).catch(e=>{ const el = $("#secb_partners"); if(el) el.innerHTML = `<p class="empty">Could not load partner submissions. ${esc(e.message)}</p>`; });
+    return `<div class="loadWrap" style="min-height:80px"><div class="spin"></div>Loading partner submissions…</div>`;
+  }
+  const rows = PADM.submissions.filter(s=>s.country_id===cid);
+  return rows.length ? rows.map(pSubCard).join("") : `<p class="empty">No partner submissions for ${esc(DB.cById[cid]?.name||"this country")} yet. Partners submit at <code>/pipeline/partner</code>.</p>`;
+}
+function bureauProfileBody(){
+  const c = P().country;
+  return `<dl class="kv">
+      <dt>MICE positioning</dt><dd>${esc(c.mice_summary||"To be researched.")}</dd>
+      <dt>Transport network</dt><dd>${esc(c.transport_summary||"To be researched.")}</dd>
+      <dt>Convention bureau</dt><dd>${esc(c.bureau_name||"None recorded")}</dd>
+    </dl><h5>Visa and delegate access</h5>${visaBlock(c)}
+    <div class="pActs" style="margin-top:14px"><button type="button" class="btn sm ghost" onclick="goTab('b_visa')">${MODE==="bureau"?"Edit on the Country profile tab":"Open the Country profile tab"}</button></div>`;
+}
+/* Partner review actions reload the queue; redraw whichever screen shows it. */
+function refreshPartner(){ if(VIEW==="partner") rPartner(); else if(BL_CUR && BL_CUR.view===VIEW) blSecsRefresh(); }
+
+/* ---------- pinned context heading (every signed-in tab) ---------- */
+const sentenceCase = s => s ? s.charAt(0) + s.slice(1).toLowerCase() : "";
+function ctxRender(){
+  const bar = $("#ctxBar"); if(!bar) return;
+  if(!(MODE==="admin" || PORTAL)){ bar.classList.add("hidden"); return; }
+  bar.classList.remove("hidden");
+  const tabs = MODE==="admin" ? ADMIN_TABS : bureauTabs();
+  const tabL = (tabs.find(t=>t[0]===VIEW)||[null,""])[1];
+  const bid = !!(BL_CUR && BL_CUR.view===VIEW);
+  const place = MODE==="admin" ? (bid ? BL_CUR.scope.name : "") : PORTAL.country.name;
+  const sec = bid ? (CTX_SEC_LABEL||"Bid pipeline") : (MODE==="admin" ? sentenceCase(tabL) : tabL);
+  $("#ctxView").textContent = MODE==="admin" ? "Agency view" : MODE==="preview" ? "Country view, preview" : "Country view";
+  $("#ctxPlace").textContent = place || sec;
+  $("#ctxSep").classList.toggle("hidden", !place); $("#ctxSec").classList.toggle("hidden", !place);
+  $("#ctxSec").textContent = sec;
+  $("#ctxCnt").textContent = bid ? `Showing ${BL_CUR.shown} of ${BL_CUR.items.length} bid${BL_CUR.items.length===1?"":"s"}` : "";
+}
+(()=>{
+  const hdr = document.querySelector("header.top"), bar = $("#ctxBar"), root = document.documentElement;
+  const set = () => { const h = hdr.offsetHeight; root.style.setProperty("--hdrH", h+"px");
+    root.style.setProperty("--stickH", (h + (bar.classList.contains("hidden") ? 0 : bar.offsetHeight))+"px"); };
+  if(window.ResizeObserver){ const ro = new ResizeObserver(set); ro.observe(hdr); ro.observe(bar); } else window.addEventListener("resize", set);
+  set();
+})();
+
+/* ---------- the two surfaces ---------- */
 function rPipeline(){
-  let rows = DB.opps.filter(o=> state.pipeStatus==="all" || effStatus(o)===state.pipeStatus);
-  const q = state.pipeQ.toLowerCase();
-  if(q) rows = rows.filter(o=> (o.title+" "+(o.issuing_body||"")+" "+(o.summary||"")).toLowerCase().includes(q));
-  if(state.pipeSector!=="all") rows = rows.filter(o=> itemSectors("opportunity",o.id).some(x=>String(x.econ_sector_id)===state.pipeSector));
-  const sRank = {open:0, watchlist:1, closed:2};
-  rows.sort((a,b)=> (sRank[effStatus(a)]??3)-(sRank[effStatus(b)]??3) || (a.submission_deadline||"9999").localeCompare(b.submission_deadline||"9999"));
-  if(state.pipeConf) rows = rows.filter(o=> effConf(o)===state.pipeConf);
-  $("#mainEl").innerHTML = `
-  <div class="pageHead"><h2>Bid Pipeline</h2><div class="meta">${DB.opps.length} tracked RFPs and host-city calls · each row shows when it was last checked against its source</div></div>
-  <div class="filters">
-    <input type="search" placeholder="Search opportunities…" value="${esc(state.pipeQ)}" oninput="state.pipeQ=this.value;rPipeline();this.focus();this.setSelectionRange(this.value.length,this.value.length)">
-    <select onchange="state.pipeStatus=this.value;rPipeline()">
-      ${["all","open","watchlist","closed"].map(s=>`<option value="${s}" ${state.pipeStatus===s?"selected":""}>${s==="all"?"All statuses":s[0].toUpperCase()+s.slice(1)}</option>`).join("")}
-    </select>
-    <select onchange="state.pipeSector=this.value;rPipeline()">${sectorOptions(state.pipeSector)}</select>
-    <select onchange="state.pipeConf=this.value;rPipeline()"><option value="">All confidence</option>${Object.entries(CONF_L).map(([k,l])=>`<option value="${k}" ${state.pipeConf===k?"selected":""}>${l}</option>`).join("")}</select>
-  </div>
-  <div class="card tblWrap" style="padding:6px 16px 10px">
-    <table class="data"><thead><tr><th>Opportunity</th><th>Issuing body</th><th>Sectors</th><th>Deadline</th><th>Status</th><th>Checked</th><th>Policy links</th></tr></thead><tbody>
-    ${rows.map(o=>{ const al=DB.aligns.filter(a=>a.opportunity_id===o.id&&a.status==="confirmed");
-      return `<tr class="rowlink" onclick="openOpp(${o.id})">
-      <td style="max-width:280px"><b>${esc(o.title)}</b></td>
-      <td>${esc(o.issuing_body||"–")}</td>
-      <td style="max-width:220px">${secChips("opportunity",o.id,2)||'<span class="chip ns">untagged</span>'}</td>
-      <td style="white-space:nowrap">${fmtD(o.submission_deadline)} ${effStatus(o)==="open"?dlChip(o.submission_deadline):""}</td>
-      <td><span class="chip ${effStatus(o)}">${effStatus(o)}</span></td>
-      <td style="white-space:nowrap">${confChip(o)}<div style="font-size:11.5px;color:var(--muted)">${o.verified_on?fmtD(o.verified_on):"never"}</div></td>
-      <td style="font-size:12.5px">${al.map(a=>`${flag(DB.cById[a.country_id]?.iso2)} ${esc(DB.cById[a.country_id]?.name)}`).join("<br>")||"–"}</td></tr>`;}).join("") || `<tr><td colspan="7" class="empty">No matches.</td></tr>`}
-    </tbody></table>
-  </div>`;
+  if(!MS || (!HADM && !BL_HIST_FAIL)){
+    $("#mainEl").innerHTML = `<div class="loadWrap"><div class="spin"></div>Loading the bid pipeline…</div>`;
+    Promise.all([MS?null:loadMS(), HADM||BL_HIST_FAIL?null:loadHistAdmin().catch(()=>{ BL_HIST_FAIL = true; })])
+      .then(()=>{ if(VIEW==="pipeline") rPipeline(); })
+      .catch(e=>{ if(VIEW==="pipeline") $("#mainEl").innerHTML = `<div class="card"><h3>Could not load fit scores</h3><p>${esc(e.message)}</p></div>`; });
+    return;
+  }
+  blRender("agency");
+}
+
+function bBids(){
+  if(!MATCHES){
+    $("#mainEl").innerHTML = `<div class="loadWrap"><div class="spin"></div>Loading calls for bids…</div>`;
+    loadMatches().then(()=>{ if(VIEW==="b_bids") bBids(); });
+    return;
+  }
+  blRender("country");
 }
 window.openOpp = (id, tab) => {
   const o = DB.opps.find(x=>x.id===id); if(!o) return;
@@ -1399,6 +1860,20 @@ function visaBlock(c){
     <dt>Last verified</dt><dd>${fmtD(c.visa_verified_on)}</dd>
   </dl>`;
 }
+function destProfileKv(id){
+  const c = DB.cById[id], prof = DB.profById[id];
+  return `
+      <dl class="kv">
+        ${prof?`<dt>Bid readiness</dt><dd>${readinessChip(c)} <span style="font-size:12.5px;color:var(--muted)">${prof.profile_depth==="full"?"full 21-field profile":"12-field base profile"} · verified ${fmtD(prof.verified_on)} · <a href="#" onclick="event.preventDefault();openDest(${id},'Framework')">see the fields</a></span></dd>`:""}
+        <dt>MICE positioning</dt><dd>${esc(c.mice_summary||"To be researched.")}</dd>
+        <dt>Visa (African delegates)</dt><dd>${c.visa_africa?VISA_AF[c.visa_africa]:esc(c.visa_regime||"To be researched.")} · <a href="#" onclick="event.preventDefault();openDest(${id},'Visa')">full visa profile</a></dd>
+        <dt>Transport network</dt><dd>${esc(c.transport_summary||"To be researched.")}</dd>
+        <dt>Security context</dt><dd>${esc(c.security_summary||"To be researched.")}</dd>
+        <dt>Convention bureau</dt><dd>${esc(c.bureau_name||"None identified")}${c.bureau_url?` · <a href="${esc(c.bureau_url)}" target="_blank" rel="noopener">site ↗</a>`:""}</dd>
+        <dt>AfCFTA status</dt><dd>${afLabelShort(c)||"–"}</dd>
+        <dt>Data confidence</dt><dd>${esc(c.data_confidence||"estimate")}</dd>
+      </dl>`;
+}
 window.openDest = (id, tab) => {
   const c = DB.cById[id]; if(!c) return;
   const all = DB.venues.filter(v=>v.country_id===id);
@@ -1411,17 +1886,7 @@ window.openDest = (id, tab) => {
   const prof = DB.profById[id];
   const body = t => {
     if(t==="Framework") return frameworkPanel(id, prof);
-    if(t==="Profile") return `
-      <dl class="kv">
-        ${prof?`<dt>Bid readiness</dt><dd>${readinessChip(c)} <span style="font-size:12.5px;color:var(--muted)">${prof.profile_depth==="full"?"full 21-field profile":"12-field base profile"} · verified ${fmtD(prof.verified_on)} · <a href="#" onclick="event.preventDefault();openDest(${id},'Framework')">see the fields</a></span></dd>`:""}
-        <dt>MICE positioning</dt><dd>${esc(c.mice_summary||"To be researched.")}</dd>
-        <dt>Visa (African delegates)</dt><dd>${c.visa_africa?VISA_AF[c.visa_africa]:esc(c.visa_regime||"To be researched.")} · <a href="#" onclick="event.preventDefault();openDest(${id},'Visa')">full visa profile</a></dd>
-        <dt>Transport network</dt><dd>${esc(c.transport_summary||"To be researched.")}</dd>
-        <dt>Security context</dt><dd>${esc(c.security_summary||"To be researched.")}</dd>
-        <dt>Convention bureau</dt><dd>${esc(c.bureau_name||"None identified")}${c.bureau_url?` · <a href="${esc(c.bureau_url)}" target="_blank" rel="noopener">site ↗</a>`:""}</dd>
-        <dt>AfCFTA status</dt><dd>${afLabelShort(c)||"–"}</dd>
-        <dt>Data confidence</dt><dd>${esc(c.data_confidence||"estimate")}</dd>
-      </dl>
+    if(t==="Profile") return destProfileKv(id) + `
       <div style="margin-top:16px"><button class="btn sm ghost" onclick="countryForm(${id})">Edit country data</button></div><div id="countryEdit"></div>`;
     if(t==="Visa") return visaBlock(c) + `<div style="margin-top:16px"><button class="btn sm ghost" onclick="visaForm(${id})">Edit visa profile</button></div><div id="visaEdit"></div>`;
     if(t==="Policy & sectors") return countryPolicyPanel(id);
@@ -1942,14 +2407,6 @@ function bHome(){
     <div class="chips">${top.map(s=>`<span class="chip sec pri">${rankDot(s.rank)} ${esc(s.sector)} · ${s.n_items} match${s.n_items===1?"":"es"}</span>`).join("") || '<span class="empty">Not yet recorded.</span>'}</div></div>`;
 }
 window.goTab = v => { VIEW=v; document.querySelectorAll("#navTabs button").forEach(x=>x.classList.toggle("active",x.dataset.v===v)); render(); };
-function bBids(){
-  const p=P(); const secs=[...new Set(p.bids.flatMap(b=>b.sectors))].sort();
-  const list = p.bids.filter(b=>state.bSector==="all"||b.sectors.includes(state.bSector));
-  $("#mainEl").innerHTML = `
-  <div class="pageHead"><h2>Calls for bids for ${esc(p.country.name)}</h2><div class="meta">${p.bids.length} live opportunities, ranked by fit with your priority sectors</div></div>
-  <div class="filters"><select onchange="state.bSector=this.value;bBids()"><option value="all">All your sectors</option>${secs.map(s=>`<option ${state.bSector===s?"selected":""}>${esc(s)}</option>`).join("")}</select></div>
-  <div class="grid cols2">${list.map(bidCard).join("") || '<div class="card empty">No matching calls right now.</div>'}</div>`;
-}
 function bEvents(){
   const p=P();
   $("#mainEl").innerHTML = `
@@ -1962,6 +2419,12 @@ function bPolicy(){
   const tree = (()=>{ const list=p.policies; const roots=list.filter(x=>!x.parent_id||!list.some(q=>q.id===x.parent_id)); const out=[]; const walk=(x,d)=>{out.push([x,d]); list.filter(q=>q.parent_id===x.id).forEach(q=>walk(q,d+1));}; roots.forEach(x=>walk(x,0)); return out; })();
   $("#mainEl").innerHTML = `
   <div class="pageHead"><h2>${esc(c.name)}: policy & priority sectors</h2><div class="meta">The national frameworks used to match bids to your economy</div></div>
+  ${bPolicyBody()}`;
+}
+function bPolicyBody(){
+  const p=P(), c=p.country;
+  const tree = (()=>{ const list=p.policies; const roots=list.filter(x=>!x.parent_id||!list.some(q=>q.id===x.parent_id)); const out=[]; const walk=(x,d)=>{out.push([x,d]); list.filter(q=>q.parent_id===x.id).forEach(q=>walk(q,d+1));}; roots.forEach(x=>walk(x,0)); return out; })();
+  return `
   <div class="card tblWrap"><h3>Priority sectors</h3>
   ${p.sectors.length? `<table class="data"><thead><tr><th>#</th><th>Sector</th><th>Policy source</th><th>Focus</th><th>Event angle</th><th>Matches</th></tr></thead><tbody>
   ${p.sectors.map(s=>`<tr><td>${rankDot(s.rank)}</td><td><b>${esc(s.sector)}</b></td><td style="font-size:12.5px">${esc(s.policy_short||s.policy||"–")}${s.reference?`<br><span style="color:var(--muted)">${esc(s.reference)}</span>`:""}</td><td style="font-size:12.5px">${esc(s.target||"–")}</td><td style="font-size:12.5px">${esc(s.mice_angle||"–")}</td><td>${s.n_items}</td></tr>`).join("")}
@@ -2242,7 +2705,7 @@ window.pDecide = async (fid, decision) => {
   if(decision==="accepted" && !confirm(`Publish "${f.label}" as submitted, at Tier 4 and Unverified, with a re-check due in 30 days?`)) return;
   const {data,error} = await sb.rpc("profile_review", {p_field_id:fid, p_decision:decision, p_value:value, p_note:note});
   if(error) return toast(error.message);
-  await loadPartner(); rPartner();
+  await loadPartner(); refreshPartner();
   toast(data?.outcome==="conflict" ? "The live value is Verified at Tier 1 or 2, so it was kept and marked Conflict with the proposal noted."
     : {accepted:"Published at Tier 4, Unverified. Re-check due in 30 days.", edited:"Edited value published at Tier 4, Unverified.", rejected:"Rejected.", confirm_requested:"Marked for confirmation with the submitter."}[decision]);
 };
@@ -2251,7 +2714,7 @@ window.pConfirmed = async id => {
   if(note===null) return;
   const r = await sb.from("profile_submissions").update({status:"confirmed", reviewer_note:note||null, reviewed_at:new Date().toISOString()}).eq("id",id);
   if(r.error) return toast(r.error.message);
-  await loadPartner(); rPartner(); toast("Marked confirmed with the submitter.");
+  await loadPartner(); refreshPartner(); toast("Marked confirmed with the submitter.");
 };
 window.pDoc = async path => {
   const {data,error} = await sb.storage.from("submission-uploads").createSignedUrl(path, 300);
@@ -2266,7 +2729,7 @@ window.pRecheck = async (id, outcome) => {
   } else { note = prompt(outcome==="conflict" ? "What does the source say instead? (recorded as the conflict note)" : "Note (optional):", ""); if(note===null) return; }
   const {error} = await sb.rpc("profile_field_recheck", {p_live_id:id, p_outcome:outcome, p_source_url:url, p_source_tier:tier, p_note:note});
   if(error) return toast(error.message);
-  await loadPartner(); rPartner();
+  await loadPartner(); refreshPartner();
   toast(outcome==="verified" ? "Verified and the re-check cleared." : outcome==="conflict" ? "Marked Conflict, re-check in 30 days." : "Still Unverified, re-check in 30 days.");
 };
 
