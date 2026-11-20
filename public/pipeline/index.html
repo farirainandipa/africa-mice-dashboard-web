@@ -764,7 +764,7 @@ function buildNav(){
   const tabs = MODE==="admin" ? ADMIN_TABS : bureauTabs();
   $("#navTabs").innerHTML = tabs.map(([k,l])=>`<button data-v="${k}" class="${k===VIEW?"active":""}">${esc(l)}</button>`).join("");
   if(MODE==="admin"){ $("#brandTitle").textContent="Africa MICE Dashboard"; $("#brandSub").textContent="Farirai Nandipa MICE Agency"; }
-  else { $("#brandTitle").textContent = (PORTAL?.country?.name||"")+" bid intelligence"; $("#brandSub").textContent="Partner portal · Farirai Nandipa MICE Agency"; }
+  else { $("#brandTitle").textContent = (PORTAL?.country?.name||"")+" Bid Intelligence"; $("#brandSub").textContent="Partner portal · Farirai Nandipa MICE Agency"; }
   const pb=$("#previewBar");
   if(MODE==="preview"){ pb.classList.remove("hidden"); pb.innerHTML=`Previewing what the <b>${esc(PORTAL.country.name)}</b> bureau sees on the <b>${esc(LIC_L[PREVIEW_TIER]||PREVIEW_TIER)}</b> licence. Internal notes, other countries' scores and suggested-host lists are hidden from them. <button class="btn sm ghost" onclick="exitPreview()">Exit preview</button>`; }
   else pb.classList.add("hidden");
@@ -778,7 +778,7 @@ $("#navTabs").addEventListener("click",e=>{
 function render(){
   const R = {overview:rOverview, pipeline:rPipeline, matching:rMatching, b_match:bMatch, events:rEvents, history:rHistory, destinations:rDest, policies:rPolicies, submissions:rSubmissions, partner:rPartner, access:rAccess,
              b_home:bHome, b_bids:bBids, b_events:bEvents, b_policy:bPolicy, b_visa:bVisa};
-  BL_CUR = null; CTX_SEC_LABEL = null; $("#mainEl").classList.remove("compact");
+  BL_CUR = null; CTX_SEC_LABEL = null; CTX_COUNT = null; $("#mainEl").classList.remove("compact");
   (R[VIEW]||rOverview)();
   ctxRender();
   window.scrollTo(0,0);
@@ -1269,7 +1269,8 @@ function ctxRender(){
   $("#ctxPlace").textContent = place || sec;
   $("#ctxSep").classList.toggle("hidden", !place); $("#ctxSec").classList.toggle("hidden", !place);
   $("#ctxSec").textContent = sec;
-  $("#ctxCnt").textContent = bid ? `Showing ${BL_CUR.shown} of ${BL_CUR.items.length} bid${BL_CUR.items.length===1?"":"s"}` : "";
+  $("#ctxCnt").textContent = bid ? `Showing ${BL_CUR.shown} of ${BL_CUR.items.length} bid${BL_CUR.items.length===1?"":"s"}`
+    : CTX_COUNT ? `Showing ${CTX_COUNT.shown} of ${CTX_COUNT.total} ${CTX_COUNT.noun}` : "";
 }
 (()=>{
   const hdr = document.querySelector("header.top"), bar = $("#ctxBar"), root = document.documentElement;
@@ -1278,6 +1279,37 @@ function ctxRender(){
   if(window.ResizeObserver){ const ro = new ResizeObserver(set); ro.observe(hdr); ro.observe(bar); } else window.addEventListener("resize", set);
   set();
 })();
+
+/* ---------- shared filter bar for the other long lists ----------
+   Same pattern as the bid list: labelled controls, "Clear all", AND logic,
+   option lists from the data, a count in the pinned heading and filters kept
+   for the browser session. */
+const LF_KEY = "amd.listFilters.v1";
+let LF = (()=>{ try{ return JSON.parse(sessionStorage.getItem(LF_KEY)||"{}") || {}; }catch(_){ return {}; } })();
+const LF_DEFAULTS = {events:{fixed:"hide"}};
+const LF_RENDER = {events:()=>rEvents(), dest:()=>rDest(), history:()=>rHistory(), matches:()=>bMatch(), bevents:()=>bEvents()};
+let CTX_COUNT = null;   // {shown, total, noun} for a filtered list on screen
+const lf = list => (LF[list] ||= {...(LF_DEFAULTS[list]||{})});
+const lfSave = () => { try{ sessionStorage.setItem(LF_KEY, JSON.stringify(LF)); }catch(_){} };
+const optsHtml = (opts, cur) => opts.map(([v,l])=>`<option value="${esc(v)}" ${String(cur??"")===String(v)?"selected":""}>${esc(l)}</option>`).join("");
+const uniq = (arr, fn) => [...new Set(arr.map(fn).filter(v=>v!=null && v!==""))];
+const DEADLINE_OPTS = [["1","Next month"],["3","Next 3 months"],["6","Next 6 months"],["12","Next 12 months"],["none","No deadline set"]];
+const withinOk = (days, w) => !w || (w==="none" ? days==null : days!=null && days>=0 && days<=Math.round(+w*30.44));
+const lfEmpty = noun => `No ${noun} match these filters. Clear a filter to see more.`;
+/* controls: {q:true, ph} for search, else {k, label, opts:[[v,l]] or groups:[[name, opts]], any} */
+function lfBar(list, controls){
+  const f = lf(list);
+  return `<section class="fbar" aria-label="Filters">${controls.map(c => c.q
+    ? `<label class="q"><span>Search</span><input type="search" id="lfq_${list}" placeholder="${esc(c.ph)}" value="${esc(f.q||"")}" oninput="lfSet('${list}','q',this.value)"></label>`
+    : `<label${c.wide?' class="pl"':""}><span>${c.label}</span><select onchange="lfSet('${list}','${c.k}',this.value)"><option value="">${c.any||"All"}</option>${c.groups ? c.groups.map(([g,o])=>o.length?`<optgroup label="${esc(g)}">${optsHtml(o,f[c.k])}</optgroup>`:"").join("") : optsHtml(c.opts,f[c.k])}</select></label>`).join("")}
+    <button type="button" class="btn ghost clr" onclick="lfClear('${list}')">Clear all</button></section>`;
+}
+window.lfSet = (list, k, v) => {
+  lf(list)[k] = v; lfSave(); LF_RENDER[list]();
+  if(k==="q"){ const i = document.getElementById("lfq_"+list); if(i){ i.focus(); i.setSelectionRange(i.value.length, i.value.length); } }
+};
+window.lfClear = list => { LF[list] = {}; lfSave(); LF_RENDER[list](); document.getElementById("lfq_"+list)?.focus(); };
+function lfCount(shown, total, noun){ CTX_COUNT = {shown, total, noun}; ctxRender(); }
 
 /* ---------- the two surfaces ---------- */
 function rPipeline(){
@@ -1356,10 +1388,18 @@ async function loadMatches(){
 async function bMatch(){
   if(!MATCHES){ $("#mainEl").innerHTML = `<div class="loadWrap"><div class="spin"></div>Loading matches…</div>`; await loadMatches(); if(VIEW!=="b_match") return; }
   if(MATCHES.error){ $("#mainEl").innerHTML = `<div class="card"><h3>Could not load matches</h3><p>${esc(portalErr(MATCHES.error))}</p></div>`; return; }
-  const c = P().country, rows = MATCHES.matches||[], plus = MATCHES.tier==="bureau_plus";
+  const c = P().country, all = MATCHES.matches||[], plus = MATCHES.tier==="bureau_plus";
+  const f = lf("matches"), q = (f.q||"").toLowerCase();
+  const rows = all.filter(m=>(!q || (m.title+" "+(m.issuing_body||"")).toLowerCase().includes(q)) && withinOk(daysLeft(m.deadline), f.within) &&
+    (!f.status || m.status===f.status) && (!f.minFit || Number(m.score)>=+f.minFit) && (!f.conf || m.confidence===f.conf));
   $("#mainEl").innerHTML = `
-  <div class="pageHead"><h2>${flag(c.iso2)} Matches for ${esc(c.name)}</h2><div class="meta">${rows.length} open and watched calls, ranked by how well ${esc(c.name)} fits each one</div></div>
+  <div class="pageHead"><h2>${flag(c.iso2)} Matches for ${esc(c.name)}</h2><div class="meta">${all.length} open and watched calls, ranked by how well ${esc(c.name)} fits each one</div></div>
   <p class="lede">The fit score (0 to 100) weighs venue capacity, air access, visa ease, bidding capability and sector priority against what each call asks for. A requirement the call does not state is left out rather than counted against you. Rows due within 21 days are highlighted. Select a row for the breakdown.</p>
+  ${lfBar("matches",[{q:true, ph:"Event or organiser"},
+    {k:"within", label:"Deadline", any:"Any time", opts:DEADLINE_OPTS},
+    {k:"status", label:"Status", any:"Any status", opts:uniq(all,m=>m.status).map(k=>[k,BL_STATUS_L[k]||k])},
+    {k:"minFit", label:"Fit score", any:"Any fit", opts:[["70","70 and above"],["50","50 and above"],["30","30 and above"]]},
+    {k:"conf", label:"Confidence", any:"Any", opts:uniq(all,m=>m.confidence).map(k=>[k,MCONF_L[k]||k])}])}
   <div class="card tblWrap" style="padding:6px 16px 10px">
     <table class="data"><thead><tr><th>#</th><th>Opportunity</th><th>Delegates</th><th>Deadline</th><th>Fit</th><th>Why</th><th>Gap</th><th>Next action</th></tr></thead><tbody>
     ${rows.map(m=>{ const n=daysLeft(m.deadline), soon = n!=null && n>=0 && n<=21, open = MATCH_OPEN===m.id;
@@ -1372,9 +1412,10 @@ async function bMatch(){
         <td style="font-size:12.5px;max-width:200px">${esc(m.reasons?.[0]||"–")}</td>
         <td style="font-size:12.5px;max-width:200px">${esc(m.gaps?.[0]||"–")}</td>
         <td style="font-size:12.5px;max-width:200px">${esc(m.next_action||"–")}</td></tr>
-        ${open?`<tr class="mxRow"><td colspan="8">${matchDetail(m, plus)}</td></tr>`:""}`;}).join("") || `<tr><td colspan="8" class="empty">No open calls are scored for ${esc(c.name)} yet.</td></tr>`}
+        ${open?`<tr class="mxRow"><td colspan="8">${matchDetail(m, plus)}</td></tr>`:""}`;}).join("") || `<tr><td colspan="8" class="empty">${all.length?lfEmpty("calls"):`No open calls are scored for ${esc(c.name)} yet.`}</td></tr>`}
     </tbody></table>
   </div>`;
+  lfCount(rows.length, all.length, "calls");
 }
 window.toggleMatch = id => { MATCH_OPEN = MATCH_OPEN===id ? null : id; bMatch(); };
 function matchDetail(m, plus){
@@ -1594,14 +1635,12 @@ window.undismiss = async (kind,id,cid) => {
    STRATEGIC EVENTS
    ===================================================================== */
 function rEvents(){
-  if(state.evHideFixed===undefined) state.evHideFixed = true;
-  let evs = DB.events.filter(e=>
-    (state.evSector==="all"||e.sector===state.evSector) &&
-    (state.evScope==="all"||e.scope===state.evScope) &&
-    (!state.evAf || (e.afcfta_score||0)>=4) &&
-    (!state.evHideFixed || !e.fixed_venue) &&
-    (!state.evOpen || e.openness_2027_29===state.evOpen) &&
-    (!state.evQ || (e.event_name+" "+(e.organiser||"")+" "+(e.forum_group||"")).toLowerCase().includes(state.evQ.toLowerCase())));
+  const f = lf("events"), q = (f.q||"").toLowerCase(), E = DB.events;
+  const evs = E.filter(e=>
+    (!f.sector || e.sector===f.sector) && (!f.scope || e.scope===f.scope) && (!f.af || (e.afcfta_score||0)>=4) &&
+    (f.fixed!=="hide" || !e.fixed_venue) && (!f.open || (e.openness_2027_29||"unknown")===f.open) &&
+    (!f.hs || e.host_selection===f.hs) && (!f.verif || (f.verif==="yes")===(e.confidence==="verified")) &&
+    (!q || (e.event_name+" "+(e.organiser||"")+" "+(e.forum_group||"")).toLowerCase().includes(q)));
   const openRank = {open:0, partly:1, unknown:2, rotation:3, fixed:4};
   evs.sort((a,b)=> (openRank[a.openness_2027_29||"unknown"]-openRank[b.openness_2027_29||"unknown"]) || (b.afcfta_score||0)-(a.afcfta_score||0) || a.event_name.localeCompare(b.event_name));
   const prios = DB.countries.filter(c=>c.priority);
@@ -1612,14 +1651,14 @@ function rEvents(){
   };
   $("#mainEl").innerHTML = `
   <div class="pageHead"><h2>Strategic Events</h2><div class="meta">${DB.events.length} rotating forums and congresses · host chosen by bid, call, invitation or rotation · sorted by openness for 2027–29</div></div>
-  <div class="filters">
-    <input type="search" placeholder="Search forums…" value="${esc(state.evQ||"")}" oninput="state.evQ=this.value;rEvents();this.focus();this.setSelectionRange(this.value.length,this.value.length)">
-    <select onchange="state.evSector=this.value;rEvents()"><option value="all">All sector groups</option>${Object.entries(SECTORS).map(([k,v])=>`<option value="${k}" ${state.evSector===k?"selected":""}>${v}</option>`).join("")}</select>
-    <select onchange="state.evScope=this.value;rEvents()"><option value="all">All scopes</option>${["international","continental","regional"].map(s=>`<option value="${s}" ${state.evScope===s?"selected":""}>${s[0].toUpperCase()+s.slice(1)}</option>`).join("")}</select>
-    <select onchange="state.evOpen=this.value;rEvents()"><option value="">Any openness</option>${Object.entries(OPEN_L).map(([k,v])=>`<option value="${k}" ${state.evOpen===k?"selected":""}>${v[0]}</option>`).join("")}</select>
-    <label class="toggle"><input type="checkbox" ${state.evAf?"checked":""} onchange="state.evAf=this.checked;rEvents()"> AfCFTA priority only</label>
-    <label class="toggle"><input type="checkbox" ${state.evHideFixed?"checked":""} onchange="state.evHideFixed=this.checked;rEvents()"> Hide fixed-venue series</label>
-  </div>
+  ${lfBar("events",[{q:true, ph:"Forum or organiser"},
+    {k:"sector", label:"Sector group", any:"All sector groups", opts:uniq(E,e=>e.sector).map(k=>[k,SECTORS[k]||k])},
+    {k:"scope", label:"Scope", any:"All scopes", opts:uniq(E,e=>e.scope).map(k=>[k,k[0].toUpperCase()+k.slice(1)])},
+    {k:"open", label:"Openness 2027–29", any:"Any openness", opts:uniq(E,e=>e.openness_2027_29||"unknown").map(k=>[k,OPEN_L[k]?.[0]||k])},
+    {k:"hs", label:"Host chosen by", any:"Any method", opts:uniq(E,e=>e.host_selection).map(k=>[k,HS_L[k]||k])},
+    {k:"af", label:"AfCFTA alignment", any:"Any", opts:[["4","4 of 5 and above"]]},
+    {k:"fixed", label:"Fixed venue", any:"Show", opts:[["hide","Hide"]]},
+    {k:"verif", label:"Verification", opts:[["yes","Verified only"],["no","Unverified only"]]}])}
   <div class="grid cols3">
   ${evs.map(e=>{
     const fits = topFits(e);
@@ -1652,8 +1691,9 @@ function rEvents(){
         <span><button class="btn sm ghost" onclick="openEv(${e.id},'Host fit')">Host fit ›</button> <button class="btn sm ghost" onclick="openEv(${e.id},'Sectors & policy fit')">Policy fit ›</button></span>
       </div>
     </div>`;
-  }).join("") || '<div class="card empty">No events match these filters.</div>'}
+  }).join("") || `<div class="card empty" style="grid-column:1/-1">${lfEmpty("events")}</div>`}
   </div>`;
+  lfCount(evs.length, E.length, "events");
 }
 function hostFitPanel(e, kind){
   const m = kind==="opportunity" ? [] : DB.matches.filter(x=>x.event_id===e.id).sort((a,b)=>b.total_score-a.total_score);
@@ -1828,17 +1868,26 @@ function readiness(p){
 function readinessChip(c){ const p=DB.profById?.[c.id]; const r=readiness(p); if(r==null) return ""; const cls=p.advisory_level==="red"?"no":p.advisory_level==="amber"?"watchlist":"lvl"; return `<span class="chip ${cls}" title="Bid readiness from the structured profile (0-100); ${p.advisory_level} travel advisory">readiness ${r}</span>`; }
 function afChip(c){ const a=AF_LABEL[c.afcfta_status]; return a?`<span class="chip ${a[1]}" title="${a[0]}">${a[0].replace("AfCFTA ","")}</span>`:(c.type==="territory"?'<span class="chip terr">territory</span>':""); }
 function rDest(){
-  const prios = DB.countries.filter(c=>c.priority);
-  const q = state.destQ.toLowerCase();
-  const rest = DB.countries.filter(c=>!c.priority && (!q || c.name.toLowerCase().includes(q)));
+  const f = lf("dest"), q = (f.q||"").toLowerCase(), C = DB.countries;
+  const band = c => { const r = readiness(DB.profById?.[c.id]); return r==null ? "none" : r>=70 ? "70" : r>=50 ? "50" : "low"; };
+  const all = C.filter(c => (!q || c.name.toLowerCase().includes(q)) && (!f.region || c.region===f.region) &&
+    (!f.prio || (f.prio==="yes")===!!c.priority) && (!f.af || (c.afcfta_status||"none")===f.af) &&
+    (!f.visa || (c.visa_africa||"none")===f.visa) && (!f.ready || band(c)===f.ready));
+  const prios = all.filter(c=>c.priority), rest = all.filter(c=>!c.priority);
   const regions = ["Northern","Western","Central","Eastern","Southern"];
   $("#mainEl").innerHTML = `
   <div class="pageHead"><h2>Destinations</h2><div class="meta">${DB.countries.length} African states and islands · structured profile on every country · full 21-field frameworks on the agency's priority markets</div></div>
-  <div class="prioBand">
-    <h3>Priority destinations</h3><p class="s">${prios.map(c=>esc(c.name)).join(" · ")}, the agency's own focus set. Every other country has its own view and profile; the pipeline is open to all of them.</p>
+  ${lfBar("dest",[{q:true, ph:"Country"},
+    {k:"region", label:"Region", any:"All regions", opts:regions.filter(r=>C.some(c=>c.region===r)).map(r=>[r,r+" Africa"])},
+    {k:"prio", label:"Priority", any:"All countries", opts:[["yes","Priority only"],["no","Not priority"]]},
+    {k:"af", label:"AfCFTA status", any:"Any status", opts:uniq(C,c=>c.afcfta_status||"none").map(k=>[k,AF_LABEL[k]?.[0]||"Not classified"])},
+    {k:"visa", label:"Visa for Africans", any:"Any", opts:uniq(C,c=>c.visa_africa||"none").map(k=>[k,VISA_AF_SHORT[k]||"Not yet classified"])},
+    {k:"ready", label:"Bid readiness", any:"Any", opts:[["70","70 and above"],["50","50 to 69"],["low","Below 50"],["none","No profile yet"]]}])}
+  ${prios.length?`<div class="prioBand">
+    <h3>Priority destinations</h3><p class="s">${C.filter(c=>c.priority).map(c=>esc(c.name)).join(" · ")}, the agency's own focus set. Every other country has its own view and profile; the pipeline is open to all of them.</p>
     <div class="grid">${prios.map(c=>destCardHtml(c)).join("")}</div>
-  </div>
-  <div class="filters"><input type="search" placeholder="Find a country…" value="${esc(state.destQ)}" oninput="state.destQ=this.value;rDest();this.focus();this.setSelectionRange(this.value.length,this.value.length)"></div>
+  </div>`:""}
+  ${all.length?"":`<div class="card empty">${lfEmpty("countries")}</div>`}
   ${regions.map(r=>{
     const cs = rest.filter(c=>c.region===r);
     if(!cs.length) return "";
@@ -1846,6 +1895,7 @@ function rDest(){
       <div class="destCard small" onclick="openDest(${c.id})"><span class="fl">${flag(c.iso2)}</span>
       <div><h4>${esc(c.name)} ${c.type==="territory"?'<span class="chip terr">territory</span>':""}</h4><div class="rg">${afLabelShort(c)}</div></div></div>`).join("")}</div>`;
   }).join("")}`;
+  lfCount(all.length, C.length, "countries");
 }
 function afLabelShort(c){ const a=AF_LABEL[c.afcfta_status]; return a? a[0] : (c.type==="territory"?"Territory":""); }
 function visaBlock(c){
@@ -2409,11 +2459,19 @@ function bHome(){
 }
 window.goTab = v => { VIEW=v; document.querySelectorAll("#navTabs button").forEach(x=>x.classList.toggle("active",x.dataset.v===v)); render(); };
 function bEvents(){
-  const p=P();
+  const p=P(), E=p.events, f=lf("bevents"), q=(f.q||"").toLowerCase();
+  const list = E.filter(e=>(!q || ((e.name||"")+" "+(e.organiser||"")).toLowerCase().includes(q)) && (!f.sector || (e.sectors||[]).includes(f.sector)) &&
+    (!f.scope || e.scope===f.scope) && (!f.open || (e.openness_2027_29||"unknown")===f.open) && (!f.year || String(e.edition_year)===f.year));
   $("#mainEl").innerHTML = `
   <div class="pageHead"><h2>Strategic rotating events</h2><div class="meta">${p.events.length} events whose sectors match ${esc(p.country.name)}'s priorities</div></div>
   <p class="lede">These events rotate around the continent or the world. Most open their host selection one to three years ahead, so position early.</p>
-  <div class="grid cols2">${p.events.map(evCardB).join("") || '<div class="card empty">No matching events yet.</div>'}</div>`;
+  ${lfBar("bevents",[{q:true, ph:"Event or organiser"},
+    {k:"sector", label:"Sector", any:"All your sectors", opts:[...new Set(E.flatMap(e=>e.sectors||[]))].sort().map(n=>[n,n])},
+    {k:"scope", label:"Scope", any:"All scopes", opts:uniq(E,e=>e.scope).map(k=>[k,k[0].toUpperCase()+k.slice(1)])},
+    {k:"open", label:"Openness 2027–29", any:"Any openness", opts:uniq(E,e=>e.openness_2027_29||"unknown").map(k=>[k,OPEN_L[k]?.[0]||k])},
+    {k:"year", label:"Edition year", any:"Any year", opts:uniq(E,e=>e.edition_year).sort().map(y=>[String(y),String(y)])}])}
+  <div class="grid cols2">${list.map(evCardB).join("") || `<div class="card empty">${E.length?lfEmpty("events"):"No matching events yet."}</div>`}</div>`;
+  lfCount(list.length, E.length, "events");
 }
 function bPolicy(){
   const p=P(), c=p.country;
@@ -2498,10 +2556,13 @@ function rHistory(){
   if(!HADM){ $("#mainEl").innerHTML = `<div class="loadWrap"><div class="spin"></div>Loading bid history…</div>`;
     loadHistAdmin().then(()=>{ if(VIEW==="history") rHistory(); }).catch(e=>{ $("#mainEl").innerHTML=`<div class="card"><h3>Could not load the bid history</h3><p>${esc(e.message)}</p></div>`; }); return; }
   const W = HADM.wins, live = W.filter(w=>w.award_status!=="cancelled");
-  const qn = state.haQueue||"all", q=(state.haQ||"").toLowerCase();
+  const f = lf("history"), qn = f.queue||"all", q = (f.q||"").toLowerCase();
   const pass2 = w => w.source_tier===2 && w.confidence!=="verified" && w.award_status!=="cancelled";
   const filt = {all:w=>w.award_status!=="cancelled", pass2, nohost:w=>w.award_status!=="cancelled"&&!w.host_country_name, draft:w=>w.win_factors&&w.win_factors_status==="draft", africa:w=>w.africa_hosted, cancelled:w=>w.award_status==="cancelled"}[qn] || (()=>true);
-  const rows = W.filter(filt).filter(w=>!q || (HADM.sByKey[w.series_key]?.name||"").toLowerCase().includes(q) || (w.host_city||"").toLowerCase().includes(q) || (w.host_country_name||"").toLowerCase().includes(q));
+  const rows = W.filter(filt).filter(w=>!q || (HADM.sByKey[w.series_key]?.name||"").toLowerCase().includes(q) || (w.host_city||"").toLowerCase().includes(q) || (w.host_country_name||"").toLowerCase().includes(q))
+    .filter(w=>(!f.year || String(w.edition_year)===f.year) && (!f.award || w.award_status===f.award) && (!f.tier || String(w.source_tier)===f.tier) &&
+      (!f.conf || (w.confidence||"unverified")===f.conf) &&
+      (!f.place || (f.place.startsWith("c:") ? w.host_country_name===f.place.slice(2) : w.host_region===f.place.slice(2))));
   const S = HADM.series;
   const last = HADM.last;
   $("#mainEl").innerHTML = `
@@ -2515,18 +2576,25 @@ function rHistory(){
     <div class="kpi"><div class="n">${W.filter(pass2).length}</div><div class="l">ICCA wins awaiting Tier 1 check</div></div>
     <div class="kpi"><div class="n">${W.filter(w=>w.win_factors&&w.win_factors_status==="draft").length}</div><div class="l">Draft win-factors notes</div></div>
   </div>
-  <div class="filters">
-    <input type="search" placeholder="Search series, city or country" value="${esc(state.haQ||"")}" onchange="state.haQ=this.value;rHistory()">
-    <select onchange="state.haQueue=this.value;rHistory()">${[["all","All editions"],["pass2","Pass 2 queue (ICCA, not yet checked)"],["nohost","Host not confirmed"],["draft","Draft win factors"],["africa","Hosted in Africa"],["cancelled","Parked or cancelled"]].map(([k,l])=>`<option value="${k}" ${qn===k?"selected":""}>${l}</option>`).join("")}</select>
+  ${lfBar("history",[{q:true, ph:"Series, city or country"},
+    {k:"queue", label:"Queue", any:"All editions", opts:[["pass2","Pass 2 queue (ICCA, not yet checked)"],["nohost","Host not confirmed"],["draft","Draft win factors"],["africa","Hosted in Africa"],["cancelled","Parked or cancelled"]]},
+    {k:"year", label:"Edition year", any:"Any year", opts:uniq(W,w=>w.edition_year).sort((a,b)=>b-a).map(y=>[String(y),String(y)])},
+    {k:"place", label:"Host country or region", any:"Anywhere", wide:true, groups:[["Regions",uniq(W,w=>w.host_region).sort().map(r=>["r:"+r,r])],["Countries",uniq(W,w=>w.host_country_name).sort().map(n=>["c:"+n,n])]]},
+    {k:"award", label:"Award status", any:"Any status", opts:uniq(W,w=>w.award_status).map(k=>[k,AWARD_L[k]||k])},
+    {k:"tier", label:"Source", any:"Any source", opts:uniq(W,w=>w.source_tier).sort().map(t=>[String(t),TIER_L[t]||String(t)])},
+    {k:"conf", label:"Confidence", any:"Any", opts:uniq(W,w=>w.confidence||"unverified").map(k=>[k,CONF_L[k]||k])}])}
+  <div class="pActs" style="margin:-2px 0 12px">
     <button class="btn sm ghost" onclick="runPass1()" id="btnPass1">Run Pass 1 now</button>
     <button class="btn sm ghost" onclick="recomputeHistory()">Recompute estimates</button>
   </div>
   <div class="card tblWrap"><div class="cardHead"><h3>${rows.length} edition${rows.length===1?"":"s"}</h3><span style="font-size:12.5px;color:var(--muted)">Click a row to edit, confirm at Tier 1, or review its win factors</span></div>
   <table class="data sm"><thead><tr><th>Year</th><th>Series</th><th>Host</th><th>Status</th><th>Source</th><th>Confidence</th><th>Win factors</th></tr></thead><tbody>
+  ${rows.length?"":`<tr><td colspan="7" class="empty">${lfEmpty("editions")}</td></tr>`}
   ${rows.map(w=>`<tr class="rowlink" onclick="openWin(${w.id})"><td><b>${esc(w.edition_year||"–")}</b></td><td>${esc(HADM.sByKey[w.series_key]?.name||w.series_key)}<br><span style="font-size:11px;color:var(--muted)">${esc(w.edition_label||"")}</span></td>
     <td>${hostHtml({city:w.host_city,country:w.host_country_name,iso2:w.host_iso2})}</td><td>${esc(AWARD_L[w.award_status])}</td><td>${w.source_tier?esc(TIER_L[w.source_tier]):"–"}</td><td>${confChip({...w,status:w.award_status})}</td>
     <td>${w.win_factors?(w.win_factors_status==="draft"?'<span class="chip watchlist">draft</span>':'<span class="chip ok">reviewed</span>'):"–"}</td></tr>`).join("")}
   </tbody></table></div>`;
+  lfCount(rows.length, W.length, "editions");
 }
 window.runPass1 = async () => {
   const b=$("#btnPass1"); if(b){ b.disabled=true; b.textContent="Reading ICCA…"; }
