@@ -246,7 +246,9 @@ supabase/migrations/    pipeline migrations from the move onwards
 - `/pipeline`, `/pipeline/partner` and `/pipeline/submit` are rewritten to
   their `.html` files, `/admin` to `admin/index.html`, and `/legal` and
   `/legal/rights` to their files in `public/legal/`, **before** the
-  SPA catch-all. Keep that order.
+  SPA catch-all. Keep that order. Any other `/pipeline/*` address (such as
+  the retired `/pipeline/admin`) returns a 404 with `pipeline/404.html`
+  rather than the landing page.
 - This repo is the only source of the pipeline pages. farirainandipa-web no
   longer carries a copy (removed in its PR #18), so edit them here.
 - farirainandipa.co.zw/pipeline/* 301-redirects here (path and query kept), so

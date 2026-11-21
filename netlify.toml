@@ -43,6 +43,13 @@
   to = "/legal/rights.html"
   status = 200
 
+# Any other /pipeline address (for example the old /pipeline/admin) is a 404,
+# not the landing page. Files that exist, such as theme.css, still load.
+[[redirects]]
+  from = "/pipeline/*"
+  to = "/pipeline/404.html"
+  status = 404
+
 [[redirects]]
   from = "/*"
   to = "/index.html"
