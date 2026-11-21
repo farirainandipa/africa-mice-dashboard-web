@@ -502,10 +502,10 @@ async function rAudit(){
 
 /* ---------- legal (IP changes W1, W2, W8) ---------- */
 const DOC_L = {terms_of_access:"Terms of Access", submission_licence:"Submission licence", data_notice:"Data notice"};
-let LG = null;
+let LD = null;
 async function rLegal(){
   const [ta, docs] = await Promise.all([rpc("admin_terms_acceptances"), rpc("admin_legal_documents")]);
-  LG = docs; const cur = ta.current_version;
+  LD = docs; const cur = ta.current_version;
   $("#mainEl").innerHTML = head("Legal", "Who has accepted which version of the Terms of Access, and every published version of the legal text. Bureau logins see nothing until they accept the current terms.",
     isSuper() ? `<button class="btn sm" onclick="lgPublish()">Publish a new version</button>` : "")
   + `<div class="card"><h3>Terms of Access acceptance (current version ${cur ?? "none"})</h3>${table(["Organisation","Login","Country","Accepted","Accepted current version"], ta.accounts.map(a=>`<tr>
@@ -519,10 +519,10 @@ async function rLegal(){
       <td class="acts"><button class="btn ghost sm" onclick="lgView(${i})">Read</button> <a class="btn ghost sm" href="/legal?doc=${esc(d.doc_type)}" target="_blank" rel="noopener">Public page</a></td></tr>`))}
     <p class="note">The text uses {owner}, filled in from legal.config.json. A new Terms of Access version asks every bureau to accept again at their next sign-in.</p></div>`;
 }
-window.lgView = i => { const d = LG[i];
+window.lgView = i => { const d = LD[i];
   showModal(`${DOC_L[d.doc_type]||d.doc_type}, version ${d.version}`, `<pre style="white-space:pre-wrap;font-family:inherit;font-size:13px">${esc(d.body)}</pre>${d.accept_label?`<p class="note">Checkbox: ${esc(d.accept_label)}</p>`:""}`); };
 window.lgPublish = () => {
-  const latest = t => LG.find(d=>d.doc_type===t) || {};
+  const latest = t => LD.find(d=>d.doc_type===t) || {};
   showModal("Publish a new version", `<div class="field"><label for="lgT">Document</label><select id="lgT">${Object.entries(DOC_L).map(([k,l])=>`<option value="${k}">${esc(l)}</option>`).join("")}</select></div>
     <div class="field"><label for="lgN">Title</label><input id="lgN"></div>
     <div class="field"><label for="lgB">Text (blank lines separate paragraphs; lines starting "1." form a list; {owner} is replaced)</label><textarea id="lgB" style="min-height:220px"></textarea></div>
